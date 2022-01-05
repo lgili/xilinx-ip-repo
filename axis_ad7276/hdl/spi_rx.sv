@@ -21,46 +21,93 @@
 
 
 module spi_rx #(
-    parameter ADC_LENGTH = 12
+    parameter ADC_LENGTH = 12,
+    parameter ADC_QTD = 3
     )(
-    input 		    clk,
-    input 		    rst,    
-    input           inData1,
-    input           inData2,
-    input  reg [31:0]   sampleEnableDiv,
-    output reg [ADC_LENGTH-1:0]   adcData1,
-    output reg [ADC_LENGTH-1:0]   adcData2,
-    output reg         cs,
-    output wire        sclk
+    input 		                    i_clk,
+    input 		                    i_rst,    
+    input  wire  [1:0]              i_data,    
+    output reg [2*ADC_LENGTH-1:0]   o_data,  
+     
+    output reg                    o_cs,
+    output wire                   o_sclk,
+    
+    input        [31:0]          i_sampleEnableDiv,
+    output wire  [31:0]          o_clockdivReg,
+       
+    output  reg  [1:0]            o_tValid,    
+    output  reg  [1:0]            o_tLast    
 
     );
     
-    // Define our states
-   typedef enum {IDLE, READING, ENDING}  state;
+    // Define our states   
+   parameter IDLE      = 'd0;
+   parameter READING   = 'd1;
+   parameter ENDING    = 'd2;
 
-   state current_state = IDLE;
-   state next_state = IDLE ;
-   reg [31:0] count = 0;
+   parameter sizeAdcHalf = ADC_QTD/2;
+   
+   reg [1:0]  next_state = IDLE ;
+   
    
    reg [31:0] sampleCount = 0;
    reg [31:0] sample_compare_value;
-   logic sampleDone;
+   
+   wire sampleDone;
+   reg [1:0]  current_state = IDLE;
+   reg [3:0] count = 0;
    
    
-   assign sample_compare_value = (sampleEnableDiv == 0) ? 'd48 : sampleEnableDiv;
+   assign o_sclk = i_clk;
    
-   assign sclk  = clk;
+      
+   //assign sample_compare_value = (i_sampleEnableDiv == 0) ? 'd48 : i_sampleEnableDiv;
+   assign o_clockdivReg = sample_compare_value;  
+   
+   
+always @(*) begin
+    case (i_sampleEnableDiv)
+        50: begin
+            sample_compare_value = 50;
+        end 
+        100: begin
+            sample_compare_value = 100;
+        end
+        150: begin
+            sample_compare_value = 150;
+        end
+        200: begin
+            sample_compare_value = 200;
+        end
+        250: begin
+            sample_compare_value = 250;
+        end 
+        300: begin
+            sample_compare_value = 300;
+        end 
+        350: begin
+            sample_compare_value = 350;
+        end 
+        400: begin
+            sample_compare_value = 400;
+        end
+        default: begin
+            sample_compare_value = 48;
+        end
+    endcase
+     
+ end     
    
 // sample rate generation
-always @(posedge clk)
+always @(posedge i_clk)
   begin
-	if(rst == 1'b0) begin
-           sampleCount <= '0;
+	if(i_rst == 1'b0) begin
+           sampleCount <= 'd0;
 	end
 	else begin
            // Reset at state transition
            if (sampleDone) 
-              sampleCount <= '0;           
+              sampleCount <= 'd0;           
            else 
               sampleCount <= sampleCount + 'd1;           
 	end
@@ -72,9 +119,22 @@ assign sampleDone = (sampleCount == sample_compare_value-1) ? 1'b1 : 1'b0;
     
     
 // update next state    
-always @(posedge clk)
+always @(posedge i_clk)
  begin
-        if(rst == 1'b0) begin
+        if(i_rst == 1'b0) begin
+               current_state <= IDLE;
+        end
+        else begin
+               current_state <= next_state;
+        end
+
+ end
+   
+   
+// update next state    
+always @(posedge i_clk)
+ begin
+        if(i_rst == 1'b0) begin
                current_state <= IDLE;
         end
         else begin
@@ -96,7 +156,7 @@ always @(*) begin
         end   
         
       READING :  begin
-            if(count == 13)
+            if(count == 12)
                 next_state = ENDING;
             else
                 next_state  = READING;
@@ -111,45 +171,92 @@ end
 
 
 // process data based on current state
-reg [ADC_LENGTH:0] data_temp1;
-reg [ADC_LENGTH:0] data_temp2; 
-always @(*) begin
+reg [ADC_LENGTH-1:0] data_temp1 ;
+reg [ADC_LENGTH-1:0] data_temp2 ;
+reg [ADC_LENGTH-1:0] data_temp1_last ;
+reg [ADC_LENGTH-1:0] data_temp2_last ;
+
+/*reg signed [ADC_LENGTH-1:0] error1 ;
+reg signed [ADC_LENGTH-1:0] error2 ;
+reg inrange1;
+reg inrange2;*/
+
+integer i;
+
+always @(posedge i_clk) begin
 
     case (current_state)
-          IDLE   :   begin
-                  cs = 1'b1;                   
-                  //tValid1 <= 1'b0;  
-                 // tValid2 <= 1'b0;             
-                  //tLast1 <= 1'b0;                              
-                 // tLast2 <= 1'b0;          
-          end
-          READING :   begin
-                cs = 1'b0;   
-                if(clk) begin               
-                    if(count == 13)
-                        count = 0;
-                    else
-                        count = count + 1;        
-                 end  
-                 
-                if(~clk) begin
-                    data_temp1 = {data_temp1[11:0], inData1};
-                    data_temp2 = {data_temp2[11:0], inData2}; 
-                
-                end         
+        IDLE   :   begin
+                  o_cs <= 1'b1; 
+                  data_temp1 <= 12'd0;
+                  data_temp2 <= 12'd0;
                   
-          
-          end
-          ENDING :    begin
-                cs = 1'b1;
-                adcData1 = data_temp1;
-                adcData2 = data_temp2;
-          end
-          
-          
-    endcase      
+                  o_tValid <= 2'h0; 
+                  o_tLast <= 2'h0;                                       
+                            
+        end
+        READING :   begin
+                  o_cs <= 1'b0;
+                                         
+                  o_tValid <= 2'h0; 
+                  o_tLast <= 2'h0;                      
+                       
+                   
+                  
+                   if(count == 12)
+                        count <= 0;
+                   else
+                        count <= count + 1;              
+               
+                 
+                    data_temp1 <= {data_temp1, i_data[0]};
+                    data_temp2 <= {data_temp2, i_data[1]};
+             
+        end
+        
+        ENDING :    begin
+                
+                 o_tValid <= 2'h3; 
+                  o_tLast <= 2'h3;
+                 
+                 o_cs <= 1'b1;
+                 
+                 
+                 /*error1 <= data_temp1 - data_temp1;    
+                 if(error1 > -12'd100 && error1 < 12'd100)     
+                    inrange1  = 1'b1;
+                 else
+                    inrange1 = 1'b0;           
+                 error2 <= data_temp2 - data_temp2;
+                 if(error2 > -12'd100 && error2 < 12'd100)     
+                    inrange2  = 1'b1;
+                 else
+                    inrange2 = 1'b0;*/
+                 
+                 if(data_temp1 >=  12'b0000_0000_1111 && data_temp1 <=  12'b1111_1111_1111)
+                    o_data[11:0] <= data_temp1;
+                 if(data_temp2 >=  12'b0000_0000_1111 && data_temp2 <=  12'b1111_1111_1111)   
+                    o_data[23:12] <= data_temp2;
+                    
+                    //data_temp1_last <= data_temp1;
+                    //data_temp2_last <= data_temp2;
+               
+                
+                              
+         end
+        
+        
+    endcase     
+
+
 end
-   
-  
+
+
+
+
+
+
+
+
 
 endmodule

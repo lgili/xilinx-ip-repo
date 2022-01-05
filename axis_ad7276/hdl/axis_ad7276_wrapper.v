@@ -50,7 +50,7 @@
 
 		// Ports of Axi Slave Bus Interface S00_AXI
 		input wire                           ACLK,
-                input wire                           ARESETN,
+        input wire                           ARESETN,
                          
 		
 		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
@@ -160,8 +160,8 @@
         .axis_tvalid(axis_tvalid),				
 		.axis_tlast(axis_tlast),
 		.axis_tready(axis_tready),
-		.axis_tdata1(axis_tdata1),
-		.axis_tdata2(axis_tdata2),
+		.axis_tdata(axis_tdata),
+		//.axis_tdata2(axis_tdata2),
 		
 		.filter_ready(dataready),
 		.filter_adc(adcData_fil)	
@@ -188,21 +188,21 @@
 	
 	
 	// axi stream data 
-	wire [ADC_QTD *ADC_LENGTH-1 : 0] axis_tdata1;	
-	wire [ADC_QTD *ADC_LENGTH-1 : 0] axis_tdata2;	
+	wire [2*ADC_QTD *ADC_LENGTH-1 : 0] axis_tdata;	
+	//wire [ADC_QTD *ADC_LENGTH-1 : 0] axis_tdata2;	
 	
 	wire [2*ADC_QTD -1:0] axis_tlast;
 	wire [2*ADC_QTD -1:0] axis_tready;
 	wire [2*ADC_QTD -1:0] axis_tvalid;
 	
-	assign m00_axis_tdata = axis_tdata1[ADC_LENGTH-1 : 0];
-	assign m01_axis_tdata = axis_tdata2[ADC_LENGTH-1 : 0];
+	assign m00_axis_tdata = axis_tdata[ADC_LENGTH-1 : 0];
+	assign m01_axis_tdata = axis_tdata[2*ADC_LENGTH-1 : 1*ADC_LENGTH-1];
 	
-	assign m02_axis_tdata = axis_tdata1[2*ADC_LENGTH-1 : 0];
-	assign m03_axis_tdata = axis_tdata2[2*ADC_LENGTH-1 : 0];
+	assign m02_axis_tdata = axis_tdata[3*ADC_LENGTH-1 : 2*ADC_LENGTH-1];
+	assign m03_axis_tdata = axis_tdata[4*ADC_LENGTH-1 : 3*ADC_LENGTH-1];
 	
-	assign m04_axis_tdata = axis_tdata1[3*ADC_LENGTH-1 : 0];
-	assign m05_axis_tdata = axis_tdata2[3*ADC_LENGTH-1 : 0];
+	assign m04_axis_tdata = axis_tdata[5*ADC_LENGTH-1 : 4*ADC_LENGTH-1];
+	assign m05_axis_tdata = axis_tdata[6*ADC_LENGTH-1 : 5*ADC_LENGTH-1];
 	
 	assign m00_axis_tvalid =  axis_tvalid[0];
 	assign m01_axis_tvalid =  axis_tvalid[1];

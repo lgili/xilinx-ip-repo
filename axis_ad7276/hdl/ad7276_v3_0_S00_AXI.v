@@ -31,8 +31,7 @@
     
             
         output wire [2*ADC_QTD-1:0] axis_tvalid,
-		output wire [ADC_QTD*ADC_LENGTH-1 : 0] axis_tdata1,
-		output wire [ADC_QTD*ADC_LENGTH-1 : 0] axis_tdata2,				
+		output wire [2*ADC_QTD*ADC_LENGTH-1 : 0] axis_tdata,						
 		output wire [2*ADC_QTD-1:0] axis_tlast,
 		input wire  [2*ADC_QTD-1:0] axis_tready,
 		
@@ -480,29 +479,28 @@
 	//assign adc2_result = {20'd0, adcData[23:12]};
 	
 	spi_rx #(
-	   .ADC_LENGTH(ADC_LENGTH)
-	) spi [ADC_QTD-1:0]
-    (
-    .clk({clk, invClk , clk}),
-    .rst(S_AXI_ARESETN), 
-       
-    .inData(inData),    
-    .adcData(adcData),  
-     
-    .sampleEnableDiv(slv_reg0),
-    .cs(cs),
-    .sclk(sclk),
-    .sampleDone(sampleDone),
-    .current_state(current_state),
-    .count(count),
-    //.clockdivReg(clockdivReg),
-    .tReady(axis_tready),
-    .tValid(axis_tvalid),        
-    .tLast(axis_tlast),
-    .tData1(axis_tdata1),
-    .tData2(axis_tdata2)
+	       .ADC_LENGTH(ADC_LENGTH)
+	) spi [ADC_QTD-1:0]   (
+            .i_clk({clk, invClk , clk}),
+            .i_rst(S_AXI_ARESETN), 
+               
+            .i_data(inData),    
+            .o_data(adcData), 
+            
+            .o_cs(cs),
+            .o_sclk(sclk),
+            
+            .i_sampleEnableDiv(slv_reg0), 
+            //.o_clockdivReg(clockdivReg),
+            
+            
+            .o_tValid(axis_tvalid),        
+            .o_tLast(axis_tlast)
+            
     );
     
+    
+    assign axis_tdata =  adcData ; //(axis_tready && axis_tvalid) ? adcData : 'd0;
     
     wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData2filter;
     
