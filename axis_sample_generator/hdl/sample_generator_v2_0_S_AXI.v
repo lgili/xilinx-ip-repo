@@ -1,45 +1,49 @@
+// Sadri - may - 02 - 2015 - updated ! 
+
+// Addresses used : 
+// base address + 0x00 : EnableSampleGeneration 	
+// base address + 0x04 : PacketSize			
+// base address + 0x08 : EnablePacket -> Enable/disenable		
+// base address + 0x0c : configPassband 
+// base address + 0x10 : DMABaseAddr 
+// base address + 0x14 : TriggerLevel
+// base address + 0x18 :  
+// base address + 0x1c : 
+// base address + 0x20 :
+// base address + 0x24 :
+// base address + 0x28 :TriggerEnable
+// base address + 0x2c :TriggerOffset
 
 `timescale 1 ns / 1 ps
 
-	module ad7276_v3_0_S00_AXI #
+	module sample_generator_v2_0_S_AXI #
 	(
 		// Users to add parameters here
-        parameter ADC_LENGTH = 12,
-        parameter ADC_QTD = 3,
-        
+
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
 		// Width of S_AXI data bus
 		parameter integer C_S_AXI_DATA_WIDTH	= 32,
 		// Width of S_AXI address bus
-		parameter integer C_S_AXI_ADDR_WIDTH	= 5
+		parameter integer C_S_AXI_ADDR_WIDTH	= 6
 	)
 	(
 		// Users to add ports here
-		input  wire		    clk,           
-        input  wire  [2*ADC_QTD-1:0]     inData,              
-        output wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData,  
-        //output wire [ADC_QTD*ADC_LENGTH-1:0]   adcData2,       
-        output wire [ADC_QTD-1:0]                   cs,  
-        output wire [ADC_QTD-1:0]                   sclk,      
-        output wire [ADC_QTD-1:0]              sampleDone,
-        output wire [2*ADC_QTD-1:0]  current_state,
-        output wire [4*ADC_QTD-1:0] count,      
-        output  wire [ADC_QTD*ADC_LENGTH-1:0] tData1,
-        output  wire [ADC_QTD*ADC_LENGTH-1:0] tData2,  
-    
-            
-        output wire [2*ADC_QTD-1:0] axis_tvalid,
-		output wire [2*ADC_QTD*ADC_LENGTH-1 : 0] axis_tdata,						
-		output wire [2*ADC_QTD-1:0] axis_tlast,
-		input wire  [2*ADC_QTD-1:0] axis_tready,
+		output 	wire					EnableSampleGeneration, 
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	PacketSize, 
+		output 	wire 	[7:0]				EnablePacket, 
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigPassband,
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	DMABaseAddr,
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	TriggerLevel,
 		
-		// filter 
-		output wire [2*ADC_QTD*ADC_LENGTH-1:0] filter_adc,
-		output wire [2*ADC_QTD-1:0] filter_ready,
-		
-		
+		input       [31:0]              TriggerOffset,    
+		input       [31:0]              TriggerEnable,
+		input 		[31:0]				TotalReceivedPacketData,
+		input 		[31:0]				TotalReceivedPackets,
+		input 		[31:0]				LastReceivedPacket_head,
+		input 		[31:0]				LastReceivedPacket_tail,
+
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -104,6 +108,7 @@
     		// accept the read data and response information.
 		input wire  S_AXI_RREADY
 	);
+	
 
 	// AXI4LITE signals
 	reg [C_S_AXI_ADDR_WIDTH-1 : 0] 	axi_awaddr;
@@ -123,7 +128,7 @@
 	// ADDR_LSB = 2 for 32 bits (n downto 2)
 	// ADDR_LSB = 3 for 64 bits (n downto 3)
 	localparam integer ADDR_LSB = (C_S_AXI_DATA_WIDTH/32) + 1;
-	localparam integer OPT_MEM_ADDR_BITS = 2;
+	localparam integer OPT_MEM_ADDR_BITS = 3;
 	//----------------------------------------------
 	//-- Signals for user logic register space example
 	//------------------------------------------------
@@ -136,11 +141,14 @@
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg5;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg6;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg7;
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg8;
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg9;
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg10;
+	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg11;
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
 	integer	 byte_index;
-	reg	 aw_en;
 
 	// I/O Connections assignments
 
@@ -162,24 +170,17 @@
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
 	      axi_awready <= 1'b0;
-	      aw_en <= 1'b1;
 	    end 
 	  else
 	    begin    
-	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
+	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID)
 	        begin
 	          // slave is ready to accept write address when 
 	          // there is a valid write address and write data
 	          // on the write address and data bus. This design 
 	          // expects no outstanding transactions. 
 	          axi_awready <= 1'b1;
-	          aw_en <= 1'b0;
 	        end
-	        else if (S_AXI_BREADY && axi_bvalid)
-	            begin
-	              aw_en <= 1'b1;
-	              axi_awready <= 1'b0;
-	            end
 	      else           
 	        begin
 	          axi_awready <= 1'b0;
@@ -199,7 +200,7 @@
 	    end 
 	  else
 	    begin    
-	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
+	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID)
 	        begin
 	          // Write Address latching 
 	          axi_awaddr <= S_AXI_AWADDR;
@@ -220,7 +221,7 @@
 	    end 
 	  else
 	    begin    
-	      if (~axi_wready && S_AXI_WVALID && S_AXI_AWVALID && aw_en )
+	      if (~axi_wready && S_AXI_WVALID && S_AXI_AWVALID)
 	        begin
 	          // slave is ready to accept write data when 
 	          // there is a valid write address and write data
@@ -256,69 +257,101 @@
 	      slv_reg5 <= 0;
 	      slv_reg6 <= 0;
 	      slv_reg7 <= 0;
+	      slv_reg8 <= 0;
+	      slv_reg9 <= 0;
+	      slv_reg10 <= 0;
+	      slv_reg11 <= 0;
 	    end 
 	  else begin
 	    if (slv_reg_wren)
 	      begin
 	        case ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	          3'h0:
+	          4'h0:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 0
 	                slv_reg0[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h1:
+	          4'h1:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 1
 	                slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h2:
+	          4'h2:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 2
 	                slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h3:
+	          4'h3:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 3
 	                slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h4:
+	          4'h4:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 4
 	                slv_reg4[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h5:
+	          4'h5:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 5
 	                slv_reg5[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h6:
+	          4'h6:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 6
 	                slv_reg6[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
-	          3'h7:
+	          4'h7:
 	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 7
 	                slv_reg7[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
+	          4'h8:
+	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 8
+	                slv_reg8[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end  
+	          4'h9:
+	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 9
+	                slv_reg9[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end  
+	          4'hA:
+	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 10
+	                slv_reg10[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end  
+	          4'hB:
+	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 11
+	                slv_reg11[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end  
 	          default : begin
-	                      slv_reg0 <= slv_reg0; 
+	                      slv_reg0 <= slv_reg0;
 	                      slv_reg1 <= slv_reg1;
 	                      slv_reg2 <= slv_reg2;
 	                      slv_reg3 <= slv_reg3;
@@ -326,6 +359,10 @@
 	                      slv_reg5 <= slv_reg5;
 	                      slv_reg6 <= slv_reg6;
 	                      slv_reg7 <= slv_reg7;
+	                      slv_reg8 <= slv_reg8;
+	                      slv_reg9 <= slv_reg9;
+	                      slv_reg10 <= slv_reg10;
+	                      slv_reg11 <= slv_reg11;
 	                    end
 	        endcase
 	      end
@@ -434,14 +471,18 @@
 	begin
 	      // Address decoding for reading registers
 	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	        3'h0   : reg_data_out <= slv_reg0;  // sample div value
-	        3'h1   : reg_data_out <= adc1_result; // 
-	        3'h2   : reg_data_out <= adc2_result;
-	        3'h3   : reg_data_out <= clockdivReg[31:0];
-	        3'h4   : reg_data_out <= slv_reg4;
-	        3'h5   : reg_data_out <= slv_reg5;
-	        3'h6   : reg_data_out <= slv_reg6;
-	        3'h7   : reg_data_out <= slv_reg7;
+	        4'h0   : reg_data_out <= slv_reg0;
+	        4'h1   : reg_data_out <= slv_reg1;
+	        4'h2   : reg_data_out <= slv_reg2;
+	        4'h3   : reg_data_out <= slv_reg3;
+	        4'h4   : reg_data_out <= slv_reg4; 		//slv_reg4;
+	        4'h5   : reg_data_out <= slv_reg5; 		//slv_reg5;
+	        4'h6   : reg_data_out <= slv_reg6; 	//slv_reg6;
+	        4'h7   : reg_data_out <= slv_reg7; 	//slv_reg7;
+	        4'h8   : reg_data_out <= slv_reg8;
+	        4'h9   : reg_data_out <= slv_reg9;
+	        4'hA   : reg_data_out <= slv_reg10;
+	        4'hB   : reg_data_out <= TriggerOffset;
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -466,104 +507,14 @@
 	end    
 
 	// Add user logic here
-	
-	wire [31:0] adc1_result;
-	wire [31:0] adc2_result;
-	
-	wire [32-1:0] clockdivReg;
-	
-	wire invClk;
-	assign invClk = ~clk;
-	
-	//assign adc1_result = {20'd0, adcData[11:0]};
-	//assign adc2_result = {20'd0, adcData[23:12]};
-	
-	/*spi_rx #(
-	       .ADC_LENGTH(ADC_LENGTH)
-	) spi [ADC_QTD-1:0]   (
-            .i_clk({clk, invClk , clk}),
-            .i_rst(S_AXI_ARESETN), 
-               
-            .i_data(inData),    
-            .o_data(adcData), 
-            
-            .o_cs(cs),
-            .o_sclk(sclk),
-            
-            .i_sampleEnableDiv(slv_reg0), 
-            //.o_clockdivReg(clockdivReg),
-            
-            
-            .o_tValid(axis_tvalid),        
-            .o_tLast(axis_tlast)
-            
-    );*/
-    
-    
-   /* adc_ad7276 #(
-            .clk_freq(100),
-            .spi_clk_div(3)
-    ) ad [ADC_QTD-1:0] (
-            .clk(S_AXI_ACLK),
-            .reset_n(S_AXI_ARESETN),
-            .data_in_0(inData[2:0]),
-            .data_in_1(inData[5:3]),
-            .sck(sclk),
-            .cs_n(cs),
-            .adc_0_data(adcData[35:0]),
-            .adc_1_data(adcData[71:36])
-    
-    );*/
-    
-    wire [2:0] adc_ready;
-    assign axis_tlast[2:0] = adc_ready;
-    assign axis_tlast[5:3] = adc_ready;  
-    
-    assign axis_tvalid[2:0] = adc_ready;
-    assign axis_tvalid[5:3] = adc_ready;
-    
-    axi_ad7276_if i_if [ADC_QTD-1:0] (
-        //clock and reset signals
-        .fpga_clk_i(S_AXI_ACLK),
-        .adc_clk_i(clk),
-        .reset_n_i(S_AXI_ARESETN),
-            
-        //IP control and data interface
-        .en_0_i(1'b1),
-        .en_1_i(1'b1),        
-        .data_rdy_o(adc_ready),
-        .data_0_o(adcData[35:0]),
-        .data_1_o(adcData[71:36]),
-            
-        //ADC control and data interface
-        .data_0_i(inData[2:0]),
-        .data_1_i(inData[5:3]),
-        .sclk_o(sclk),
-        .cs_o(cs)    
-    );
-    
-    assign axis_tdata =  adcData ; //(axis_tready && axis_tvalid) ? adcData : 'd0;
-    
-    wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData2filter;
-    
-    assign adcData2filter =  adcData;
-    
-    
-    subfildown #(
-    .IW(12), .OW(12), .CW(12), .NDOWN(5), .NCOEFFS(1023),
-			.INITIAL_COEFFS("INITIAL_COEFFS.mem")
-    ) filter [2*ADC_QTD-1:0]
-    (
-        .i_clk(clk),
-        .i_reset(~S_AXI_ARESETN),
-        .i_tap_wr(1'b0),
-        .i_tap(12'h0),
-        .i_ce({adc_ready[0],adc_ready[0],adc_ready[1],adc_ready[1],adc_ready[2],adc_ready[2]}),
-        .i_sample(adcData2filter),
-        .o_ce(filter_ready),
-        .o_result(filter_adc)
-    );
 
+	assign EnableSampleGeneration = slv_reg0[0]; 
+	assign PacketSize = slv_reg1; 
+	assign EnablePacket = slv_reg2[7:0]; 
+	assign ConfigPassband = slv_reg3;
+	assign DMABaseAddr = slv_reg4;
+	assign TriggerLevel = slv_reg5;
+	
 	// User logic ends
 
 	endmodule

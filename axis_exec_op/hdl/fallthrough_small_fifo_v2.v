@@ -11,6 +11,7 @@
 //   2/11/09 -- jnaous: Rewrote to make much more efficient.
 //	 5/11/11 -- hyzeng: Rewrote based on http://www.billauer.co.il/reg_fifo.html
 //                      to improve timing by adding output register
+//   05/01/22 -- Gili made changes
 ///////////////////////////////////////////////////////////////////////////////
 //
 // http://netfpga-cic.org/legal/netfpga-hardware-software-license.txt

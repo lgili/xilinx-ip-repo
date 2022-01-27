@@ -1,0 +1,120 @@
+#-----------------------------------------------------------
+# Vivado v2021.1 (64-bit)
+# SW Build 3247384 on Thu Jun 10 19:36:07 MDT 2021
+# IP Build 3246043 on Fri Jun 11 00:30:35 MDT 2021
+# Start of session at: Wed Jan  5 09:15:58 2022
+# Process ID: 396608
+# Current directory: /home/lgili/Documents/FPGA/xilinx-ip-repo/axis_exec_op
+# Command line: vivado -mode batch -source tcl/axis_exec_op.tcl
+# Log file: /home/lgili/Documents/FPGA/xilinx-ip-repo/axis_exec_op/vivado.log
+# Journal file: /home/lgili/Documents/FPGA/xilinx-ip-repo/axis_exec_op/vivado.jou
+#-----------------------------------------------------------
+source tcl/axis_exec_op.tcl
+# source ./tcl/metadata.tcl
+## set design "axis_exec_op"
+## set top "${design}_wrapper"
+## set proj_dir "./ip_proj"
+## set ip_properties [ list \
+##     vendor "lucasbrasilino.com" \
+##     library "AXIS" \
+##     name ${design} \
+##     version "1.0" \
+##     taxonomy "/AXIS_Application" \
+##     display_name "AXIS Op Execution" \
+##     description "Executes an operation over AXI4-Stream" \
+##     vendor_display_name "Lucas Brasilino" \
+##     company_url "http://lucasbrasilino.com" \
+##     ]
+## set family_lifecycle { \
+##   artix7 Production \
+##   artix7l Production \
+##   kintex7 Production \
+##   kintex7l Production \
+##   kintexu Production \
+##   kintexuplus Production \
+##   virtex7 Production \
+##   virtexu Production \
+##   virtexuplus Production \
+##   zynq Production \
+##   zynquplus Production \
+##   aartix7 Production \
+##   azynq Production \
+##   qartix7 Production \
+##   qkintex7 Production \
+##   qkintex7l Production \
+##   qvirtex7 Production \
+##   qzynq Production \
+## }
+# set ip_project [ create_project -name ${design} -force -dir ${proj_dir} -ip ]
+# set_property top ${top} [current_fileset]
+# set_property source_mgmt_mode All ${ip_project}
+# set v_src_files [glob ./hdl/*.v]
+# set sv_src_files [glob ./hdl/*.sv]
+# read_verilog ${v_src_files}
+# read_verilog -sv ${sv_src_files}
+# update_compile_order -fileset sources_1
+# ipx::package_project
+INFO: [IP_Flow 19-3899] Cannot get the environment domain name variable for the component vendor name. Setting the vendor name to 'user.org'.
+INFO: [IP_Flow 19-5654] Module 'axis_exec_op_wrapper' uses SystemVerilog sources with a Verilog top file. These SystemVerilog files will not be analysed by the packager.
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/tools/Xilinx/Vivado/2021.1/data/ip'.
+INFO: [IP_Flow 19-5107] Inferred bus interface 'M_AXIS' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'S_AXIS' of definition 'xilinx.com:interface:axis:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'S_AXI' of definition 'xilinx.com:interface:aximm:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'ARESETN' of definition 'xilinx.com:signal:reset:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'ACLK' of definition 'xilinx.com:signal:clock:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-4728] Bus Interface 'ARESETN': Added interface parameter 'POLARITY' with value 'ACTIVE_LOW'.
+INFO: [IP_Flow 19-8018] Clock interface ACLK has no prefix in its name to identify associated interfaces. The interfaces might be inferred incorrectly. It is advised to review ASSOCIATED_BUSIF value for this interface.
+INFO: [IP_Flow 19-4728] Bus Interface 'ACLK': Added interface parameter 'ASSOCIATED_BUSIF' with value 'M_AXIS'.
+INFO: [IP_Flow 19-4728] Bus Interface 'ACLK': Added interface parameter 'ASSOCIATED_RESET' with value 'ARESETN'.
+INFO: [IP_Flow 19-2181] Payment Required is not set for this core.
+INFO: [IP_Flow 19-2187] The Product Guide file is missing.
+# set ip_core [ipx::current_core]
+# set_property -dict ${ip_properties} ${ip_core}
+# set_property SUPPORTED_FAMILIES ${family_lifecycle} ${ip_core}
+WARNING: [IP_Flow 19-4623] Unrecognized family  artix7.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  artix7l.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  kintex7.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  kintex7l.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  kintexuplus.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  virtex7.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  virtexu.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  aartix7.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  azynq.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  qartix7.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  qkintex7.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  qkintex7l.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  qvirtex7.  Please verify spelling and reissue command to set the supported files.
+WARNING: [IP_Flow 19-4623] Unrecognized family  qzynq.  Please verify spelling and reissue command to set the supported files.
+# set aclk_intf [ipx::get_bus_interfaces ACLK -of_objects ${ip_core}]
+# set aclk_assoc_intf [ipx::add_bus_parameter ASSOCIATED_BUSIF $aclk_intf]
+# set_property value M_AXIS:S_AXIS:S_AXI $aclk_assoc_intf
+# set aclk_assoc_reset [ipx::add_bus_parameter ASSOCIATED_RESET $aclk_intf]
+# set_property value ARESETN $aclk_assoc_reset
+# set aresetn_intf [ipx::get_bus_interfaces ARESETN -of_objects ${ip_core}]
+# set aresetn_polarity [ipx::add_bus_parameter POLARITY $aresetn_intf]
+# set_property value ACTIVE_LOW ${aresetn_polarity}
+# ipx::check_integrity ${ip_core}
+INFO: [IP_Flow 19-861] XGUI layout file basename "xgui/axis_exec_op_wrapper_v1_0.tcl" does not have the current IP <name>_v<version> format. If the IP name or version was changed recently, recreate this file to update the file format.
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "aartix7"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "artix7"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "artix7l"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "azynq"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "kintex7"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "kintex7l"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "kintexuplus"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "qartix7"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "qkintex7"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "qkintex7l"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "qvirtex7"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "qzynq"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "virtex7"
+WARNING: [IP_Flow 19-2403] Component Definition 'lucasbrasilino.com:AXIS:axis_exec_op:1.0 (AXIS Op Execution)': Unrecognized Family "virtexu"
+INFO: [IP_Flow 19-2181] Payment Required is not set for this core.
+INFO: [IP_Flow 19-2187] The Product Guide file is missing.
+INFO: [Ipptcl 7-1486] check_integrity: Integrity check passed.
+# ipx::save_core ${ip_core}
+# close_project
+# file delete -force ${proj_dir}
+INFO: [Common 17-206] Exiting Vivado at Wed Jan  5 09:16:14 2022...

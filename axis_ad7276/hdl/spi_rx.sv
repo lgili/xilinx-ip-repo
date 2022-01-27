@@ -156,7 +156,7 @@ always @(*) begin
         end   
         
       READING :  begin
-            if(count == 12)
+            if(count == 15)
                 next_state = ENDING;
             else
                 next_state  = READING;
@@ -171,8 +171,8 @@ end
 
 
 // process data based on current state
-reg [ADC_LENGTH-1:0] data_temp1 ;
-reg [ADC_LENGTH-1:0] data_temp2 ;
+reg [ADC_LENGTH+1:0] data_temp1 ;
+reg [ADC_LENGTH+1:0] data_temp2 ;
 reg [ADC_LENGTH-1:0] data_temp1_last ;
 reg [ADC_LENGTH-1:0] data_temp2_last ;
 
@@ -203,14 +203,14 @@ always @(posedge i_clk) begin
                        
                    
                   
-                   if(count == 12)
+                   if(count == 15)
                         count <= 0;
                    else
                         count <= count + 1;              
                
                  
-                    data_temp1 <= {data_temp1, i_data[0]};
-                    data_temp2 <= {data_temp2, i_data[1]};
+                    data_temp1 <= {data_temp1[12:0], i_data[0]};
+                    data_temp2 <= {data_temp2[12:0], i_data[1]};
              
         end
         
@@ -232,11 +232,16 @@ always @(posedge i_clk) begin
                     inrange2  = 1'b1;
                  else
                     inrange2 = 1'b0;*/
-                 
-                 if(data_temp1 >=  12'b0000_0000_1111 && data_temp1 <=  12'b1111_1111_1111)
-                    o_data[11:0] <= data_temp1;
-                 if(data_temp2 >=  12'b0000_0000_1111 && data_temp2 <=  12'b1111_1111_1111)   
-                    o_data[23:12] <= data_temp2;
+                    
+//most significant bit of data_temp1 is a zero
+//two least significant bits of data_temp1 are zero
+//the rest of the bits make up the 12-bit sample   
+
+                 //data_temp1 >=  12'b0000_0000_1111 &&
+                 //if( data_temp1 <=  12'b1111_1111_1111)
+                    o_data[11:0] <= data_temp1[12:1];
+                 //if(data_temp2 <=  12'b1111_1111_1111)   
+                    o_data[23:12] <= data_temp2[12:1];
                     
                     //data_temp1_last <= data_temp1;
                     //data_temp2_last <= data_temp2;

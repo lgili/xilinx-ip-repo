@@ -1,12 +1,20 @@
 
+// Addresses used : 
+// base address + 0x00 : EnableSampleGeneration 	
+// base address + 0x04 : PacketSize			
+// base address + 0x08 : PacketRate 			
+// base address + 0x0c : PacketPattern 
+// base address + 0x10 : TotalReceivedPacketData 
+// base address + 0x14 : TotalReceivedPackets
+// base address + 0x18 : LastReceivedPacket_head 
+// base address + 0x1c : LastReceivedPacket_tail
+
 `timescale 1 ns / 1 ps
 
-	module ad7276_v3_0_S00_AXI #
+	module ad7276_v1_s_axi #
 	(
 		// Users to add parameters here
-        parameter ADC_LENGTH = 12,
-        parameter ADC_QTD = 3,
-        
+
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
@@ -17,29 +25,16 @@
 	)
 	(
 		// Users to add ports here
-		input  wire		    clk,           
-        input  wire  [2*ADC_QTD-1:0]     inData,              
-        output wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData,  
-        //output wire [ADC_QTD*ADC_LENGTH-1:0]   adcData2,       
-        output wire [ADC_QTD-1:0]                   cs,  
-        output wire [ADC_QTD-1:0]                   sclk,      
-        output wire [ADC_QTD-1:0]              sampleDone,
-        output wire [2*ADC_QTD-1:0]  current_state,
-        output wire [4*ADC_QTD-1:0] count,      
-        output  wire [ADC_QTD*ADC_LENGTH-1:0] tData1,
-        output  wire [ADC_QTD*ADC_LENGTH-1:0] tData2,  
-    
-            
-        output wire [2*ADC_QTD-1:0] axis_tvalid,
-		output wire [2*ADC_QTD*ADC_LENGTH-1 : 0] axis_tdata,						
-		output wire [2*ADC_QTD-1:0] axis_tlast,
-		input wire  [2*ADC_QTD-1:0] axis_tready,
+		output 	wire					EnableSampleGeneration, 
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	PacketSize, 
+		output 	wire 	[7:0]				PacketRate, 
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	PacketPattern,
 		
-		// filter 
-		output wire [2*ADC_QTD*ADC_LENGTH-1:0] filter_adc,
-		output wire [2*ADC_QTD-1:0] filter_ready,
-		
-		
+		input 		[31:0]				TotalReceivedPacketData,
+		input 		[31:0]				TotalReceivedPackets,
+		input 		[31:0]				LastReceivedPacket_head,
+		input 		[31:0]				LastReceivedPacket_tail,
+
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -140,7 +135,6 @@
 	wire	 slv_reg_wren;
 	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
 	integer	 byte_index;
-	reg	 aw_en;
 
 	// I/O Connections assignments
 
@@ -162,24 +156,17 @@
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
 	      axi_awready <= 1'b0;
-	      aw_en <= 1'b1;
 	    end 
 	  else
 	    begin    
-	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
+	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID)
 	        begin
 	          // slave is ready to accept write address when 
 	          // there is a valid write address and write data
 	          // on the write address and data bus. This design 
 	          // expects no outstanding transactions. 
 	          axi_awready <= 1'b1;
-	          aw_en <= 1'b0;
 	        end
-	        else if (S_AXI_BREADY && axi_bvalid)
-	            begin
-	              aw_en <= 1'b1;
-	              axi_awready <= 1'b0;
-	            end
 	      else           
 	        begin
 	          axi_awready <= 1'b0;
@@ -199,7 +186,7 @@
 	    end 
 	  else
 	    begin    
-	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
+	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID)
 	        begin
 	          // Write Address latching 
 	          axi_awaddr <= S_AXI_AWADDR;
@@ -220,7 +207,7 @@
 	    end 
 	  else
 	    begin    
-	      if (~axi_wready && S_AXI_WVALID && S_AXI_AWVALID && aw_en )
+	      if (~axi_wready && S_AXI_WVALID && S_AXI_AWVALID)
 	        begin
 	          // slave is ready to accept write data when 
 	          // there is a valid write address and write data
@@ -318,7 +305,7 @@
 	                slv_reg7[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          default : begin
-	                      slv_reg0 <= slv_reg0; 
+	                      slv_reg0 <= slv_reg0;
 	                      slv_reg1 <= slv_reg1;
 	                      slv_reg2 <= slv_reg2;
 	                      slv_reg3 <= slv_reg3;
@@ -434,14 +421,14 @@
 	begin
 	      // Address decoding for reading registers
 	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	        3'h0   : reg_data_out <= slv_reg0;  // sample div value
-	        3'h1   : reg_data_out <= adc1_result; // 
-	        3'h2   : reg_data_out <= adc2_result;
-	        3'h3   : reg_data_out <= clockdivReg[31:0];
-	        3'h4   : reg_data_out <= slv_reg4;
-	        3'h5   : reg_data_out <= slv_reg5;
-	        3'h6   : reg_data_out <= slv_reg6;
-	        3'h7   : reg_data_out <= slv_reg7;
+	        3'h0   : reg_data_out <= slv_reg0;
+	        3'h1   : reg_data_out <= slv_reg1;
+	        3'h2   : reg_data_out <= slv_reg2;
+	        3'h3   : reg_data_out <= slv_reg3;
+	        3'h4   : reg_data_out <= TotalReceivedPacketData; 		//slv_reg4;
+	        3'h5   : reg_data_out <= TotalReceivedPackets; 		//slv_reg5;
+	        3'h6   : reg_data_out <= LastReceivedPacket_head; 	//slv_reg6;
+	        3'h7   : reg_data_out <= LastReceivedPacket_tail; 	//slv_reg7;
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -466,104 +453,12 @@
 	end    
 
 	// Add user logic here
-	
-	wire [31:0] adc1_result;
-	wire [31:0] adc2_result;
-	
-	wire [32-1:0] clockdivReg;
-	
-	wire invClk;
-	assign invClk = ~clk;
-	
-	//assign adc1_result = {20'd0, adcData[11:0]};
-	//assign adc2_result = {20'd0, adcData[23:12]};
-	
-	/*spi_rx #(
-	       .ADC_LENGTH(ADC_LENGTH)
-	) spi [ADC_QTD-1:0]   (
-            .i_clk({clk, invClk , clk}),
-            .i_rst(S_AXI_ARESETN), 
-               
-            .i_data(inData),    
-            .o_data(adcData), 
-            
-            .o_cs(cs),
-            .o_sclk(sclk),
-            
-            .i_sampleEnableDiv(slv_reg0), 
-            //.o_clockdivReg(clockdivReg),
-            
-            
-            .o_tValid(axis_tvalid),        
-            .o_tLast(axis_tlast)
-            
-    );*/
-    
-    
-   /* adc_ad7276 #(
-            .clk_freq(100),
-            .spi_clk_div(3)
-    ) ad [ADC_QTD-1:0] (
-            .clk(S_AXI_ACLK),
-            .reset_n(S_AXI_ARESETN),
-            .data_in_0(inData[2:0]),
-            .data_in_1(inData[5:3]),
-            .sck(sclk),
-            .cs_n(cs),
-            .adc_0_data(adcData[35:0]),
-            .adc_1_data(adcData[71:36])
-    
-    );*/
-    
-    wire [2:0] adc_ready;
-    assign axis_tlast[2:0] = adc_ready;
-    assign axis_tlast[5:3] = adc_ready;  
-    
-    assign axis_tvalid[2:0] = adc_ready;
-    assign axis_tvalid[5:3] = adc_ready;
-    
-    axi_ad7276_if i_if [ADC_QTD-1:0] (
-        //clock and reset signals
-        .fpga_clk_i(S_AXI_ACLK),
-        .adc_clk_i(clk),
-        .reset_n_i(S_AXI_ARESETN),
-            
-        //IP control and data interface
-        .en_0_i(1'b1),
-        .en_1_i(1'b1),        
-        .data_rdy_o(adc_ready),
-        .data_0_o(adcData[35:0]),
-        .data_1_o(adcData[71:36]),
-            
-        //ADC control and data interface
-        .data_0_i(inData[2:0]),
-        .data_1_i(inData[5:3]),
-        .sclk_o(sclk),
-        .cs_o(cs)    
-    );
-    
-    assign axis_tdata =  adcData ; //(axis_tready && axis_tvalid) ? adcData : 'd0;
-    
-    wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData2filter;
-    
-    assign adcData2filter =  adcData;
-    
-    
-    subfildown #(
-    .IW(12), .OW(12), .CW(12), .NDOWN(5), .NCOEFFS(1023),
-			.INITIAL_COEFFS("INITIAL_COEFFS.mem")
-    ) filter [2*ADC_QTD-1:0]
-    (
-        .i_clk(clk),
-        .i_reset(~S_AXI_ARESETN),
-        .i_tap_wr(1'b0),
-        .i_tap(12'h0),
-        .i_ce({adc_ready[0],adc_ready[0],adc_ready[1],adc_ready[1],adc_ready[2],adc_ready[2]}),
-        .i_sample(adcData2filter),
-        .o_ce(filter_ready),
-        .o_result(filter_adc)
-    );
 
+	assign EnableSampleGeneration = slv_reg0[0]; 
+	assign PacketSize = slv_reg1; 
+	assign PacketRate = slv_reg2[7:0]; 
+	assign PacketPattern = slv_reg3;
+	
 	// User logic ends
 
 	endmodule
