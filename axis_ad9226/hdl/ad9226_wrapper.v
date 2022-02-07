@@ -10,8 +10,8 @@
 
 
 		// Parameters of Axi Slave Bus Interface S00_AXI
-		parameter integer C_S00_AXI_DATA_WIDTH	= 64,
-		parameter integer C_S00_AXI_ADDR_WIDTH	= 5,
+		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
+		parameter integer C_S00_AXI_ADDR_WIDTH	= 6,
 		
 		
 		parameter integer C_M_AXIS_START_COUNT	= 32
@@ -30,7 +30,15 @@
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_1,
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_2,
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_3,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_trigger,		
+		input wire [ADC_DATA_WIDTH-1 : 0] adc_trigger,
+		output wire irq,		
+		input wire button,
+		output wire [31:0] posTrigger,
+		output wire trigger_acq,
+		output wire [2:0] state,
+		output wire eoc,
+		//output wire AXIS_CLK,
+		//output wire ARESETN_AXIS_M,
 		//input wire [(ADC_TRIGGER_ON)-1:0] otr,
 
 		// User ports ends
@@ -40,6 +48,7 @@
 		// Ports of Axi Slave Bus Interface S00_AXI
 		input wire                           ACLK,
         input wire                           ARESETN,
+       
                          
 		
 		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
@@ -94,13 +103,23 @@
 // signals 
 //
 ///////////////////////////////////////////////////////////////////////////
-wire 	[7:0]	packetRate; 
-wire	[31:0]	packetPattern; 
+wire 	[7:0]	enablePacket; 
+wire	[31:0]	configPassband; 
+wire    [31:0] dmaBaseAddr;
+wire    [31:0] triggerLevel;
+wire    [31:0] triggerEnable;
+wire    [31:0] configSampler;
+wire    [31:0] dataFromArm;
+wire    [31:0] decimator;
+
+wire    [31:0]  triggerOffset;
 
 wire 	[31:0]	totalReceivedPacketData; 
 wire 	[31:0]	totalReceivedPackets; 
 wire 	[31:0]	lastReceivedPacket_head; 
 wire 	[31:0]	lastReceivedPacket_tail; 
+
+assign posTrigger = triggerOffset;
 
 `ifdef POST_SYNTHESIS_SIMULATION
 reg 		enableSampleGeneration; 
@@ -129,8 +148,16 @@ wire 	[31:0]	packetSize;
 	
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			    ( packetSize ), 
-		.PacketRate			        ( packetRate ), 
-		.PacketPattern 			    ( packetPattern ), 
+		.EnablePacket			    ( enablePacket ), 
+		.ConfigPassband 			( packetPattern ), 
+		.DMABaseAddr                (dmaBaseAddr),
+		.TriggerLevel               (triggerLevel),
+		.ConfigSampler              (configSampler), 
+		.DataFromArm                (dataFromArm),
+		.Decimator                  (decimator),
+		
+		.TriggerOffset                (triggerOffset), 
+		.TriggerEnable                (triggerEnable),
 
 		.TotalReceivedPacketData 	( totalReceivedPacketData ), 
 		.TotalReceivedPackets 		( totalReceivedPackets ), 
@@ -170,9 +197,8 @@ wire 	[31:0]	packetSize;
 		.LastReceivedPacket_head 	( lastReceivedPacket_head ), 
 		.LastReceivedPacket_tail 	( lastReceivedPacket_tail ), 
 		
-		.S_AXIS_ACLK			(ACLK),
-		.S_AXIS_ARESETN			(ARESETN),
-		.S_AXIS_TREADY			(s_axis_tready),
+		.S_AXIS_ACLK			(AXIS_CLK),
+		.S_AXIS_ARESETN			(ARESETN),		.S_AXIS_TREADY			(s_axis_tready),
 		.S_AXIS_TDATA			(s_axis_tdata),
 		.S_AXIS_TSTRB			(s_axis_tstrb),
 		.S_AXIS_TKEEP			(s_axis_tkeep), 
@@ -192,15 +218,29 @@ wire 	[31:0]	packetSize;
 		.adc_2(adc_2),
 		.adc_3(adc_3),
 		.adc_trigger(adc_trigger),		
-		.otr(otr),
-	    
+		.irq(irq),
+		.button(button),	
+		.state(state),  
+		.eoc(eoc),  
+		//.AXIS_CLK(AXIS_CLK),
+		//.ARESETN_AXIS_M(ARESETN_AXIS_M),
+		    
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			( packetSize ), 
-		.PacketRate			( packetRate ), 
-		.PacketPattern 			( packetPattern ), 
+		.EnablePacket			( enablePacket ), 
+		.ConfigPassband 		( configPassband ), 
+		.DMABaseAddr            (dmaBaseAddr),
+		.TriggerLevel           (triggerLevel),
+		.ConfigSampler          (configSampler), 
+		.DataFromArm            (dataFromArm), 	
+		.Decimator              (decimator),	
+		
+		.TriggerOffset          (triggerOffset),
+		.TriggerEnable          (triggerEnable),
+		.trigger_acq             (trigger_acq), 
 
 		.M_AXIS_ACLK			(ACLK),
-		.M_AXIS_ARESETN			(ARESETN),
+		.M_AXIS_ARESETN			(ARESETN_AXIS_M),		
 		.M_AXIS_TVALID			(m_axis_tvalid),
 		.M_AXIS_TDATA			(m_axis_tdata),
 		.M_AXIS_TSTRB			(m_axis_tstrb),

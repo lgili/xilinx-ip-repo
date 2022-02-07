@@ -7,8 +7,8 @@
 // base address + 0x0c : configPassband 
 // base address + 0x10 : DMABaseAddr 
 // base address + 0x14 : TriggerLevel
-// base address + 0x18 :  
-// base address + 0x1c : 
+// base address + 0x18 : ConfigSampler 
+// base address + 0x1c : DataFromArm
 // base address + 0x20 :
 // base address + 0x24 :
 // base address + 0x28 :TriggerEnable
@@ -36,6 +36,8 @@
 		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigPassband,
 		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	DMABaseAddr,
 		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	TriggerLevel,
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigSampler,
+		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	DataFromArm,
 		
 		input       [31:0]              TriggerOffset,    
 		input       [31:0]              TriggerEnable,
@@ -475,8 +477,8 @@
 	        4'h1   : reg_data_out <= slv_reg1;
 	        4'h2   : reg_data_out <= slv_reg2;
 	        4'h3   : reg_data_out <= slv_reg3;
-	        4'h4   : reg_data_out <= slv_reg4; 		//slv_reg4;
-	        4'h5   : reg_data_out <= slv_reg5; 		//slv_reg5;
+	        4'h4   : reg_data_out <= slv_reg4; 	//slv_reg4;
+	        4'h5   : reg_data_out <= slv_reg5; 	//slv_reg5;
 	        4'h6   : reg_data_out <= slv_reg6; 	//slv_reg6;
 	        4'h7   : reg_data_out <= slv_reg7; 	//slv_reg7;
 	        4'h8   : reg_data_out <= slv_reg8;
@@ -514,6 +516,8 @@
 	assign ConfigPassband = slv_reg3;
 	assign DMABaseAddr = slv_reg4;
 	assign TriggerLevel = slv_reg5;
+	assign ConfigSampler = slv_reg6;
+	assign DataFromArm  = slv_reg7;
 	
 	// User logic ends
 

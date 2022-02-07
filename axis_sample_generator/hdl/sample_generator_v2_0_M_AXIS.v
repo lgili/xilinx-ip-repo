@@ -8,7 +8,7 @@
 	module sample_generator_v2_0_M_AXIS #
 	(
 		// Users to add parameters here
-        parameter integer MAX_VALUE_COUNTER	= 1666666,
+        parameter integer MAX_VALUE_COUNTER	= 65000,
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
@@ -20,7 +20,8 @@
 	(
 		// Users to add ports here
 		output wire [2:0]  state,
-		input   wire      trigger,		
+		input   wire      trigger,
+		input wire        clk_sample,   		
 		output  reg irq,
 		input 	wire						EnableSampleGeneration, 
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]		PacketSize, 
@@ -28,6 +29,8 @@
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]		ConfigPassband,
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	DMABaseAddr,
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	TriggerLevel,
+		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	ConfigSampler,
+		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	DataFromArm,
 		
 		output   wire    [31:0]              TriggerOffset,  
 		output   wire    [31:0]              TriggerEnable,
@@ -52,7 +55,9 @@
 // SENo and trigger
 //
 /////////////////////////////////////////////////	
+wire trigger_comb;
 wire trigger_acq;
+wire triggerLevel_value;
 wire out_data_valid;
 wire [C_M_AXIS_TDATA_WIDTH-1 : 0] out_datafilter;
 
@@ -149,7 +154,7 @@ always @(posedge Clk)
 	
 		case ( fsm_trigger_currentState )
 		`FSM_TRIGGER_STATE_IDLE: begin
-		      if(trigger_acq == 1'b1 || trigger == 1'b0 )
+		      if(trigger_comb == 1'b1 || trigger == 1'b0 )
 		          fsm_trigger_currentState <=  `FSM_TRIGGER_STATE_WAITING;
 		      else
 		          fsm_trigger_currentState <=  `FSM_TRIGGER_STATE_IDLE ;             
@@ -298,7 +303,7 @@ reg 	[31:0]		globalCounter;
 
 //assign  irq = ~CanEnable ;
 
-always @(posedge Clk) 
+always @(posedge clk_sample) 
 	if ( ! ResetL || CanEnable ==1'b0 ) begin 
 		globalCounter <= 0; 
 		irq <= 1'b0;		
@@ -311,8 +316,12 @@ always @(posedge Clk)
 		      if ( dataIsBeingTransferred )  begin
 		          if(globalCounter >= MAX_VALUE_COUNTER)
 		              globalCounter <= 0;		           
-		          else        
-			         globalCounter <= globalCounter + 1;
+		          else        begin
+			             if(ConfigSampler[0] == 0)
+			                 globalCounter <= globalCounter + 1;
+			             else
+			                 globalCounter <= DataFromArm;    
+			      end
 		      end
 		      else 
 			     globalCounter <= globalCounter; 
@@ -359,6 +368,9 @@ begin
         i = 0;
 end
 
+assign triggerLevel_value = (TriggerLevel == 0) ? 65350 : TriggerLevel;
+assign trigger_comb = (ConfigSampler[1] == 0) ? 0 : trigger_acq;
+
 trigger_level_acq #(.DATA_WIDTH(16),
 	               .TWOS_COMPLEMENT(0))		
 					trigger_dut
@@ -366,7 +378,7 @@ trigger_level_acq #(.DATA_WIDTH(16),
 				    .clk(Clk),
 				    .in_data_valid(M_AXIS_TVALID),
 				    .in_data(globalCounter[15:0]),
-				    .trigger_level(TriggerLevel),
+				    .trigger_level(triggerLevel_value),
 					.in_dma_master_address(packetCounter),
 				    .out_data_offset(TriggerOffset),
 					.trigger_response(TriggerEnable),

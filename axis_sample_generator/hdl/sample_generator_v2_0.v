@@ -8,7 +8,7 @@
 	module sample_generator_v2_0 #
 	(
 		// Users to add parameters here
-        parameter integer MAX_VALUE_COUNTER	= 1666666,
+        parameter integer MAX_VALUE_COUNTER	= 65000,
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
@@ -38,15 +38,15 @@
         input wire trigger,
         output wire irq,
         output wire [2:0] state,
+        input wire  clk_sample,   
+             
 		// User ports ends
 		// Do not modify the ports beyond this line
 
 
 		// Ports of Axi Slave Bus Interface S_AXI
-		input wire  S_ACLK,
-		input wire  M_ACLK,
-		input wire  ARESETN,
-		input wire  M_ARESETN,
+		input wire  ACLK,		
+		input wire  ARESETN,		
 		input wire [C_S_AXI_ADDR_WIDTH-1 : 0] s_axi_awaddr,
 		input wire [2 : 0] s_axi_awprot,
 		input wire  s_axi_awvalid,
@@ -86,29 +86,29 @@
 		output wire  m_axis_tlast,
 		input wire  m_axis_tready, 
 		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] m_axis_tkeep, 
-		output wire 	m_axis_tuser,
+		output wire 	m_axis_tuser
 		
 		
 		// Ports of Axi Slave Bus Interface S_AXI_INTR		
-		input wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0] s_axi_intr_awaddr,
-		input wire [2 : 0] s_axi_intr_awprot,
-		input wire  s_axi_intr_awvalid,
-		output wire  s_axi_intr_awready,
-		input wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0] s_axi_intr_wdata,
-		input wire [(C_S_AXI_INTR_DATA_WIDTH/8)-1 : 0] s_axi_intr_wstrb,
-		input wire  s_axi_intr_wvalid,
-		output wire  s_axi_intr_wready,
-		output wire [1 : 0] s_axi_intr_bresp,
-		output wire  s_axi_intr_bvalid,
-		input wire  s_axi_intr_bready,
-		input wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0] s_axi_intr_araddr,
-		input wire [2 : 0] s_axi_intr_arprot,
-		input wire  s_axi_intr_arvalid,
-		output wire  s_axi_intr_arready,
-		output wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0] s_axi_intr_rdata,
-		output wire [1 : 0] s_axi_intr_rresp,
-		output wire  s_axi_intr_rvalid,
-		input wire  s_axi_intr_rready
+//		input wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0] s_axi_intr_awaddr,
+//		input wire [2 : 0] s_axi_intr_awprot,
+//		input wire  s_axi_intr_awvalid,
+//		output wire  s_axi_intr_awready,
+//		input wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0] s_axi_intr_wdata,
+//		input wire [(C_S_AXI_INTR_DATA_WIDTH/8)-1 : 0] s_axi_intr_wstrb,
+//		input wire  s_axi_intr_wvalid,
+//		output wire  s_axi_intr_wready,
+//		output wire [1 : 0] s_axi_intr_bresp,
+//		output wire  s_axi_intr_bvalid,
+//		input wire  s_axi_intr_bready,
+//		input wire [C_S_AXI_INTR_ADDR_WIDTH-1 : 0] s_axi_intr_araddr,
+//		input wire [2 : 0] s_axi_intr_arprot,
+//		input wire  s_axi_intr_arvalid,
+//		output wire  s_axi_intr_arready,
+//		output wire [C_S_AXI_INTR_DATA_WIDTH-1 : 0] s_axi_intr_rdata,
+//		output wire [1 : 0] s_axi_intr_rresp,
+//		output wire  s_axi_intr_rvalid,
+//		input wire  s_axi_intr_rready
 	);
 	
 ///////////////////////////////////////////////////////////////////////////
@@ -116,17 +116,22 @@
 // signals 
 //
 ///////////////////////////////////////////////////////////////////////////
+
 wire 	[7:0]	enablePacket; 
 wire	[31:0]	configPassband; 
 wire    [31:0] dmaBaseAddr;
 wire    [31:0] triggerLevel;
 wire    [31:0] triggerEnable;
+wire    [31:0] configSampler;
+wire    [31:0] dataFromArm;
 
 wire    [31:0]  triggerOffset;
 wire 	[31:0]	totalReceivedPacketData; 
 wire 	[31:0]	totalReceivedPackets; 
 wire 	[31:0]	lastReceivedPacket_head; 
 wire 	[31:0]	lastReceivedPacket_tail; 
+
+
 
 //assign irq = ~trigger ;
 
@@ -160,6 +165,8 @@ wire 	[31:0]	packetSize;
 		.ConfigPassband 			( packetPattern ), 
 		.DMABaseAddr                 (dmaBaseAddr),
 		.TriggerLevel                (triggerLevel),
+		.ConfigSampler               (configSampler), 
+		.DataFromArm             (dataFromArm),
 		
 		.TriggerOffset                (triggerOffset), 
 		.TriggerEnable                (triggerEnable),
@@ -226,6 +233,9 @@ wire 	[31:0]	packetSize;
 		.ConfigPassband 		( configPassband ), 
 		.DMABaseAddr            (dmaBaseAddr),
 		.TriggerLevel           (triggerLevel),
+		.ConfigSampler          (configSampler), 
+		.DataFromArm            (signal), 
+		.clk_sample             (clk_sample),
 		
 		.TriggerOffset          (triggerOffset),
 		.TriggerEnable          (triggerEnable),

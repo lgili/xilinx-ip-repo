@@ -30,7 +30,7 @@ module ad_9226#(
         input clk_sample,
         input wire ready,
         //input wire clk_enable,
-        output wire eoc,
+        output reg eoc,
         input wire  [ADC_DATA_WIDTH-1:0] data_in0,
         input wire  [ADC_DATA_WIDTH-1:0] data_in1,
         input wire  [ADC_DATA_WIDTH-1:0] data_in2,
@@ -61,15 +61,11 @@ initial begin
  end 
 
 // Clock enable  
-/*always @(posedge clk)
+always @(posedge clk)
     begin
-        if(clk_enable == 0)
-            lambda <= 0;
-        else
-            lambda <= clk_sample; 
-           
+       eoc <= flag;           
     end
-    */
+   
 // FSM Sequential Behaviour
     always @(posedge clk)
     begin
@@ -144,5 +140,5 @@ initial begin
 
 // Output Mapping
    // End of Conversion (EOC)
-    assign eoc = flag;
+    //assign eoc = flag;
 endmodule
