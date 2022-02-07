@@ -264,7 +264,7 @@ always @(posedge Clk)
 wire 			dataIsBeingTransferred; 
 wire 			lastDataIsBeingTransferred; 
 
-assign dataIsBeingTransferred =  M_AXIS_TREADY;
+assign dataIsBeingTransferred = ResetL && M_AXIS_TREADY;
 assign lastDataIsBeingTransferred = dataIsBeingTransferred & M_AXIS_TLAST;
 
 /////////////////////////////////////////////////
@@ -464,7 +464,7 @@ always @(posedge clk_25m) // cs_n
 // generation of TVALID signal 
 // if the fsm is in active state, then we generate packets 
 // just send data on clk 25 Mhz
-assign M_AXIS_TVALID = eoc ; 
+assign M_AXIS_TVALID = (((fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END)) && (eoc ==1) )? 1 : 0;  
 //assign M_AXIS_TVALID = (( (fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END) ) )? 1 : 0; 
 
 /////////////////////////////////////////////////
