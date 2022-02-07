@@ -1,7 +1,32 @@
 
-`timescale 1 ns / 1 ps
+/*
+Copyright (c) 2014-2022 Luiz Carlos Gili
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// Language: Verilog 2001
+
+`timescale 1ns / 1ps
+
 //`define POST_SYNTHESIS_SIMULATION 1
-	module ad9226_v1_0 #
+	module ad9226_wrapper #
 	(
 		// Users to add parameters here
         parameter ADC_DATA_WIDTH = 12,        
@@ -240,7 +265,7 @@ wire 	[31:0]	packetSize;
 		.trigger_acq             (trigger_acq), 
 
 		.M_AXIS_ACLK			(ACLK),
-		.M_AXIS_ARESETN			(ARESETN_AXIS_M),		
+		.M_AXIS_ARESETN			(ARESETN),		
 		.M_AXIS_TVALID			(m_axis_tvalid),
 		.M_AXIS_TDATA			(m_axis_tdata),
 		.M_AXIS_TSTRB			(m_axis_tstrb),

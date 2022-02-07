@@ -1,73 +1,105 @@
+/*
+Copyright (c) 2014-2022 Luiz Carlos Gili
 
-`timescale 1 ns / 1 ps
-	module ad9226_v1_m_axis #
-	(
-		// Users to add parameters here
-		parameter integer MAX_VALUE_COUNTER	= 65000,
-        parameter ADC_DATA_WIDTH = 12,       
-		// User parameters ends
-		// Do not modify the parameters beyond this line
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-		// Width of S_AXIS address bus. The slave accepts the read and write addresses of width C_M_AXIS_TDATA_WIDTH.
-		parameter integer C_M_AXIS_TDATA_WIDTH	= 32,
-		// Start count is the numeber of clock cycles the master will wait before initiating/issuing any transaction.
-		parameter integer C_M_START_COUNT	= 32
-	)
-	(
-		// Users to add ports here
-		input wire clk_25m,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_1,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_2,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_3,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_trigger,
-		output reg irq,
-		input wire button, // 0 is pressed
-		output wire trigger_acq,
-		output wire [2:0]  state,
-		output wire eoc,
-		//output wire AXIS_CLK,
-		//output wire ARESETN_AXIS_M,
-		
-		input 	wire						EnableSampleGeneration, 
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]		PacketSize, 
-		input 	wire 	[7:0]					EnablePacket, 
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]		ConfigPassband,
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	DMABaseAddr,
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	TriggerLevel,
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	ConfigSampler,
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	DataFromArm,
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	Decimator,
-		
-		output   wire    [31:0]              TriggerOffset,  
-		output   wire    [31:0]              TriggerEnable,
-		// otr out of range, indicates when the input is out of limits of thw adc
-		//input wire [(ADC_TRIGGER_ON)-1:0] otr,
-        //output wire [ADC_DATA_WIDTH-1 : 0] adc_result_1,
-        //output wire [ADC_DATA_WIDTH-1 : 0] adc_result_2,
-        //output wire [ADC_DATA_WIDTH-1 : 0] adc_result_3,
-        //output wire [ADC_DATA_WIDTH-1 : 0] adc_result_trigger,   
-		
-		
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-		// User ports ends
-		// Do not modify the ports beyond this line
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 
-		// Global ports
-		input wire  						M_AXIS_ACLK,
-		input wire  						M_AXIS_ARESETN,
-		output wire  						M_AXIS_TVALID,
-		output wire [C_M_AXIS_TDATA_WIDTH-1 : 0] 		M_AXIS_TDATA,
-		output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 		M_AXIS_TSTRB,
-		output wire  						M_AXIS_TLAST,
-		input wire  						M_AXIS_TREADY,
-		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
-		output wire 						M_AXIS_TUSER
-	);
+// Language: Verilog 2001
+
+`timescale 1ns / 1ps
+
+module ad9226_v1_m_axis #
+(
+	// Users to add parameters here
+	parameter integer MAX_VALUE_COUNTER	= 65000,
+	parameter ADC_DATA_WIDTH = 12,       
+	// User parameters ends
+	// Do not modify the parameters beyond this line
+
+	// Width of S_AXIS address bus. The slave accepts the read and write addresses of width C_M_AXIS_TDATA_WIDTH.
+	parameter integer C_M_AXIS_TDATA_WIDTH	= 32,
+	// Start count is the numeber of clock cycles the master will wait before initiating/issuing any transaction.
+	parameter integer C_M_START_COUNT	= 32
+)
+(
+	// Users to add ports here
+	input wire clk_25m,
+
+	/*
+     * ADC input
+     */
+	input wire [ADC_DATA_WIDTH-1 : 0] adc_1,
+	input wire [ADC_DATA_WIDTH-1 : 0] adc_2,
+	input wire [ADC_DATA_WIDTH-1 : 0] adc_3,
+	input wire [ADC_DATA_WIDTH-1 : 0] adc_trigger,
+
+	/*
+     * Interrupt 
+     */
+	output reg irq,
+
+	/*
+     * Auxiliary Status 
+     */
+	input wire button, // 0 is pressed
+	output wire trigger_acq,
+	output wire [2:0]  state,
+	output wire eoc,
 	
+	/*
+     * Configurations 
+     */	
+	input 	wire						         EnableSampleGeneration, 
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 PacketSize, 
+	input 	wire 	[7:0]					     EnablePacket, 
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 ConfigPassband,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 DMABaseAddr,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 TriggerLevel,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 ConfigSampler,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 DataFromArm,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 Decimator,	
+	output   wire    [31:0]              TriggerOffset,  
+	output   wire    [31:0]              TriggerEnable,
+
+	// otr out of range, indicates when the input is out of limits of thw adc
+	
+	// User ports ends
+	// Do not modify the ports beyond this line
+
+	/*
+     * AXI Stream Output
+     */
+	input wire  						M_AXIS_ACLK,
+	input wire  						M_AXIS_ARESETN,
+	output wire  						M_AXIS_TVALID,
+	output wire [C_M_AXIS_TDATA_WIDTH-1 : 0] 		M_AXIS_TDATA,
+	output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 		M_AXIS_TSTRB,
+	output wire  						M_AXIS_TLAST,
+	input wire  						M_AXIS_TREADY,
+	output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
+	output wire 						M_AXIS_TUSER
+);
+
 	
 /////////////////////////////////////////////////
 // 
-// SENo and trigger
+// Sin and trigger to remove later
 //
 /////////////////////////////////////////////////	
 wire trigger_comb;
@@ -87,7 +119,6 @@ wire 		ResetL;
 assign Clk = M_AXIS_ACLK; 
 assign ResetL = M_AXIS_ARESETN;
 
-//assign ARESETN_AXIS_M = (!M_AXIS_ARESETN || (EnableSampleGeneration == 1)) ? 0: 1;
 
 /////////////////////////////////////////////////
 // 
@@ -255,6 +286,7 @@ always @(posedge Clk)
 		endcase 
 	end 
 	
+
 /////////////////////////////////////////////////
 // 
 // data transfer qualifiers
@@ -288,15 +320,12 @@ always @(posedge Clk)
 		end 
 	end 
 	
-// assign packetSizeInDwords = PacketSize >> 2; 
-// assign validBytesInLastChunk = PacketSize - packetSizeInDwords * 4; 
 
 /////////////////////////////////////////////////
 // 
-// global counter
+// ADC Interface
 //
 /////////////////////////////////////////////////
-// this is a 32 bits counter which counts up with every successful data transfer. this creates the body of the packets. 
 
 wire [11:0] adc_result_1;
 wire [11:0] adc_result_2;
@@ -312,62 +341,66 @@ wire [15:0] adc_result_decimator;
 wire adc_ready;
 wire in_data_ready;
 
-//assign irq = ~button ;
-//assign adcData = (dataIsBeingTransferred == 1'b1) ?  {adc1,adc0} : adcData;
 
-    // ADC instance
+ // ADC instance
 ad_9226#(
-	.ADC_DATA_WIDTH(ADC_DATA_WIDTH))
-   ADC    (
-        .clk(Clk),
-        .rst_n(ResetL),
-        .clk_sample(clk_25m),
-        .ready(in_data_ready),        
-        .eoc(eoc),
-        .data_in0(adc_1),
-        .data_in1(adc_2),
-        .data_in2(adc_2),
-        .data_in3(adc3_3),
-        .data_out0(adc_result_1), 
-        .data_out1(adc_result_2),
-        .data_out2(adc_result_3),
-        .data_out3(adc_result_4)             
-    );
+	.ADC_DATA_WIDTH(ADC_DATA_WIDTH)
+)
+ADC
+(
+	.clk(Clk),
+	.rst_n(ResetL),
+	.clk_sample(clk_25m),
+	.ready(in_data_ready),        
+	.eoc(eoc),
+	.data_in0(adc_1),
+	.data_in1(adc_2),
+	.data_in2(adc_2),
+	.data_in3(adc3_3),
+	.data_out0(adc_result_1), 
+	.data_out1(adc_result_2),
+	.data_out2(adc_result_3),
+	.data_out3(adc_result_4)             
+);
     
- data_decimation#(
+data_decimation#(
     .DATA_IN_WIDTH(12),
     .DATA_OUT_WIDTH(12),
     .DATA_REG_WIDTH(32)
- ) decimator 
- (
-     .clk(clk_25m),
-     .rst_n(ResetL),
-     .in_data_ready(in_data_ready),
-     .in_data_valid(1'b1),
-     .in_data(adc_result_1),
-     .out_data_ready(1'b1),
-     .out_data_valid(adc_result_1_valid),
-     .out_data(adc_result_decimator),
-     .decimate_reg(Decimator)  
+) decimator 
+(
+	.clk(clk_25m),
+	.rst_n(ResetL),
+	.in_data_ready(in_data_ready),
+	.in_data_valid(1'b1),
+	.in_data(adc_result_1),
+	.out_data_ready(1'b1),
+	.out_data_valid(adc_result_1_valid),
+	.out_data(adc_result_decimator),
+	.decimate_reg(Decimator)  
 );   
 
-//assign AXIS_CLK = M_AXIS_ACLK; //adc_result_1_valid;
     
 assign triggerLevel_value = (TriggerLevel == 0) ? 65350 : TriggerLevel;
 assign trigger_comb = (ConfigSampler[1] == 0) ? 0 : trigger_acq;
 
-trigger_level_acq #(.DATA_WIDTH(12),
-	               .TWOS_COMPLEMENT(0))		
-					trigger_dut
-					(.rst(!ResetL),
-				    .clk(Clk),
-				    .in_data_valid(clk_25m),
-				    .in_data(adc_result_1),
-				    .trigger_level(TriggerLevel),
-					.in_dma_master_address(packetCounter),
-				    .out_data_offset(TriggerOffset),
-					.trigger_response(TriggerEnable),
-					.trigger(trigger_acq));    
+trigger_level_acq #
+(
+	.DATA_WIDTH(12),
+	.TWOS_COMPLEMENT(0)
+)
+trigger_dut
+(
+	.rst(!ResetL),
+	.clk(Clk),
+	.in_data_valid(clk_25m),
+	.in_data(adc_result_1),
+	.trigger_level(TriggerLevel),
+	.in_dma_master_address(packetCounter),
+	.out_data_offset(TriggerOffset),
+	.trigger_response(TriggerEnable),
+	.trigger(trigger_acq)
+);    
 
 reg 	[31:0]		globalCounter; 
 
@@ -417,18 +450,6 @@ always @(posedge Clk)
             end 
 	  endcase 	  	       
 	    
-	          
-//		if ( dataIsBeingTransferred )  begin		      
-//		    if(triggerCount != 0)
-//		         globalCounter <= 32'h1b207;  
-//		    else if(globalCounter >= MAX_VALUE_COUNTER)
-//		          globalCounter <= 0;		           
-//		    else        
-//			     globalCounter <= globalCounter + 1;
-//			end    
-			  
-//		else 
-//			globalCounter <= globalCounter; 
 	end 
 
 /////////////////////////////////////////////////
@@ -464,7 +485,7 @@ always @(posedge clk_25m) // cs_n
 // generation of TVALID signal 
 // if the fsm is in active state, then we generate packets 
 // just send data on clk 25 Mhz
-//assign M_AXIS_TVALID = (((fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END)) && (eoc ==1)? 1 : 0;  
+//assign M_AXIS_TVALID =  eoc;  
 assign M_AXIS_TVALID = (( (fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END) ) )? 1 : 0; 
 
 /////////////////////////////////////////////////
