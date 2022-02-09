@@ -1,108 +1,133 @@
 
-`timescale 1 ns / 1 ps
+/*
+Copyright (c) 2014-2022 Luiz Carlos Gili
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// Language: Verilog 2001
+
+`timescale 1ns / 1ps
+
 //`define POST_SYNTHESIS_SIMULATION 1
-	module ad7276_v3_0 #
-	(
-		// Users to add parameters here
-        parameter ADC_LENGTH = 12,
-        parameter ADC_QTD = 1,
-		// User parameters ends
-		// Do not modify the parameters beyond this line
+module ad7276_v3_0 #
+(
+	// Users to add parameters here
+	parameter ADC_LENGTH = 12,
+	parameter ADC_QTD = 1,
+	// User parameters ends
+	// Do not modify the parameters beyond this line
 
 
-		// Parameters of Axi Slave Bus Interface S00_AXI
-		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
-		parameter integer C_S00_AXI_ADDR_WIDTH	= 5,
-		
-		
-		parameter integer C_M_AXIS_START_COUNT	= 32
+	// Parameters of Axi Slave Bus Interface S00_AXI
+	parameter integer C_S00_AXI_DATA_WIDTH	= 32,
+	parameter integer C_S00_AXI_ADDR_WIDTH	= 5,
+	
+	
+	parameter integer C_M_AXIS_START_COUNT	= 32
 
-		// Parameters of Axi Master Bus Interface M01_AXIS
-		//parameter integer C_M01_AXIS_TDATA_WIDTH	= 32,
-		//parameter integer C_M01_AXIS_START_COUNT	= 32,
+	// Parameters of Axi Master Bus Interface M01_AXIS
+	//parameter integer C_M01_AXIS_TDATA_WIDTH	= 32,
+	//parameter integer C_M01_AXIS_START_COUNT	= 32,
 
-		// Parameters of Axi Master Bus Interface M00_AXIS
-		//parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
-		//parameter integer C_M00_AXIS_START_COUNT	= 32
-	)
-	(
-		// Users to add ports here
-	    input  wire		    clk_48MHz,           
-        input  wire  [2*ADC_QTD-1:0]   inData,           
-        output wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData, 
-        output wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData_fil,            
-       
-        //output wire [ADC_LENGTH-1:0]   adcData2,
-        //output wire [ADC_LENGTH-1:0]   adcData3,
-        //output wire [ADC_LENGTH-1:0]   adcData4,
-        //output wire [ADC_LENGTH-1:0]   adcData5,
-        //output wire [ADC_LENGTH-1:0]   adcData6,      
-        output wire [ADC_QTD-1:0]     cs,
-        output wire [ADC_QTD-1:0]     sclk,
-        //output wire [ADC_QTD-1:0]     sampleDone,
-        //output wire [2*ADC_QTD-1:0]    current_state,
-        //output wire [4*ADC_QTD-1:0]    count,
-        output wire [2*ADC_QTD-1:0]      dataready,
-        
-        // filter 
-		//output wire [ADC_LENGTH-1:0] filter_adc,
-		//output wire filter_ready,
+	// Parameters of Axi Master Bus Interface M00_AXIS
+	//parameter integer C_M00_AXIS_TDATA_WIDTH	= 32,
+	//parameter integer C_M00_AXIS_START_COUNT	= 32
+)
+(
+	// Users to add ports here
+	input  wire		    clk_48MHz,           
+	input  wire  [2*ADC_QTD-1:0]   inData,           
+	output wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData, 
+	output wire [2*ADC_QTD*ADC_LENGTH-1:0]   adcData_fil,            
+	
+	//output wire [ADC_LENGTH-1:0]   adcData2,
+	//output wire [ADC_LENGTH-1:0]   adcData3,
+	//output wire [ADC_LENGTH-1:0]   adcData4,
+	//output wire [ADC_LENGTH-1:0]   adcData5,
+	//output wire [ADC_LENGTH-1:0]   adcData6,      
+	output wire [ADC_QTD-1:0]     cs,
+	output wire [ADC_QTD-1:0]     sclk,
+	//output wire [ADC_QTD-1:0]     sampleDone,
+	//output wire [2*ADC_QTD-1:0]    current_state,
+	//output wire [4*ADC_QTD-1:0]    count,
+	output wire [2*ADC_QTD-1:0]      dataready,
+	
+	// filter 
+	//output wire [ADC_LENGTH-1:0] filter_adc,
+	//output wire filter_ready,
 
-		// User ports ends
-		// Do not modify the ports beyond this line
+	// User ports ends
+	// Do not modify the ports beyond this line
 
 
-		// Ports of Axi Slave Bus Interface S00_AXI
-		input wire                           ACLK,
-        input wire                           ARESETN,
-                         
-		
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
-		input wire [2 : 0] s00_axi_awprot,
-		input wire  s00_axi_awvalid,
-		output wire  s00_axi_awready,
-		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_wdata,
-		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb,
-		input wire  s00_axi_wvalid,
-		output wire  s00_axi_wready,
-		output wire [1 : 0] s00_axi_bresp,
-		output wire  s00_axi_bvalid,
-		input wire  s00_axi_bready,
-		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_araddr,
-		input wire [2 : 0] s00_axi_arprot,
-		input wire  s00_axi_arvalid,
-		output wire  s00_axi_arready,
-		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_rdata,
-		output wire [1 : 0] s00_axi_rresp,
-		output wire  s00_axi_rvalid,
-		input wire  s00_axi_rready,
-		
-		
-		//////////////////////////////////////////////////////////////////
-		// Ports of Axi Slave Bus Interface S_AXIS
-		//input wire  s_axis_aclk,
-		//input wire  s_axis_aresetn,
-		output wire  s_axis_tready,
-		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s_axis_tdata,
-		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s_axis_tstrb,
-		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s_axis_tkeep,
-		input wire  s_axis_tlast,
-		input wire  s_axis_tvalid,
+	// Ports of Axi Slave Bus Interface S00_AXI
+	input wire                           ACLK,
+	input wire                           ARESETN,
+						
+	
+	input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
+	input wire [2 : 0] s00_axi_awprot,
+	input wire  s00_axi_awvalid,
+	output wire  s00_axi_awready,
+	input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_wdata,
+	input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb,
+	input wire  s00_axi_wvalid,
+	output wire  s00_axi_wready,
+	output wire [1 : 0] s00_axi_bresp,
+	output wire  s00_axi_bvalid,
+	input wire  s00_axi_bready,
+	input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_araddr,
+	input wire [2 : 0] s00_axi_arprot,
+	input wire  s00_axi_arvalid,
+	output wire  s00_axi_arready,
+	output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_rdata,
+	output wire [1 : 0] s00_axi_rresp,
+	output wire  s00_axi_rvalid,
+	input wire  s00_axi_rready,
+	
+	
+	//////////////////////////////////////////////////////////////////
+	// Ports of Axi Slave Bus Interface S_AXIS
+	//input wire  s_axis_aclk,
+	//input wire  s_axis_aresetn,
+	output wire  s_axis_tready,
+	input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s_axis_tdata,
+	input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s_axis_tstrb,
+	input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s_axis_tkeep,
+	input wire  s_axis_tlast,
+	input wire  s_axis_tvalid,
 
-		// Ports of Axi Master Bus Interface M_AXIS
-		//input wire  m_axis_aclk,
-		//input wire  m_axis_aresetn,
-		output wire  m_axis_tvalid,
-		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m_axis_tdata,
-		output wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] m_axis_tstrb,
-		output wire  m_axis_tlast,
-		input wire  m_axis_tready, 
-		output wire 	[(C_S00_AXI_DATA_WIDTH/8)-1 : 0] m_axis_tkeep, 
-		output wire 	m_axis_tuser
-		
-		/////////////////////////////////////////////////////////////////
-		
-		
+	// Ports of Axi Master Bus Interface M_AXIS
+	//input wire  m_axis_aclk,
+	//input wire  m_axis_aresetn,
+	output wire  m_axis_tvalid,
+	output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m_axis_tdata,
+	output wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] m_axis_tstrb,
+	output wire  m_axis_tlast,
+	input wire  m_axis_tready, 
+	output wire 	[(C_S00_AXI_DATA_WIDTH/8)-1 : 0] m_axis_tkeep, 
+	output wire 	m_axis_tuser
+	
+	/////////////////////////////////////////////////////////////////
+	
+	
 //		// Ports of Axi Master Bus Interface M00_AXIS		
 //		output wire  m00_axis_tvalid,
 //		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m00_axis_tdata,
@@ -116,28 +141,28 @@
 //		//output wire [(ADC_LENGTH/8)-1 : 0] m01_axis_tstrb,
 //		output wire  m01_axis_tlast,
 //		input wire  m01_axis_tready,
-		
+	
 //		// Ports of Axi Master Bus Interface M01_AXIS		
 //		output wire  m02_axis_tvalid,
 //		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m02_axis_tdata,
 //		//output wire [(ADC_LENGTH/8)-1 : 0] m01_axis_tstrb,
 //		output wire  m02_axis_tlast,
 //		input wire  m02_axis_tready,
-		
+	
 //		// Ports of Axi Master Bus Interface M01_AXIS		
 //		output wire  m03_axis_tvalid,
 //		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m03_axis_tdata,
 //		//output wire [(ADC_LENGTH/8)-1 : 0] m01_axis_tstrb,
 //		output wire  m03_axis_tlast,
 //		input wire  m03_axis_tready,
-		
+	
 //		// Ports of Axi Master Bus Interface M01_AXIS		
 //		output wire  m04_axis_tvalid,
 //		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m04_axis_tdata,
 //		//output wire [(ADC_LENGTH/8)-1 : 0] m01_axis_tstrb,
 //		output wire  m04_axis_tlast,
 //		input wire  m04_axis_tready,
-		
+	
 //		// Ports of Axi Master Bus Interface M01_AXIS		
 //		output wire  m05_axis_tvalid,
 //		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m05_axis_tdata,
@@ -145,8 +170,8 @@
 //		output wire  m05_axis_tlast,
 //		input wire  m05_axis_tready
 
-		
-	);
+	
+);
 	
 ///////////////////////////////////////////////////////////////////////////
 //

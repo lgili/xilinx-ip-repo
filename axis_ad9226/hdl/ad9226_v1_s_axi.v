@@ -32,7 +32,7 @@ THE SOFTWARE.
 // base address + 0x18 : ConfigSampler 
 // base address + 0x1c : DataFromArm
 // base address + 0x20 : Decimator
-// base address + 0x24 :
+// base address + 0x24 : MavgFactor
 // base address + 0x28 :TriggerEnable
 // base address + 0x2c :TriggerOffset
 
@@ -64,6 +64,7 @@ module ad9226_v1_s_axi #
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigSampler,
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	DataFromArm,
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	Decimator,
+	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	MavgFactor,
 	
 	/*
      * Status to ARM
@@ -551,6 +552,7 @@ module ad9226_v1_s_axi #
 	assign ConfigSampler = slv_reg6;
 	assign DataFromArm  = slv_reg7;
 	assign Decimator  = slv_reg8;
+	assign MavgFactor = slv_reg9;
 	
 	// User logic ends
 

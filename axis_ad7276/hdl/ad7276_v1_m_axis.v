@@ -1,48 +1,89 @@
 
-`timescale 1 ns / 1 ps
+/*
+Copyright (c) 2014-2022 Luiz Carlos Gili
 
-	module ad7276_v1_m_axis #
-	(
-		// Users to add parameters here
-        parameter ADC_LENGTH = 12,        
-		// User parameters ends
-		// Do not modify the parameters beyond this line
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-		// Width of S_AXIS address bus. The slave accepts the read and write addresses of width C_M_AXIS_TDATA_WIDTH.
-		parameter integer C_M_AXIS_TDATA_WIDTH	= 32,
-		// Start count is the numeber of clock cycles the master will wait before initiating/issuing any transaction.
-		parameter integer C_M_START_COUNT	= 32
-	)
-	(
-		// Users to add ports here
-		input  wire            clk_48MHz,
-		input  wire  [1:0]     inData,              
-        output wire [2*ADC_LENGTH-1:0]   adcData,
-        output wire                    cs,  
-        output wire                    sclk,      
-        output wire                    sampleDone,
-		
-		
-		
-		input 	wire						EnableSampleGeneration, 
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]		PacketSize, 
-		input 	wire 	[7:0]					PacketRate, 
-		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]		PacketPattern,
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
 
-		// User ports ends
-		// Do not modify the ports beyond this line
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
 
-		// Global ports
-		input wire  						M_AXIS_ACLK,
-		input wire  						M_AXIS_ARESETN,
-		output wire  						M_AXIS_TVALID,
-		output wire [C_M_AXIS_TDATA_WIDTH-1 : 0] 		M_AXIS_TDATA,
-		output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 		M_AXIS_TSTRB,
-		output wire  						M_AXIS_TLAST,
-		input wire  						M_AXIS_TREADY,
-		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
-		output wire 						M_AXIS_TUSER
-	);
+// Language: Verilog 2001
+
+`timescale 1ns / 1ps
+
+module ad7276_v1_m_axis #
+(
+	// Users to add parameters here
+	parameter ADC_LENGTH = 12,        
+	// User parameters ends
+	// Do not modify the parameters beyond this line
+
+	// Width of S_AXIS address bus. The slave accepts the read and write addresses of width C_M_AXIS_TDATA_WIDTH.
+	parameter integer C_M_AXIS_TDATA_WIDTH	= 32,
+	// Start count is the numeber of clock cycles the master will wait before initiating/issuing any transaction.
+	parameter integer C_M_START_COUNT	= 32
+)
+(
+	// Users to add ports here
+	input  wire                         Clk_100m,
+	input  wire  						Clk_adc,
+	input  wire  						Resetn,
+
+	input wire [31:0] angle ,
+	/*
+     * ADC port
+     */	
+	input  wire  [1:0]                inData,              
+	output wire  [2*ADC_LENGTH-1:0]   adcData,
+	output wire                       cs,  
+	output wire                       sclk,      
+	output wire                       sampleDone,
+	
+	
+	/*
+     * Configurations 
+     */	
+	input 	wire						         EnableSampleGeneration, 
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 PacketSize, 
+	input 	wire 	[7:0]					     EnablePacket, 
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 ConfigPassband,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 DMABaseAddr,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 TriggerLevel,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 ConfigSampler,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 DataFromArm,
+	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 Decimator,	
+	input   wire    [C_M_AXIS_TDATA_WIDTH-1:0]   MavgFactor,
+
+	output   wire    [31:0]              TriggerOffset,  
+	output   wire    [31:0]              TriggerEnable,
+
+	// User ports ends
+	// Do not modify the ports beyond this line
+
+	// Global ports
+	
+	output wire  									m_axis_tvalid, 
+	output wire [C_M_AXIS_TDATA_WIDTH-1 : 0] 		m_axis_tdata, 
+	output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	m_axis_tstrb, 
+	output wire  									m_axis_tlast, 
+	input  wire  									m_axis_tready, 
+	output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	m_axis_tkeep, 
+	output wire 									m_axis_tuser 
+);
 	
 /////////////////////////////////////////////////
 // 
@@ -52,8 +93,8 @@
 wire 		Clk; 
 wire 		ResetL; 
 
-assign Clk = M_AXIS_ACLK; 
-assign ResetL = M_AXIS_ARESETN; 
+assign Clk = Clk_100m; 
+assign ResetL = Resetn; 
 
 /////////////////////////////////////////////////
 // 
@@ -147,8 +188,8 @@ always @(posedge Clk)
 wire 			dataIsBeingTransferred; 
 wire 			lastDataIsBeingTransferred; 
 
-assign dataIsBeingTransferred = M_AXIS_TVALID & M_AXIS_TREADY;
-assign lastDataIsBeingTransferred = dataIsBeingTransferred & M_AXIS_TLAST;
+assign dataIsBeingTransferred = m_axis_tvalid & m_axis_tready;
+assign lastDataIsBeingTransferred = dataIsBeingTransferred & m_axis_tlast;
 
 /////////////////////////////////////////////////
 // 
@@ -171,8 +212,6 @@ always @(posedge Clk)
 		end 
 	end 
 	
-// assign packetSizeInDwords = PacketSize >> 2; 
-// assign validBytesInLastChunk = PacketSize - packetSizeInDwords * 4; 
 
 /////////////////////////////////////////////////
 // 
@@ -189,16 +228,21 @@ wire adc_ready;
 assign cs = cs_n;
 assign adcData = (dataIsBeingTransferred == 1'b1) ?  {adc1,adc0} : adcData;
 
-axi_ad7276_if i_if (
+wire in_data_ready;
+wire eoc_adc;
+wire [11:0] adc_result_decimator;
+wire adc_result_1_valid;
+
+ad7276_if adc (
         //clock and reset signals
         .fpga_clk_i(Clk),
-        .adc_clk_i(clk_48MHz),
+        .adc_clk_i(Clk_adc),
         .reset_n_i(ResetL),
             
         //IP control and data interface
-        .en_0_i(1'b1),
+        .en_0_i(in_data_ready),
         .en_1_i(1'b1),        
-        .data_rdy_o(adc_ready),
+        .data_rdy_o(eoc_adc),
         .data_0_o(adc0),
         .data_1_o(adc1),
             
@@ -208,6 +252,71 @@ axi_ad7276_if i_if (
         .sclk_o(sclk),
         .cs_o(cs_n)    
     );
+
+data_decimation#(
+    .DATA_IN_WIDTH(12),
+    .DATA_OUT_WIDTH(12),
+    .DATA_REG_WIDTH(32)
+) decimator 
+(
+	.clk(Clk),
+	.rst_n(ResetL),
+	.in_data_ready(in_data_ready),
+	.in_data_valid(eoc_adc),
+	.in_data(adc0),
+	.out_data_ready(1'b1),
+	.out_data_valid(adc_result_1_valid),
+	.out_data(adc_result_decimator),
+	.decimate_reg(Decimator)  
+);  
+
+
+wire [15:0] out_data_fir;
+wire out_data_valid_fir;
+
+moving_average_fir #
+(
+	.IN_DATA_WIDTH(12),
+	.OUT_DATA_WIDTH(16)
+)	mavg_fir
+(
+	.clk(Clk), 
+	.rst(ResetL), 
+	.mavg_factor(MavgFactor),
+	.in_data_valid(adc_result_1_valid), 
+	.in_data(adc_result_decimator),
+	.out_data_valid(out_data_valid_fir), 
+	.out_data(out_data_fir)
+);
+
+reg [15:0] sin;
+reg [15:0] cos;
+
+localparam VALUE = 32000/1.647; // reduce by a factor of 1.647 since thats the gain of the system
+
+cordic#
+(
+	.DATA_WIDTH(16)
+) sine_cosine 
+(
+	.clock(Clk),
+	.angle(angle),
+	.Amp(VALUE), // amplitude
+	.Phase_shift(1'd0),
+	.Cos_out(sin),
+	.Sin_out(cos)
+);
+
+/*
+cordic cordic
+(
+	.clock(Clk),
+	.reset(!ResetL),
+	.start(1'b1),
+	.angle_in(32'hc0000000),
+	.cos_out(sin),
+	.sin_out(cos)
+);*/
 
 reg 	[31:0]		globalCounter; 
 
@@ -258,7 +367,7 @@ always @(negedge cs_n) // cs_n
 // generation of TVALID signal 
 // if the fsm is in active state, then we generate packets 
 
-assign M_AXIS_TVALID = ( (fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END) ) ? 1 : 0; 
+assign m_axis_tvalid = ( (fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END) ) ? 1 : 0; 
 
 /////////////////////////////////////////////////
 // 
@@ -266,7 +375,7 @@ assign M_AXIS_TVALID = ( (fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_current
 //
 /////////////////////////////////////////////////
 
-assign M_AXIS_TLAST = (validBytesInLastChunk == 0) ? ( ( packetCounter == (packetSizeInDwords-1) ) ? 1 : 0 ) : 
+assign m_axis_tlast = (validBytesInLastChunk == 0) ? ( ( packetCounter == (packetSizeInDwords-1) ) ? 1 : 0 ) : 
 			( ( packetCounter == packetSizeInDwords ) ? 1 : 0 ); 
 
 /////////////////////////////////////////////////

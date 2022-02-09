@@ -39,7 +39,7 @@ module ad9226_v1_m_axis #
 )
 (
 	// Users to add ports here
-	input wire clk_25m,
+	input wire clk_100m,
 
 	/*
      * ADC input
@@ -74,8 +74,11 @@ module ad9226_v1_m_axis #
 	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 ConfigSampler,
 	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 DataFromArm,
 	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 Decimator,	
+	input   wire    [C_M_AXIS_TDATA_WIDTH-1:0]   MavgFactor,
+
 	output   wire    [31:0]              TriggerOffset,  
 	output   wire    [31:0]              TriggerEnable,
+
 
 	// otr out of range, indicates when the input is out of limits of thw adc
 	
@@ -115,10 +118,11 @@ wire [C_M_AXIS_TDATA_WIDTH-1 : 0] out_datafilter;
 /////////////////////////////////////////////////
 wire 		Clk; 
 wire 		ResetL; 
+wire        ADC_CLK;
 
-assign Clk = M_AXIS_ACLK; 
+assign Clk = clk_100m; 
 assign ResetL = M_AXIS_ARESETN;
-
+assign ADC_CLK = M_AXIS_ACLK;
 
 /////////////////////////////////////////////////
 // 
@@ -350,7 +354,7 @@ ADC
 (
 	.clk(Clk),
 	.rst_n(ResetL),
-	.clk_sample(clk_25m),
+	.clk_sample(ADC_CLK),
 	.ready(in_data_ready),        
 	.eoc(eoc),
 	.data_in0(adc_1),
@@ -369,10 +373,10 @@ data_decimation#(
     .DATA_REG_WIDTH(32)
 ) decimator 
 (
-	.clk(clk_25m),
+	.clk(Clk),
 	.rst_n(ResetL),
 	.in_data_ready(in_data_ready),
-	.in_data_valid(1'b1),
+	.in_data_valid(eoc),
 	.in_data(adc_result_1),
 	.out_data_ready(1'b1),
 	.out_data_valid(adc_result_1_valid),
@@ -380,6 +384,25 @@ data_decimation#(
 	.decimate_reg(Decimator)  
 );   
 
+
+
+wire [15:0] out_data_fir;
+wire out_data_valid_fir;
+
+moving_average_fir #
+(
+	.IN_DATA_WIDTH(12),
+	.OUT_DATA_WIDTH(16)
+)	mavg_fir
+(
+	.clk(Clk), 
+	.rst(ResetL), 
+	.mavg_factor(MavgFactor),
+	.in_data_valid(adc_result_1_valid), 
+	.in_data(adc_result_decimator),
+	.out_data_valid(out_data_valid_fir), 
+	.out_data(out_data_fir)
+);
     
 assign triggerLevel_value = (TriggerLevel == 0) ? 65350 : TriggerLevel;
 assign trigger_comb = (ConfigSampler[1] == 0) ? 0 : trigger_acq;
@@ -393,7 +416,7 @@ trigger_dut
 (
 	.rst(!ResetL),
 	.clk(Clk),
-	.in_data_valid(clk_25m),
+	.in_data_valid(ADC_CLK),
 	.in_data(adc_result_1),
 	.trigger_level(TriggerLevel),
 	.in_dma_master_address(packetCounter),
@@ -407,7 +430,7 @@ reg 	[31:0]		globalCounter;
 
 
 //assign M_AXIS_TDATA = globalCounter; 
-assign M_AXIS_TDATA =  (C_M_AXIS_TDATA_WIDTH == 64) ? {16'd0,adc_result_4, adc_result_3, adc_result_2, adc_result_1} : {8'd0, adc_result_1, adc_result_decimator}; 
+assign M_AXIS_TDATA =  (C_M_AXIS_TDATA_WIDTH == 64) ? {16'd0,adc_result_4, adc_result_3, adc_result_2, adc_result_1} : {8'd0, adc_result_decimator, out_data_fir}; 
 
 always @(posedge Clk) 
 	if ( ! ResetL ) begin 
@@ -461,7 +484,7 @@ always @(posedge Clk)
 
 reg 	[29:0]		packetCounter; 
 
-always @(posedge clk_25m) // cs_n
+always @(posedge ADC_CLK) // cs_n
 	if ( ! ResetL ) begin 
 		packetCounter <= 0; 
 	end 

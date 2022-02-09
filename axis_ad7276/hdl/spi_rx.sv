@@ -1,44 +1,49 @@
-`timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 12/13/2021 03:23:09 PM
-// Design Name: 
-// Module Name: spi_rx
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
 
+/*
+Copyright (c) 2014-2022 Luiz Carlos Gili
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// Language: Verilog 2001
+
+`timescale 1ns / 1ps
 
 module spi_rx #(
     parameter ADC_LENGTH = 12,
     parameter ADC_QTD = 3
-    )(
+)(
     input 		                    i_clk,
     input 		                    i_rst,    
     input  wire  [1:0]              i_data,    
     output reg [2*ADC_LENGTH-1:0]   o_data,  
-     
+        
     output reg                    o_cs,
     output wire                   o_sclk,
-    
+
     input        [31:0]          i_sampleEnableDiv,
     output wire  [31:0]          o_clockdivReg,
-       
+        
     output  reg  [1:0]            o_tValid,    
     output  reg  [1:0]            o_tLast    
 
-    );
+);
     
     // Define our states   
    parameter IDLE      = 'd0;

@@ -1,68 +1,31 @@
-`timescale 1ns / 1ps
-// -----------------------------------------------------------------------------
-//
-// Copyright 2011(c) Analog Devices, Inc.
-//
-// All rights reserved.
-//
-// Redistribution and use in source and binary forms, with or without modification,
-// are permitted provided that the following conditions are met:
-//  - Redistributions of source code must retain the above copyright
-//    notice, this list of conditions and the following disclaimer.
-//  - Redistributions in binary form must reproduce the above copyright
-//    notice, this list of conditions and the following disclaimer in
-//    the documentation and/or other materials provided with the
-//    distribution.
-//  - Neither the name of Analog Devices, Inc. nor the names of its
-//    contributors may be used to endorse or promote products derived
-//    from this software without specific prior written permission.
-//  - The use of this software may or may not infringe the patent rights
-//    of one or more patent holders.  This license does not release you
-//    from the requirement that you obtain separate licenses from these
-//    patent holders to use this software.
-//  - Use of the software either in source or binary form, must be run
-//    on or directly connected to an Analog Devices Inc. component.
-//
-// THIS SOFTWARE IS PROVIDED BY ANALOG DEVICES "AS IS" AND ANY EXPRESS OR IMPLIED
-// WARRANTIES, INCLUDING, BUT NOT LIMITED TO, NON-INFRINGEMENT, MERCHANTABILITY
-// AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-// IN NO EVENT SHALL ANALOG DEVICES BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-// INTELLECTUAL PROPERTY RIGHTS, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-// LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-// ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-// SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
-// -----------------------------------------------------------------------------
-// FILE NAME : PmodAD1_if.v
-// MODULE NAME : PmodAD1_if
-// AUTHOR : atofan
-// AUTHOR�S EMAIL : alexandru.tofan@analog.com
-// -----------------------------------------------------------------------------
-// SVN REVISION: 468
-// -----------------------------------------------------------------------------
-// KEYWORDS : PmodAD1, AD7476A
-// -----------------------------------------------------------------------------
-// PURPOSE : Driver for the AD7476A 12 Bit 1 MSPS ADC
-// -----------------------------------------------------------------------------
-// REUSE ISSUES
-// Reset Strategy      : Active low reset signal
-// Clock Domains       : N/A
-// Critical Timing     : N/A
-// Test Features       : N/A
-// Asynchronous I/F    : N/A
-// Instantiations      : N/A
-// Synthesizable (y/n) : Y
-// Target Device       : AD7476A
-// Other               : 
-// -----------------------------------------------------------------------------
-// -----------------------------------------------------------------------------
 
-//------------------------------------------------------------------------------
-//----------- Module Declaration -----------------------------------------------
-//------------------------------------------------------------------------------
-module axi_ad7276_if
+/*
+Copyright (c) 2014-2022 Luiz Carlos Gili
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// Language: Verilog 2001
+
+`timescale 1ns / 1ps
+
+module ad7276_if
     (
         //clock and reset signals
         input           fpga_clk_i,
