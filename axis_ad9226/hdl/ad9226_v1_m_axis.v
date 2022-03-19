@@ -120,9 +120,9 @@ wire 		Clk;
 wire 		ResetL; 
 wire        ADC_CLK;
 
-assign Clk = clk_100m; 
+assign Clk = M_AXIS_ACLK;  //clk_100m
 assign ResetL = M_AXIS_ARESETN;
-assign ADC_CLK = M_AXIS_ACLK;
+assign ADC_CLK = clk_100m; //M_AXIS_ACLK
 
 /////////////////////////////////////////////////
 // 
@@ -198,8 +198,9 @@ always @(posedge Clk)
 		end
 		`FSM_TRIGGER_STATE_WAITING: begin
 		      // count tlast (qtd of packages send after trigged)
-		      if(M_AXIS_TLAST == 1) begin
-		           tlastCount <= tlastCount + 1; 
+		      tlastCount <= tlastCount + 1;
+		      if(tlastCount >= PacketSize) begin
+		           //tlastCount <= tlastCount + 1; 
 		           
 		           if (tlastCount >= 32'h3) begin		      
 		              CanEnable <= 0;
@@ -457,10 +458,10 @@ always @(posedge Clk)
 		end   
 		`FSM_TRIGGER_STATE_WAITING: begin
 		          globalCounter <= 32'h1b207; 
-		          irq <= 1'b0;
+		          irq <= 1'b1;
 		end
 		`FSM_TRIGGER_STATE_ACTIVE: begin
-            irq <= 1'b1;
+            irq <= 1'b0;
             globalCounter <= globalCounter; 		
 		end
 		`FSM_TRIGGER_STATE_END: begin

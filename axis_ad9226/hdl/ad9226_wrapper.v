@@ -191,7 +191,7 @@ wire 	[31:0]	packetSize;
 		.LastReceivedPacket_head 	( lastReceivedPacket_head ), 
 		.LastReceivedPacket_tail 	( lastReceivedPacket_tail ), 
 		
-		.S_AXI_ACLK			    (ADC_CLK),
+		.S_AXI_ACLK			    (clk_100m),
 		.S_AXI_ARESETN			(ARESETN),
 		.S_AXI_AWADDR			(s00_axi_awaddr),
 		.S_AXI_AWPROT			(s00_axi_awprot),
@@ -224,7 +224,7 @@ wire 	[31:0]	packetSize;
 		.LastReceivedPacket_head 	( lastReceivedPacket_head ), 
 		.LastReceivedPacket_tail 	( lastReceivedPacket_tail ), 
 		
-		.S_AXIS_ACLK			(ADC_CLK),
+		.S_AXIS_ACLK			(clk_100m),
 		.S_AXIS_ARESETN			(ARESETN),		.S_AXIS_TREADY			(s_axis_tready),
 		.S_AXIS_TDATA			(s_axis_tdata),
 		.S_AXIS_TSTRB			(s_axis_tstrb),
@@ -240,7 +240,7 @@ wire 	[31:0]	packetSize;
 		.C_M_START_COUNT(C_M_AXIS_START_COUNT)
 	) ad9226_v1_m_axis_inst (
 	
-	    .clk_100m(clk_100m),
+	    .clk_100m(ADC_CLK),
 		.adc_1(adc_1),
 		.adc_2(adc_2),
 		.adc_3(adc_3),
@@ -267,7 +267,7 @@ wire 	[31:0]	packetSize;
 		.TriggerEnable          (triggerEnable),
 		.trigger_acq             (trigger_acq), 
 
-		.M_AXIS_ACLK			(ADC_CLK),
+		.M_AXIS_ACLK			(clk_100m),
 		.M_AXIS_ARESETN			(ARESETN),		
 		.M_AXIS_TVALID			(m_axis_tvalid),
 		.M_AXIS_TDATA			(m_axis_tdata),
