@@ -35,7 +35,7 @@ reg [OUT_DATA_WIDTH-1:0] accumulator = 0;
 
 wire signed_data_valid;
 wire [IN_DATA_WIDTH-1:0] signed_in_data;
-reg [OUT_DATA_WIDTH-1:0] signed_out_data;
+reg  [OUT_DATA_WIDTH-1:0] signed_out_data;
 
 // =====================
 // Code Section

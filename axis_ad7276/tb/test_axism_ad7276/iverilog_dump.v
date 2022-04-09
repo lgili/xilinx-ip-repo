@@ -1,6 +1,6 @@
 module iverilog_dump();
 initial begin
-    $dumpfile("ad7276_v1_m_axis.fst");
-    $dumpvars(0, ad7276_v1_m_axis);
+    $dumpfile("adc_7276.fst");
+    $dumpvars(0, adc_7276);
 end
 endmodule

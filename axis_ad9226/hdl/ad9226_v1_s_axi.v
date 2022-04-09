@@ -26,15 +26,15 @@ THE SOFTWARE.
 // base address + 0x00 : EnableSampleGeneration 	
 // base address + 0x04 : PacketSize			
 // base address + 0x08 : EnablePacket -> Enable/disenable		
-// base address + 0x0c : configPassband 
-// base address + 0x10 : DMABaseAddr 
+// base address + 0x0c : positionsZcd 
+// base address + 0x10 : ConfigZCDValue 
 // base address + 0x14 : TriggerLevel
 // base address + 0x18 : ConfigSampler 
-// base address + 0x1c : DataFromArm
+// base address + 0x1c : ConfigAdc
 // base address + 0x20 : Decimator
 // base address + 0x24 : MavgFactor
-// base address + 0x28 :TriggerEnable
-// base address + 0x2c :TriggerOffset
+// base address + 0x28 :FirstPositionZcd
+// base address + 0x2c :LastPositionZcd
 
 `timescale 1 ns / 1 ps
 
@@ -57,12 +57,11 @@ module ad9226_v1_s_axi #
      */
 	output 	wire					            EnableSampleGeneration, 
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	PacketSize, 
-	output 	wire 	[7:0]				        EnablePacket, 
-	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigPassband,
-	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	DMABaseAddr,
+	output 	wire 	[7:0]				        EnablePacket, 	
+	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigZCDValue,
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	TriggerLevel,
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigSampler,
-	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	DataFromArm,
+	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	ConfigAdc,
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	Decimator,
 	output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	MavgFactor,
 	
@@ -71,6 +70,8 @@ module ad9226_v1_s_axi #
      */
 	input       [31:0]              TriggerOffset,    
 	input       [31:0]              TriggerEnable,
+	input   	[31:0]	            FirstPositionZcd,
+	input   	[31:0]	            LastPositionZcd,
 	input 		[31:0]				TotalReceivedPacketData,
 	input 		[31:0]				TotalReceivedPackets,
 	input 		[31:0]				LastReceivedPacket_head,
@@ -509,7 +510,7 @@ module ad9226_v1_s_axi #
 	        4'h0   : reg_data_out <= slv_reg0;
 	        4'h1   : reg_data_out <= slv_reg1;
 	        4'h2   : reg_data_out <= slv_reg2;
-	        4'h3   : reg_data_out <= slv_reg3;
+	        4'h3   : reg_data_out <= slv_reg3; //slv_reg3;
 	        4'h4   : reg_data_out <= slv_reg4; 	//slv_reg4;
 	        4'h5   : reg_data_out <= slv_reg5; 	//slv_reg5;
 	        4'h6   : reg_data_out <= slv_reg6; 	//slv_reg6;
@@ -517,8 +518,8 @@ module ad9226_v1_s_axi #
 	        4'h8   : reg_data_out <= slv_reg8;
 	        4'h9   : reg_data_out <= slv_reg9;
 	        4'hA   : reg_data_out <= slv_reg10;
-	        4'hB   : reg_data_out <= TriggerOffset;
-	        default : reg_data_out <= 0;
+	        4'hB   : reg_data_out <= FirstPositionZcd;
+	        default : reg_data_out <= LastPositionZcd;
 	      endcase
 	end
 
@@ -546,11 +547,11 @@ module ad9226_v1_s_axi #
 	assign EnableSampleGeneration = slv_reg0[0]; 
 	assign PacketSize = slv_reg1; 
 	assign EnablePacket = slv_reg2[7:0]; 
-	assign ConfigPassband = slv_reg3;
-	assign DMABaseAddr = slv_reg4;
+	//assign ConfigPassband = slv_reg3;
+	assign ConfigZCDValue = slv_reg4;
 	assign TriggerLevel = slv_reg5;
 	assign ConfigSampler = slv_reg6;
-	assign DataFromArm  = slv_reg7;
+	assign ConfigAdc  = slv_reg7;
 	assign Decimator  = slv_reg8;
 	assign MavgFactor = slv_reg9;
 	

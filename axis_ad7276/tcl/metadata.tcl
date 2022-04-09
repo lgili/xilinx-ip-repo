@@ -1,4 +1,4 @@
-set design "axis_ad7276"
+set design "ad7276"
 set top "${design}_wrapper"
 set proj_dir "./ip_proj"
 

@@ -26,16 +26,18 @@ THE SOFTWARE.
 `timescale 1ns / 1ps
 
 //`define POST_SYNTHESIS_SIMULATION 1
-	module ad9226_wrapper #
+	module ad7276_wrapper #
 	(
 		// Users to add parameters here
-        parameter ADC_DATA_WIDTH = 12,        
+        parameter ADC_LENGTH = 12,
+        parameter FIR_OUT_LENGTH = 16,
+	    parameter ADC_QTD = 1,     
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
+
 		// Parameters of Axi Slave Bus Interface S00_AXI
-		parameter integer C_S00_AXI_DATA_WIDTH	= 64,
-		parameter integer C_S_AXIS_DATA_WIDTH	= 32,
+		parameter integer C_S00_AXI_DATA_WIDTH	= 32,
 		parameter integer C_S00_AXI_ADDR_WIDTH	= 6,
 		
 		
@@ -52,16 +54,27 @@ THE SOFTWARE.
 	(
 		// Users to add ports here
 	    input wire  clk_100m,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_1,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_2,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_3,
-		input wire [ADC_DATA_WIDTH-1 : 0] adc_trigger,
+	    input  wire  [2*ADC_QTD-1:0]   inData,   
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_1,
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_2,
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_3,
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_4,
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_5,
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_6,
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_7,
+		output wire [FIR_OUT_LENGTH-1 : 0] adc_8,
+		
+		output wire [ADC_QTD-1 : 0] cs,
+		output wire [ADC_QTD-1 : 0] sclk,
+		
+		
+		//input wire [ADC_LENGTH-1 : 0] adc_trigger,
 		output wire irq,		
 		input wire button,
-		output wire [31:0] posTrigger,
-		output wire trigger_acq,
-		output wire [2:0] state,
-		output wire eoc,
+		//output wire [31:0] posTrigger,
+		//output wire trigger_acq,
+		//output wire [2:0] state,
+		//output wire eoc,
 		//output wire AXIS_CLK,
 		//output wire ARESETN_AXIS_M,
 		//input wire [(ADC_TRIGGER_ON)-1:0] otr,
@@ -69,17 +82,19 @@ THE SOFTWARE.
 		// User ports ends
 		// Do not modify the ports beyond this line
 
+
 		// Ports of Axi Slave Bus Interface S00_AXI
 		input wire                           ADC_CLK,
-        input wire                           ARESETN,       
+        input wire                           ARESETN,
+       
                          
 		
-		input wire [C_S_AXIS_DATA_WIDTH-1 : 0] s00_axi_awaddr,
+		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
 		input wire [2 : 0] s00_axi_awprot,
 		input wire  s00_axi_awvalid,
 		output wire  s00_axi_awready,
-		input wire [C_S_AXIS_DATA_WIDTH-1 : 0] s00_axi_wdata,
-		input wire [(C_S_AXIS_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb,
+		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_wdata,
+		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s00_axi_wstrb,
 		input wire  s00_axi_wvalid,
 		output wire  s00_axi_wready,
 		output wire [1 : 0] s00_axi_bresp,
@@ -89,33 +104,33 @@ THE SOFTWARE.
 		input wire [2 : 0] s00_axi_arprot,
 		input wire  s00_axi_arvalid,
 		output wire  s00_axi_arready,
-		output wire [C_S_AXIS_DATA_WIDTH-1 : 0] s00_axi_rdata,
+		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] s00_axi_rdata,
 		output wire [1 : 0] s00_axi_rresp,
 		output wire  s00_axi_rvalid,
-		input wire  s00_axi_rready,
+		input wire  s00_axi_rready
 		
 		
 		//////////////////////////////////////////////////////////////////
 		// Ports of Axi Slave Bus Interface S_AXIS
 		//input wire  s_axis_aclk,
 		//input wire  s_axis_aresetn,
-		output wire  s_axis_tready,
+		/*output wire  s_axis_tready,
 		input wire [C_S00_AXI_DATA_WIDTH-1 : 0] s_axis_tdata,
 		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s_axis_tstrb,
 		input wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] s_axis_tkeep,
 		input wire  s_axis_tlast,
-		input wire  s_axis_tvalid,
+		input wire  s_axis_tvalid,*/
 
 		// Ports of Axi Master Bus Interface M_AXIS
 		//input wire  m_axis_aclk,
 		//input wire  m_axis_aresetn,
-		output wire  m_axis_tvalid,
+		/*output wire  m_axis_tvalid,
 		output wire [C_S00_AXI_DATA_WIDTH-1 : 0] m_axis_tdata,
 		output wire [(C_S00_AXI_DATA_WIDTH/8)-1 : 0] m_axis_tstrb,
 		output wire  m_axis_tlast,
 		input wire  m_axis_tready, 
 		output wire 	[(C_S00_AXI_DATA_WIDTH/8)-1 : 0] m_axis_tkeep, 
-		output wire 	m_axis_tuser
+		output wire 	m_axis_tuser*/
 		
 		/////////////////////////////////////////////////////////////////	
 		
@@ -126,19 +141,18 @@ THE SOFTWARE.
 // signals 
 //
 ///////////////////////////////////////////////////////////////////////////
-wire 	[7:0]  enablePacket; 
-wire	[31:0] configPassband; 
-wire    [31:0] configZCDValue;
+wire 	[7:0]	enablePacket; 
+wire	[31:0]	configPassband; 
+wire    [31:0] dmaBaseAddr;
 wire    [31:0] triggerLevel;
 wire    [31:0] triggerEnable;
 wire    [31:0] configSampler;
-wire    [31:0] configAdc;
+wire    [31:0] dataFromArm;
 wire    [31:0] decimator;
 wire    [31:0] mavgFactor;
 
-wire    [31:0]  firstPositionZcd;
-wire    [31:0]  lastPositionZcd;
 wire    [31:0]  triggerOffset;
+
 wire 	[31:0]	totalReceivedPacketData; 
 wire 	[31:0]	totalReceivedPackets; 
 wire 	[31:0]	lastReceivedPacket_head; 
@@ -146,40 +160,25 @@ wire 	[31:0]	lastReceivedPacket_tail;
 
 assign posTrigger = triggerOffset;
 
-`ifdef POST_SYNTHESIS_SIMULATION
-reg 		enableSampleGeneration; 
-reg 	[31:0]	packetSize; 
 
-initial begin 
-#1000
-	enableSampleGeneration = 1; 
-end 
-
-initial begin 
-	packetSize = 31; 
-end 
-
-`else 
-
-wire 	enableSampleGeneration; 
+wire 		enableSampleGeneration; 
 wire 	[31:0]	packetSize; 	
 	
 	
 // Instantiation of Axi Bus Interface S_AXI
 	ad9226_v1_s_axi # ( 
-		.C_S_AXI_DATA_WIDTH(C_S_AXIS_DATA_WIDTH),
+		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
 		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-	) ad9226_v1_s_axi_inst (
+	) ad7276_v1_s_axi_inst (
 	
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			    ( packetSize ), 
 		.EnablePacket			    ( enablePacket ), 
-		.FirstPositionZcd       (firstPositionZcd),
-		.LastPositionZcd        (lastPositionZcd), 
-		.ConfigZCDValue             (configZCDValue),
+		.ConfigPassband 			( packetPattern ), 
+		.DMABaseAddr                (dmaBaseAddr),
 		.TriggerLevel               (triggerLevel),
 		.ConfigSampler              (configSampler), 
-		.ConfigAdc                (configAdc),
+		.DataFromArm                (dataFromArm),
 		.Decimator                  (decimator),
 		.MavgFactor                 (mavgFactor),
 		
@@ -214,9 +213,42 @@ wire 	[31:0]	packetSize;
 		.S_AXI_RREADY(s00_axi_rready)
 	);	
 	
-`endif 	
+
+
+
+    wire [2*FIR_OUT_LENGTH-1:0] adc0_data;
+    
+    assign adc_2 = adc0_data[31:16];
+    assign adc_1 = adc0_data[15:0];
+    
+    adc_7276 #
+    (
+        .ADC_LENGTH(ADC_LENGTH)
+    ) adc_inst
+    (
+        .Clk_100m(clk_100m),
+        .Clk_adc(ADC_CLK),
+        .Resetn(ARESETN),        
+        .inData(inData),              
+        .adcData(adc0_data),
+        .cs(cs),  
+        .sclk(sclk),      
+        .sampleDone(), 
+        .EnableSampleGeneration(enableSampleGeneration), 
+        .PacketSize(packetSize), 
+        .EnablePacket(enablePacket), 
+        .ConfigPassband(configPassband),
+        .DMABaseAddr(dmaBaseAddr),
+        .TriggerLevel(triggerLevel),
+        .ConfigSampler(configSampler),
+        .DataFromArm(dataFromArm),
+        .Decimator(decimator),	
+        .MavgFactor(mavgFactor),    
+        .TriggerOffset(triggerOffset),  
+        .TriggerEnable(triggerEnable)
+    );
 	// Instantiation of Axi Bus Interface S_AXIS
-	ad9226_v1_s_axis # ( 
+	/*ad9226_v1_s_axis # ( 
 		.C_S_AXIS_TDATA_WIDTH(C_S00_AXI_DATA_WIDTH)
 	) ad9226_v1_s_axis_inst (
 		.TotalReceivedPacketData 	( totalReceivedPacketData ), 
@@ -231,11 +263,11 @@ wire 	[31:0]	packetSize;
 		.S_AXIS_TKEEP			(s_axis_tkeep), 
 		.S_AXIS_TLAST			(s_axis_tlast),
 		.S_AXIS_TVALID			(s_axis_tvalid)
-	);
+	);*/
 	
 	
 	// Instantiation of Axi Bus Interface M_AXIS
-	ad9226_v1_m_axis # ( 
+	/*ad9226_v1_m_axis # ( 
 		.C_M_AXIS_TDATA_WIDTH(C_S00_AXI_DATA_WIDTH),
 		.C_M_START_COUNT(C_M_AXIS_START_COUNT)
 	) ad9226_v1_m_axis_inst (
@@ -255,16 +287,14 @@ wire 	[31:0]	packetSize;
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			( packetSize ), 
 		.EnablePacket			( enablePacket ), 
-		
-		.ConfigZCDValue            (configZCDValue),
+		.ConfigPassband 		( configPassband ), 
+		.DMABaseAddr            (dmaBaseAddr),
 		.TriggerLevel           (triggerLevel),
 		.ConfigSampler          (configSampler), 
-		.ConfigAdc              (configAdc), 	
+		.DataFromArm            (dataFromArm), 	
 		.Decimator              (decimator),	
 		.MavgFactor             (mavgFactor),
 		
-		.FirstPositionZcd       (firstPositionZcd),
-		.LastPositionZcd        (lastPositionZcd),
 		.TriggerOffset          (triggerOffset),
 		.TriggerEnable          (triggerEnable),
 		.trigger_acq             (trigger_acq), 
@@ -278,7 +308,7 @@ wire 	[31:0]	packetSize;
 		.M_AXIS_TREADY			(m_axis_tready),
 		.M_AXIS_TKEEP 			( m_axis_tkeep ), 
 		.M_AXIS_TUSER 			( m_axis_tuser )
-	);
+	);*/
 	
 
 

@@ -26,7 +26,12 @@ $ make
 ```
 Then you need to add this folter to yours IP repository on Vivado.
 
+### To run simulation with cocotb
 
+```console
+$ make
+$ gtkwave sim.fst
+```
 
 <!---
 

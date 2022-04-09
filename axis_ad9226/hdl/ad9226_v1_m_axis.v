@@ -34,6 +34,7 @@ module ad9226_v1_m_axis #
 
 	// Width of S_AXIS address bus. The slave accepts the read and write addresses of width C_M_AXIS_TDATA_WIDTH.
 	parameter integer C_M_AXIS_TDATA_WIDTH	= 32,
+	parameter  integer DATA_REG_WIDTH  = 32,
 	// Start count is the numeber of clock cycles the master will wait before initiating/issuing any transaction.
 	parameter integer C_M_START_COUNT	= 32
 )
@@ -65,19 +66,23 @@ module ad9226_v1_m_axis #
 	/*
      * Configurations 
      */	
-	input 	wire						         EnableSampleGeneration, 
-	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 PacketSize, 
-	input 	wire 	[7:0]					     EnablePacket, 
-	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 ConfigPassband,
-	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 DMABaseAddr,
-	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 TriggerLevel,
-	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 ConfigSampler,
-	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 DataFromArm,
-	input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	 Decimator,	
-	input   wire    [C_M_AXIS_TDATA_WIDTH-1:0]   MavgFactor,
+	input 	wire						     EnableSampleGeneration, 
+	input 	wire 	[DATA_REG_WIDTH-1:0]	 PacketSize, 
+	input 	wire 	[7:0]					 EnablePacket, 
+	
+	input 	wire 	[DATA_REG_WIDTH-1:0]	 ConfigZCDValue,
+	input 	wire 	[DATA_REG_WIDTH-1:0]	 TriggerLevel,
+	input 	wire 	[DATA_REG_WIDTH-1:0]	 ConfigSampler,
+	input 	wire 	[DATA_REG_WIDTH-1:0]	 DataFromArm,
+	input 	wire 	[DATA_REG_WIDTH-1:0]	 Decimator,	
+	input   wire    [DATA_REG_WIDTH-1:0]     MavgFactor,
+	input   wire    [DATA_REG_WIDTH-1:0]     ConfigPassBand,
+	input   wire    [DATA_REG_WIDTH-1:0]     ConfigAdc,
 
 	output   wire    [31:0]              TriggerOffset,  
 	output   wire    [31:0]              TriggerEnable,
+	output   wire    [31:0]              FirstPositionZcd,
+	output   wire    [31:0]              LastPositionZcd,
 
 
 	// otr out of range, indicates when the input is out of limits of thw adc
@@ -92,10 +97,10 @@ module ad9226_v1_m_axis #
 	input wire  						M_AXIS_ARESETN,
 	output wire  						M_AXIS_TVALID,
 	output wire [C_M_AXIS_TDATA_WIDTH-1 : 0] 		M_AXIS_TDATA,
-	output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 		M_AXIS_TSTRB,
+	output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TSTRB,
 	output wire  						M_AXIS_TLAST,
 	input wire  						M_AXIS_TREADY,
-	output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
+	output wire [(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
 	output wire 						M_AXIS_TUSER
 );
 
@@ -109,7 +114,7 @@ wire trigger_comb;
 
 wire triggerLevel_value;
 wire out_data_valid;
-wire [C_M_AXIS_TDATA_WIDTH-1 : 0] out_datafilter;
+
 	
 /////////////////////////////////////////////////
 // 
@@ -130,7 +135,7 @@ assign ADC_CLK = M_AXIS_ACLK; // M_AXIS_ACLK
 //
 /////////////////////////////////////////////////
 
-reg 	enableSampleGenerationR; 
+reg 	enableSampleGenerationR;
 
 wire 	enableSampleGenerationPosEdge; 
 wire 	enableSampleGenerationNegEdge; 
@@ -313,49 +318,48 @@ reg 	[C_M_AXIS_TDATA_WIDTH-1-2:0]	packetSizeInDwords;
 reg 	[1:0]				validBytesInLastChunk; 
 
 always @(posedge Clk) 
-	if ( ! ResetL || CanEnable ==1'b0 ) begin 
-		packetSizeInDwords <= 0; 
-		validBytesInLastChunk <= 0; 
-	end 
-	else begin 
-		if ( enableSampleGenerationPosEdge ) begin 
-			packetSizeInDwords <= PacketSize >> 2;
-			validBytesInLastChunk <= PacketSize - packetSizeInDwords * 4;
-		end 
-	end 
-	
+if ( ! ResetL || CanEnable ==1'b0 ) begin 
+    packetSizeInDwords <= 0; 
+    validBytesInLastChunk <= 0; 
+end 
+else begin 
+    if ( enableSampleGenerationPosEdge ) begin 
+        packetSizeInDwords <= PacketSize >> 2;
+        validBytesInLastChunk <= PacketSize - packetSizeInDwords * 4;
+    end 
+end 
+
 
 /////////////////////////////////////////////////
 // 
 // ADC Interface
 //
 /////////////////////////////////////////////////
-
-wire [11:0] adc_result_1;
-wire [11:0] adc_result_2;
-wire [11:0] adc_result_3;
-wire [11:0] adc_result_4;
+wire signed [11:0] adc_result_1;
+wire signed [11:0] adc_result_2;
+wire signed [11:0] adc_result_3;
+wire signed [11:0] adc_result_4;
 wire adc_result_1_ready;
 wire adc_result_2_ready;
 wire adc_result_3_ready;
 wire adc_result_4_ready;
 wire adc_result_1_valid;
-wire [15:0] adc_result_decimator;
+wire signed [15:0] adc_result_decimator;
 //wire eoc;
 wire adc_ready;
 wire in_data_ready;
 
 
- // ADC instance
+// ADC instance
 ad_9226#(
-	.ADC_DATA_WIDTH(ADC_DATA_WIDTH)
+	.ADC_DATA_WIDTH(ADC_DATA_WIDTH)   
 )
 ADC
 (
 	.clk(Clk),
 	.rst_n(ResetL),
 	.clk_sample(ADC_CLK),
-	.ready(in_data_ready),        
+	.ready(ResetL),        
 	.eoc(eoc),
 	.data_in0(adc_1),
 	.data_in1(adc_2),
@@ -364,7 +368,8 @@ ADC
 	.data_out0(adc_result_1), 
 	.data_out1(adc_result_2),
 	.data_out2(adc_result_3),
-	.data_out3(adc_result_4)             
+	.data_out3(adc_result_4),
+	.configAdc(ConfigAdc)           
 );
     
 data_decimation#(
@@ -404,6 +409,44 @@ moving_average_fir #
 	.out_data(out_data_fir)
 );
     
+wire out_data_valid_filter;
+wire [15:0] out_data_filter; 
+
+/*
+passband_filter passband
+(
+		.rst(ResetL),
+		.clk(Clk),
+		.in_data_valid(out_data_valid_fir),
+		.in_data(out_data_fir),
+		.out_data_valid(out_data_valid_filter),
+		.out_data(out_data_filter)
+		//.in_coeff_a1(-32'd1073738109),
+		//.in_coeff_a2(32'd536867332),
+		//.in_coeff_b0(32'd1789),
+		//.in_coeff_b2(-32'd1789),
+		//.config_reg(ConfigPassBand)
+);
+*/
+wire [15:0] out_data_zcd;    
+    
+zero_crossing_detector#
+(
+    .DATA_WIDTH(16),
+    .REG_WIDTH(32)
+) zcd_dut
+(
+    .clk(Clk),
+    .rst(ResetL),
+    .in_data_valid(out_data_valid_fir),
+    .in_data(out_data_fir), 
+    .in_counter_pos(packetCounter),
+    .out_data(out_data_zcd),    
+    .config_reg(ConfigZCDValue),
+    .out_zcd_first_pos(FirstPositionZcd),
+	.out_zcd_last_pos(LastPositionZcd)
+);    
+
 assign triggerLevel_value = (TriggerLevel == 0) ? 65350 : TriggerLevel;
 assign trigger_comb = (ConfigSampler[1] == 0) ? 0 : trigger_acq;
 
@@ -416,8 +459,8 @@ trigger_dut
 (
 	.rst(!ResetL),
 	.clk(Clk),
-	.in_data_valid(ADC_CLK),
-	.in_data(adc_result_1),
+	.in_data_valid(out_data_valid_fir),
+	.in_data(out_data_fir),
 	.trigger_level(TriggerLevel),
 	.in_dma_master_address(packetCounter),
 	.out_data_offset(TriggerOffset),
@@ -430,7 +473,7 @@ reg 	[31:0]		globalCounter;
 
 
 //assign M_AXIS_TDATA = globalCounter; 
-assign M_AXIS_TDATA =  (C_M_AXIS_TDATA_WIDTH == 64) ? {16'd0,adc_result_4, adc_result_3, adc_result_2, adc_result_1} : {8'd0, adc_result_decimator, out_data_fir}; 
+assign M_AXIS_TDATA =  (C_M_AXIS_TDATA_WIDTH == 64) ? { 2'd0, packetCounter, out_data_zcd, out_data_fir} : {out_data_zcd, out_data_fir}; 
 
 always @(posedge Clk) 
 	if ( ! ResetL ) begin 
