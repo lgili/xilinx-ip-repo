@@ -174,5 +174,12 @@ always @(posedge Clk)
 			end 
 		end 
 	end 
+	
+	
+	
+	
+	
+
+	
 			
 endmodule

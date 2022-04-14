@@ -473,7 +473,7 @@ reg 	[31:0]		globalCounter;
 
 
 //assign M_AXIS_TDATA = globalCounter; 
-assign M_AXIS_TDATA =  (C_M_AXIS_TDATA_WIDTH == 64) ? { 2'd0, packetCounter, out_data_zcd, out_data_fir} : {out_data_zcd, out_data_fir}; 
+assign M_AXIS_TDATA =  (C_M_AXIS_TDATA_WIDTH == 64) ? { 2'd0, packetCounter, out_data_zcd, out_data_fir} : packetCounter; 
 
 always @(posedge Clk) 
 	if ( ! ResetL ) begin 
@@ -582,5 +582,8 @@ assign M_AXIS_TSTRB =   ( (! lastDataIsBeingTransferred) && dataIsBeingTransferr
 
 assign M_AXIS_TKEEP = M_AXIS_TSTRB; // 4'hf; 
 assign M_AXIS_TUSER = 0; 
+
+
+
 
 endmodule
