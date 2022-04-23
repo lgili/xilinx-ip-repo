@@ -1,21 +1,34 @@
-// Sadri - May - 28 - 2016 - Added NumberOfPacketsToSend to have a mechanism to make sure we check the fifo full event correctly. 
-// Sadri - May - 25 - 2016 - Updated, added AsynchFIFO_AlmostFull port to show the user that the asynch fifo has got full. this should never happen. 
-// Sadri - may - 02 - 2015 - updated ! 
+/*
+Copyright (c) 2014-2022 Luiz Carlos Gili
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+
+// Language: Verilog 2001
 
 // Addresses used : 
-// base address + 0x00 : slv_reg0 : CPU WRITES : EnableSampleGeneration 	
-// base address + 0x04 : slv_reg1 : CPU WRITES : PacketSize			
-// base address + 0x08 : slv_reg2 : CPU WRITES : PacketRate 			
-// base address + 0x0c : slv_reg3 : CPU WRITES : Number of Packets to send ( old use: PacketPattern )
-// base address + 0x10 : slv_reg4 : CPU READs  : TotalReceivedPacketData 
-// base address + 0x10 : slv_reg4 : CPU WRITEs : Reset signal to Asynch FIFO 
-// base address + 0x14 : slv_reg5 : CPU READS  : Error detected in counter  // TotalReceivedPackets	// Also this reflects AsynchFIFO_AlmostFull 
-// base address + 0x18 : slv_reg6 : CPU READS  : error detected counter value current  // LastReceivedPacket_head 
-// base address + 0x1c : slv_reg7 : CPU READS  : error detected counter value prev  // LastReceivedPacket_tail
+// base address + 0x00 : EnableSampleGeneration 	
+
 
 `timescale 1 ns / 1 ps
 
-	module sample_generator_v2_0_S_AXI #
+module axi_clock_s_axi #
 	(
 		// Users to add parameters here
 
@@ -23,29 +36,14 @@
 		// Do not modify the parameters beyond this line
 
 		// Width of S_AXI data bus
-		parameter integer C_S_AXI_DATA_WIDTH	= 32,
+		parameter integer AXI_DATA_WIDTH	= 32,
 		// Width of S_AXI address bus
-		parameter integer C_S_AXI_ADDR_WIDTH	= 5
+		parameter integer AXI_ADDR_WIDTH	= 5
 	)
 	(
 		// Users to add ports here
-		output 	wire					EnableSampleGeneration, 
-		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	PacketSize, 
-		output 	wire 	[7:0]				PacketRate, 
-		output 	wire 	[C_S_AXI_DATA_WIDTH-1:0]	PacketPattern,
-		output 	wire	[C_S_AXI_DATA_WIDTH-1:0]	NumberOfPacketsToSend,
 		
-		input 		[31:0]				TotalReceivedPacketData,
-		input 		[31:0]				TotalReceivedPackets,
-		input 		[31:0]				LastReceivedPacket_head,
-		input 		[31:0]				LastReceivedPacket_tail,
-		
-		input 						ErrorDetectedInCounter, 
-		input 		[31:0]	 			ErrorDetectedCounterValue_current,
-		input 		[31:0]	 			ErrorDetectedCounterValue_prev,
-
-		input 						AsynchFIFO_AlmostFull,
-		output 						AsynchFIFO_ResetN,
+		output 	wire 	[AXI_DATA_WIDTH-1:0]	ClockDivider, 		
 		
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -55,7 +53,7 @@
 		// Global Reset Signal. This Signal is Active LOW
 		input wire  S_AXI_ARESETN,
 		// Write address (issued by master, acceped by Slave)
-		input wire [C_S_AXI_ADDR_WIDTH-1 : 0] S_AXI_AWADDR,
+		input wire [AXI_ADDR_WIDTH-1 : 0] S_AXI_AWADDR,
 		// Write channel Protection type. This signal indicates the
     		// privilege and security level of the transaction, and whether
     		// the transaction is a data access or an instruction access.
@@ -67,11 +65,11 @@
     		// to accept an address and associated control signals.
 		output wire  S_AXI_AWREADY,
 		// Write data (issued by master, acceped by Slave) 
-		input wire [C_S_AXI_DATA_WIDTH-1 : 0] S_AXI_WDATA,
+		input wire [AXI_DATA_WIDTH-1 : 0] S_AXI_WDATA,
 		// Write strobes. This signal indicates which byte lanes hold
     		// valid data. There is one write strobe bit for each eight
     		// bits of the write data bus.    
-		input wire [(C_S_AXI_DATA_WIDTH/8)-1 : 0] S_AXI_WSTRB,
+		input wire [(AXI_DATA_WIDTH/8)-1 : 0] S_AXI_WSTRB,
 		// Write valid. This signal indicates that valid write
     		// data and strobes are available.
 		input wire  S_AXI_WVALID,
@@ -88,7 +86,7 @@
     		// can accept a write response.
 		input wire  S_AXI_BREADY,
 		// Read address (issued by master, acceped by Slave)
-		input wire [C_S_AXI_ADDR_WIDTH-1 : 0] S_AXI_ARADDR,
+		input wire [AXI_ADDR_WIDTH-1 : 0] S_AXI_ARADDR,
 		// Protection type. This signal indicates the privilege
     		// and security level of the transaction, and whether the
     		// transaction is a data access or an instruction access.
@@ -100,7 +98,7 @@
     		// ready to accept an address and associated control signals.
 		output wire  S_AXI_ARREADY,
 		// Read data (issued by slave)
-		output wire [C_S_AXI_DATA_WIDTH-1 : 0] S_AXI_RDATA,
+		output wire [AXI_DATA_WIDTH-1 : 0] S_AXI_RDATA,
 		// Read response. This signal indicates the status of the
     		// read transfer.
 		output wire [1 : 0] S_AXI_RRESP,
@@ -113,39 +111,39 @@
 	);
 
 	// AXI4LITE signals
-	reg [C_S_AXI_ADDR_WIDTH-1 : 0] 	axi_awaddr;
+	reg [AXI_ADDR_WIDTH-1 : 0] 	axi_awaddr;
 	reg  	axi_awready;
 	reg  	axi_wready;
 	reg [1 : 0] 	axi_bresp;
 	reg  	axi_bvalid;
-	reg [C_S_AXI_ADDR_WIDTH-1 : 0] 	axi_araddr;
+	reg [AXI_ADDR_WIDTH-1 : 0] 	axi_araddr;
 	reg  	axi_arready;
-	reg [C_S_AXI_DATA_WIDTH-1 : 0] 	axi_rdata;
+	reg [AXI_DATA_WIDTH-1 : 0] 	axi_rdata;
 	reg [1 : 0] 	axi_rresp;
 	reg  	axi_rvalid;
 
 	// Example-specific design signals
-	// local parameter for addressing 32 bit / 64 bit C_S_AXI_DATA_WIDTH
+	// local parameter for addressing 32 bit / 64 bit AXI_DATA_WIDTH
 	// ADDR_LSB is used for addressing 32/64 bit registers/memories
 	// ADDR_LSB = 2 for 32 bits (n downto 2)
 	// ADDR_LSB = 3 for 64 bits (n downto 3)
-	localparam integer ADDR_LSB = (C_S_AXI_DATA_WIDTH/32) + 1;
+	localparam integer ADDR_LSB = (AXI_DATA_WIDTH/32) + 1;
 	localparam integer OPT_MEM_ADDR_BITS = 2;
 	//----------------------------------------------
 	//-- Signals for user logic register space example
 	//------------------------------------------------
 	//-- Number of Slave Registers 8
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg0;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg1;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg2;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg3;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg4;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg5;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg6;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	slv_reg7;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg0;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg1;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg2;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg3;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg4;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg5;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg6;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg7;
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
-	reg [C_S_AXI_DATA_WIDTH-1:0]	 reg_data_out;
+	reg [AXI_DATA_WIDTH-1:0]	 reg_data_out;
 	integer	 byte_index;
 	reg 				asynchFIFO_AlmostFullR;
 	
@@ -262,56 +260,56 @@
 	      begin
 	        case ( axi_awaddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
 	          3'h0:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 0
 	                slv_reg0[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h1:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 1
 	                slv_reg1[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h2:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 2
 	                slv_reg2[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h3:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 3
 	                slv_reg3[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h4:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 4
 	                slv_reg4[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h5:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 5
 	                slv_reg5[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h6:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 6
 	                slv_reg6[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
 	              end  
 	          3'h7:
-	            for ( byte_index = 0; byte_index <= (C_S_AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 7
@@ -438,10 +436,10 @@
 	        3'h1   : reg_data_out <= slv_reg1;
 	        3'h2   : reg_data_out <= slv_reg2;
 	        3'h3   : reg_data_out <= slv_reg3;
-	        3'h4   : reg_data_out <= TotalReceivedPacketData; 		//slv_reg4;
-	        3'h5   : reg_data_out <= asynchFIFO_AlmostFullR; // ErrorDetectedInCounter; // TotalReceivedPackets; 		//slv_reg5;
-	        3'h6   : reg_data_out <= ErrorDetectedCounterValue_current; // LastReceivedPacket_head; 	//slv_reg6;
-	        3'h7   : reg_data_out <= ErrorDetectedCounterValue_prev; // LastReceivedPacket_tail; 	//slv_reg7;
+	        3'h4   : reg_data_out <= slv_reg4; 		
+	        3'h5   : reg_data_out <= slv_reg5; 
+	        3'h6   : reg_data_out <= slv_reg6; 
+	        3'h7   : reg_data_out <= slv_reg7; 
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -467,36 +465,12 @@
 
 	// Add user logic here
 
-	assign EnableSampleGeneration = slv_reg0[0]; 
-	assign PacketSize = slv_reg1; 
-	assign PacketRate = slv_reg2[7:0]; 
-	assign PacketPattern = slv_reg3;
-	assign NumberOfPacketsToSend = slv_reg3; 
+	assign ClockDivider = slv_reg0; 
 	
-	always @( posedge S_AXI_ACLK ) begin 
-		if ( S_AXI_ARESETN == 0 ) begin 
-			asynchFIFO_AlmostFullR <= 0; 
-		end 
-		else begin 
-			if ( ! AsynchFIFO_ResetN ) begin 
-				asynchFIFO_AlmostFullR <= 0;
-			end 
-			else if ( ! EnableSampleGeneration ) begin 
-				asynchFIFO_AlmostFullR <= 0;
-			end 
-			else if ( AsynchFIFO_AlmostFull ) begin 
-				asynchFIFO_AlmostFullR <= 1; 
-			end 
-			else begin 
-				asynchFIFO_AlmostFullR <= asynchFIFO_AlmostFullR;
-			end 
-		end 
-	end 
 	
-	// Active Low Reset Signal going to the Asynch FIFO 
-	// By default this register is all zero and fifo remains in reset until you explicitly write to this register. 
-	assign AsynchFIFO_ResetN = slv_reg4[0];
 	
+		
 	// User logic ends
 
 	endmodule
+

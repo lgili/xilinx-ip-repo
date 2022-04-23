@@ -1,4 +1,4 @@
-# Copyright (c) 2022 Luiz Carlos Gili
+# Copyright (c) 2020 Alex Forencich
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,28 +26,23 @@ WAVES ?= 1
 COCOTB_HDL_TIMEUNIT = 1ns
 COCOTB_HDL_TIMEPRECISION = 1ps
 
-DUT      = ad9226_v1_m_axis
+DUT      = axi_clock_wrapper
 TOPLEVEL = $(DUT)
 MODULE   = test_$(DUT)
 VERILOG_SOURCES += ../../hdl/$(DUT).v
-VERILOG_SOURCES += ../../hdl/ad_9226.v
-VERILOG_SOURCES += ../../hdl/data_decimation.v
-VERILOG_SOURCES += ../../hdl/trigger_level_acq.v
-VERILOG_SOURCES += ../../hdl/moving_average_fir.v
-VERILOG_SOURCES += ../../hdl/zero_crossing_detector.v
-VERILOG_SOURCES += ../../hdl/passband_filter.v
+VERILOG_SOURCES += ../../hdl/axi_clock_s_axi.v
+VERILOG_SOURCES += ../../hdl/axi_clock_divider.v
 
 # module parameters
-export PARAM_DATA_WIDTH ?= 12
-export PARAM_KEEP_ENABLE ?= $(shell expr $(PARAM_DATA_WIDTH) \> 8 )
-export PARAM_KEEP_WIDTH ?= $(shell expr $(PARAM_DATA_WIDTH) / 8 )
+export PARAM_AXI_DATA_WIDTH = 32
+export PARAM_AXI_ADDR_WIDTH = 5
+
 
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
 
-	COMPILE_ARGS += -P $(TOPLEVEL).DATA_WIDTH=$(PARAM_DATA_WIDTH)
-	COMPILE_ARGS += -P $(TOPLEVEL).KEEP_ENABLE=$(PARAM_KEEP_ENABLE)
-	COMPILE_ARGS += -P $(TOPLEVEL).KEEP_WIDTH=$(PARAM_KEEP_WIDTH)
+	COMPILE_ARGS += -P $(TOPLEVEL).AXI_LITE_DATA_WIDTH=$(PARAM_AXI_DATA_WIDTH)
+	COMPILE_ARGS += -P $(TOPLEVEL).AXI_ADDR_WIDTH=$(PARAM_AXI_ADDR_WIDTH)
 	
 
 	ifeq ($(WAVES), 1)
@@ -55,11 +50,11 @@ ifeq ($(SIM), icarus)
 		COMPILE_ARGS += -s iverilog_dump
 	endif
 else ifeq ($(SIM), verilator)
-	COMPILE_ARGS += -Wno-SELRANGE -Wno-WIDTH
+	COMPILE_ARGS += -Wno-SELRANGE -Wno-WIDTH -Wno-CASEINCOMPLETE
 
-	COMPILE_ARGS += -GDATA_WIDTH=$(PARAM_DATA_WIDTH)
-	COMPILE_ARGS += -GKEEP_ENABLE=$(PARAM_KEEP_ENABLE)
-	COMPILE_ARGS += -GKEEP_WIDTH=$(PARAM_KEEP_WIDTH)
+	COMPILE_ARGS += -GAXI_LITE_DATA_WIDTH=$(PARAM_AXI_DATA_WIDTH)
+	COMPILE_ARGS += -GAXI_ADDR_WIDTH=$(PARAM_AXI_ADDR_WIDTH)
+	
 
 	ifeq ($(WAVES), 1)
 		COMPILE_ARGS += --trace-fst

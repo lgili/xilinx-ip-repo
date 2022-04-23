@@ -40,7 +40,7 @@ module ad_9226#
     /*
      * CLK to adc sample
      */
-    input clk_sample,
+    input wire clk_sample,
 
     // ADC ready and end of conversion status
     input wire ready,        
@@ -65,7 +65,7 @@ module ad_9226#
     /*
      * ADC config
      */   
-    input  [31:0] configAdc    
+    input wire  [31:0] configAdc    
 );
 
 localparam HIGH =1;
@@ -75,17 +75,17 @@ localparam LOW  =4;
 
 reg [3:0] fsm_cs;
 reg [3:0] fsm_ns;  
-wire lambda;
-reg sigma;
+wire clk_sample;
+
 reg flag;   
 wire [ADC_DATA_WIDTH-1:0] offsetUsed;
 reg [5:0] waitCycles = 4;
 reg [31:0] countCycles;
 
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out0;
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out1;
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out2;
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out3;
+reg  [ADC_DATA_WIDTH-1:0] signed_data_out0;
+reg  [ADC_DATA_WIDTH-1:0] signed_data_out1;
+reg  [ADC_DATA_WIDTH-1:0] signed_data_out2;
+reg  [ADC_DATA_WIDTH-1:0] signed_data_out3;
 
 
 assign offsetUsed = (configAdc[31] == 1) ? configAdc[30:0] : 0;
@@ -94,13 +94,11 @@ assign data_out1 = signed_data_out1;
 assign data_out2 = signed_data_out2;
 assign data_out3 = signed_data_out3;
 
-assign lambda = clk_sample;
+
  
 initial begin 
     fsm_cs   = HIGH;
-    fsm_ns   = HIGH; 
-   
-     
+    fsm_ns   = HIGH;   
 end 
 
 // Clock enable  
@@ -109,18 +107,17 @@ always @(posedge clk) begin
 end
    
 // FSM Sequential Behaviour
-always @(posedge clk) begin
+/*always @(posedge clk) begin
     if(rst_n == 0) begin 
         fsm_cs <= HIGH;
-        countCycles <= 0;
     end
     else
         fsm_cs <= fsm_ns;         
-end
+end*/
     
     
 // FSM Combinational Behaviour
-always @(fsm_cs,lambda) begin
+/*always @(fsm_cs,clk_sample) begin
     sigma <= 0;
     flag  <= 0;
     
@@ -128,7 +125,7 @@ always @(fsm_cs,lambda) begin
     
     HIGH : 
             begin       
-            if (lambda == 0)
+            if (clk_sample == 0)
                 fsm_ns <= ACQ;
             else
                 fsm_ns <= HIGH;
@@ -146,47 +143,31 @@ always @(fsm_cs,lambda) begin
     LOW:
         begin
             flag <= 1;
-            if (lambda == 1) begin
-                fsm_ns <= HIGH;
-                
-                // fix glitch on firsts clock off reading
-                /*if(countCycles <= waitCycles)begin
-                    countCycles <= countCycles + 1;
-                end
-                else 
-                    flag <= 1;*/
+            if (clk_sample == 1) begin
+                fsm_ns <= HIGH; 
             end    
             else
                 fsm_ns <= LOW;  
         end          
     endcase
-end
+end*/
     
+
 // Update Sample Register
-always @(posedge clk) begin
+always @(posedge clk_sample) begin
     if (rst_n == 0) begin // zera saidas em reset
         signed_data_out0 <= 12'h0; 
         signed_data_out1 <= 12'h0;
         signed_data_out2 <= 12'h0;
         signed_data_out3 <= 12'h0;
     end
-    else if (sigma == 1) begin
-        if(ready == 1) begin
+    else begin
             signed_data_out0 <= data_in0 - offsetUsed; 
             signed_data_out1 <= data_in1 - offsetUsed;
             signed_data_out2 <= data_in2 - offsetUsed;
-            signed_data_out3 <= data_in3 - offsetUsed;
-        end
-        else begin
-            signed_data_out0 <= 0; 
-            signed_data_out1 <= 0;
-            signed_data_out2 <= 0;
-            signed_data_out3 <= 0;
-        end
+            signed_data_out3 <= data_in3 - offsetUsed;       
     end        
 end
 
-// Output Mapping
-// End of Conversion (EOC)
-//assign eoc = flag;
+
 endmodule

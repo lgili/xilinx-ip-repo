@@ -40,31 +40,19 @@ from cocotbext.axi import AddressSpace
 class TB:
     def __init__(self, dut):
         self.dut = dut
-        #self.signal = []
-
+     
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
-        #self.log.setLevel(logging.FATAL)
 
-        # AXI
-        #self.address_space = AddressSpace()
-        #self.pool = self.address_space.create_pool(0, 0x8000_0000)
-
+        # AXI 
         cocotb.cocotb.start_soon(Clock(dut.clk_100m, 10,units="ns").start())        
-        cocotb.cocotb.start_soon(Clock(dut.clk_adc, 40, units="ns").start())
+        
 
         self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.clk_100m, dut.aresetn,reset_active_level=False)
-        #self.address_space.register_region(self.axil_master, 0x10_0000_0000)
-        #self.hw_regs = self.address_space.create_window(0x10_0000_0000, self.axil_master.size)
-
-        #self.sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.clk_100m, dut.aresetn,reset_active_level=False)
-
-        #tb.log.info("Packet: %s", pkt)
-
-        self.EnableSampleGenerationAddr = 0x00
-        self.PacketSizeAddr             = 0x04
-        self.PacketRate                 = 0x08
-        self.ConfigAdcAddr              = 0x0C
+       
+        
+        
+        self.ClockDividerAddr = 0x00      
 
                        
         
@@ -78,19 +66,17 @@ class TB:
         if generator:
             self.axil_master.write_if.b_channel.set_pause_generator(generator())
             self.axil_master.read_if.r_channel.set_pause_generator(generator())
-            self.sink.set_pause_generator(generator())
+            
             
 
     async def reset(self):
-        self.dut.aresetn.setimmediatevalue(1)
-        
+        self.dut.aresetn.setimmediatevalue(1)        
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         self.dut.aresetn.value = 0
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
-        self.dut.aresetn.value = 1  
-        self.dut.m_axis_tready.value = 1      
+        self.dut.aresetn.value = 1             
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
 
@@ -100,108 +86,45 @@ class TB:
     async def write_to_axi_lite(self,addr, value):
 
         self.log.info("Writing data")
-        try:           
-            
+        try:            
             send_data = value.to_bytes(4, 'little') #bytearray(value)    
             await self.axil_master.write(addr, send_data)
-           
-
             await RisingEdge(self.dut.clk_100m)
             data = await self.axil_master.read(addr, 4)
 
             self.log.info("Writed: %s", data.data) 
         except:
-            print("An exception occurred")       
-
-    async def gen_adc_input_thead(self):
-        for i in range(len(self.signal)): 
-            v = int(self.signal[i])       
-            await self.write(v)
-            
-
-    async def write(self, data):    
-        await RisingEdge(self.dut.clk_adc)    
-        self.dut.s1_ad9226_data.value = data
-        self.dut.s2_ad9226_data.value = data
-        self.dut.s3_ad9226_data.value = data
-        
-        
-    async def read_m_axis_thead(self):
-        for data in range(2): #len(self.signal)
-            self.rx_frame = await self.sink.read()          
-
-
-    def generateSin(self, freq, time, amp, sample_rate, random, random_range):
-        samples = np.arange(0, time, 1/sample_rate) 
-        noise = 0
-        if random == 1:
-              noise = np.random.randint(random_range, size=(len(samples)))  
-              
-        self.signal = amp/2 * np.sin(2 * np.pi * freq * samples)  + (amp/2)  + noise
-        self.signal = np.int16(self.signal)
-        #print(self.signal[4]) 
-        #print(len(self.signal))  
+            print("An exception occurred")     
 
 
    
 async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=None):
 
-    tb = TB(dut)
-    
-
-    tb.generateSin(0.3,0.3,3500,10e3,1,500)
+    tb = TB(dut)    
     await tb.reset()
 
     tb.set_idle_generator(idle_inserter)
     tb.set_backpressure_generator(backpressure_inserter)
 
-
+    CLK_DIV = 10
     # set packet size
-    await tb.write_to_axi_lite(tb.PacketSizeAddr, 1000)
-
-    # set adc config
-    await RisingEdge(dut.clk_100m)
-    useSigned = 1
-    if(useSigned):
-        val = 1 << 31
-        val |= 2048
-        tb.log.info("Adc config %d", val)
-        await tb.write_to_axi_lite(tb.ConfigAdcAddr, val)
-    else:
-        await tb.write_to_axi_lite(tb.ConfigAdcAddr, 0)    
-
-    # set enable
-    await RisingEdge(dut.clk_100m)
-    await RisingEdge(dut.clk_100m)
-    await tb.write_to_axi_lite(tb.EnableSampleGenerationAddr, 1)    
-
-    write_thread_a = cocotb.start_soon(tb.gen_adc_input_thead())
+    await tb.write_to_axi_lite(tb.ClockDividerAddr, CLK_DIV)
+       
+       
+    for data in range(CLK_DIV*100): #len(self.signal)
+           await RisingEdge(dut.clk_100m)
    
-   
-    assert 1 == 1   
-    await RisingEdge(dut.clk_100m)
-    await RisingEdge(dut.clk_100m)
-
-     # Wait for the other thread to complete
-    await write_thread_a
-
-    #result = await tb.sink.read(100)
-    #tb.log("values from m_axis %d", result)
-
-    #write_thread_b = cocotb.start_soon(tb.read_m_axis_thead())
-    #await write_thread_b
+    await RisingEdge(dut.clk_100m)  
+    assert 1 == 1    
+    
 
 
 def cycle_pause():
     return itertools.cycle([1, 1, 1, 0])
-    #return itertools.cycle([1])
 
 if cocotb.SIM_NAME:
 
-    data_width = len(cocotb.top.s_axi_wdata)
-    byte_lanes = data_width // 8
-    max_burst_size = (byte_lanes-1).bit_length()
-
+    
     factory = TestFactory(run_test)    
     factory.add_option("idle_inserter", [None, cycle_pause])
     factory.add_option("backpressure_inserter", [None, cycle_pause])    
@@ -214,30 +137,24 @@ tests_dir = os.path.abspath(os.path.dirname(__file__))
 hdl_dir = os.path.abspath(os.path.join(tests_dir, '..',  'hdl'))
 
 
-@pytest.mark.parametrize("data_width", [12])
-def test_ad9226_wrapper(request, data_width):
-    dut = "ad9226_wrapper"
+@pytest.mark.parametrize("axi_lite_data_width", [8, 16, 32])
+def test_axi_clock(request, axi_lite_data_width):
+    dut = "axi_clock"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
 
     verilog_sources = [
-        os.path.join(hdl_dir, f"{dut}.v"),        
-        os.path.join(hdl_dir, "ad9226_v1_m_axis.v"),
-        os.path.join(hdl_dir, "ad9226_v1_s_axis.v"),
-        os.path.join(hdl_dir, "ad9226_v1_s_axi.v"),
-        os.path.join(hdl_dir, "ad_9226.v"),
-        os.path.join(hdl_dir, "data_decimation.v"),
-        os.path.join(hdl_dir, "trigger_level_acq.v"),
-        os.path.join(hdl_dir, "moving_average_fir.v"),
-        os.path.join(hdl_dir, "zero_crossing_detector.v"),
-        os.path.join(hdl_dir, "passband_filter.v"),
-        os.path.join(hdl_dir, "skidbuffer.v"),
+        os.path.join(hdl_dir, f"{dut}_wrapper.v"),        
+        os.path.join(hdl_dir, f"{dut}_divider.v"),
+        os.path.join(hdl_dir, f"{dut}_s_axi.v"),
+        
         
     ]
 
     parameters = {}
 
-    parameters['ADC_DATA_WIDTH'] = data_width    
+    parameters['AXI_LITE_DATA_WIDTH'] = axi_lite_data_width
+    parameters['AXI_ADDR_WIDTH'] = 5    
 
     extra_env = {f'PARAM_{k}': str(v) for k, v in parameters.items()}
 

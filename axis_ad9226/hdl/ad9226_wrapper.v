@@ -44,7 +44,7 @@ THE SOFTWARE.
 		// Parameters of Axi Slave Bus Interface S00_AXI
 		parameter integer AXI_LITE_DATA_WIDTH	= 32,
 		parameter integer AXIS_DATA_WIDTH	= 32,
-		parameter integer AXI_ADDR_WIDTH	= 6,
+		parameter integer AXI_ADDR_WIDTH	= 5,
 		
 		
 		parameter integer C_M_AXIS_START_COUNT	= 32
@@ -62,15 +62,19 @@ THE SOFTWARE.
 		// Users to add ports here
 	   
 		input wire [ADC_DATA_WIDTH-1 : 0] s1_ad9226_data,
+		input wire                        s1_otr,
 		output wire                       s1_ad9226_clk,
 		
 		input wire [ADC_DATA_WIDTH-1 : 0] s2_ad9226_data,
+		input wire                        s2_otr,
 		output wire                       s2_ad9226_clk,
 		
 		input wire [ADC_DATA_WIDTH-1 : 0] s3_ad9226_data,
+		input wire                        s3_otr,
 		output wire                       s3_ad9226_clk,
 		
 		input wire [ADC_DATA_WIDTH-1 : 0] s4_ad9226_data,
+		input wire                        s4_otr,
 		output wire                       s4_ad9226_clk,
 		
 		
@@ -90,6 +94,7 @@ THE SOFTWARE.
 
 		// Ports of Axi Slave Bus Interface S00_AXI	
 		input wire  clk_100m,	
+		input wire  clk_adc,
         input wire                           aresetn,       
                          
 		
@@ -136,8 +141,6 @@ THE SOFTWARE.
 		output wire 	[(AXIS_DATA_WIDTH/8)-1 : 0] m_axis_tkeep, 
 		output wire 	m_axis_tuser
 		
-		
-		
 		/////////////////////////////////////////////////////////////////	
 		
 	);
@@ -174,20 +177,19 @@ wire 	[AXI_LITE_DATA_WIDTH-1:0]	totalReceivedPackets;
 wire 	[AXI_LITE_DATA_WIDTH-1:0]	lastReceivedPacket_head; 
 wire 	[AXI_LITE_DATA_WIDTH-1:0]	lastReceivedPacket_tail; 
 
-wire              ADC_CLK;
-assign adc1_clk = ADC_CLK;
-assign adc2_clk = ADC_CLK;
-assign adc3_clk = ADC_CLK;
-assign adc4_clk = ADC_CLK;
+//wire              clk_adc;
+assign s1_ad9226_clk = clk_adc;
+assign s2_ad9226_clk = clk_adc;
+assign s3_ad9226_clk = clk_adc;
+assign s4_ad9226_clk = clk_adc;
 
 assign posTrigger = triggerOffset;
 
 `ifdef POST_SYNTHESIS_SIMULATION
-reg 		enableSampleGeneration; 
+reg 		enableSampleGeneration =0; 
 reg 	[31:0]	packetSize; 
 
 initial begin 
-#1000
 	enableSampleGeneration = 1; 
 end 
 
@@ -201,66 +203,42 @@ wire 	enableSampleGeneration;
 wire 	[31:0]	packetSize; 	
 assign PacketSize = packetSize;
 	
-	
-	clk_wiz_0 clk_inst
-   (
-    // Clock out ports
-    .clk_out1(ADC_CLK),     // output clk_out1
-    // Status and control signals
-    .resetn(aresetn), // input resetn
-    //.locked(locked),       // output locked
-   // Clock in ports
-    .clk_in1(clk_100m));      // input clk_in1
-    
-    
     
 // Instantiation of Axi Bus Interface S_AXI
 	ad9226_v1_s_axi # ( 
-		.C_S_AXI_DATA_WIDTH(AXI_LITE_DATA_WIDTH-1),
-		.C_S_AXI_ADDR_WIDTH(AXI_ADDR_WIDTH)
-	) ad9226_v1_s_axi_inst (
-	
+		.AXI_DATA_WIDTH(AXI_LITE_DATA_WIDTH),
+		.AXI_ADDR_WIDTH(AXI_ADDR_WIDTH)
+	) 	ad9226_v1_s_axi_inst (
+			
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
-		.PacketSize 			    ( packetSize ), 
-		.EnablePacket			    ( enablePacket ), 
-		.FirstPositionZcd       (firstPositionZcd),
-		.LastPositionZcd        (lastPositionZcd), 
-		.ConfigZCDValue             (configZCDValue),
-		.TriggerLevel               (triggerLevel),
-		.ConfigSampler              (configSampler), 
-		.ConfigAdc                (configAdc),
-		.Decimator                  (decimator),
-		.MavgFactor                 (mavgFactor),
+		.PacketSize 			( packetSize ), 
+		.PacketRate			( packetRate ), 
+		.ConfigAdc 			( configAdc ), 
+		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
 		
-		.TriggerOffset                (triggerOffset), 
-		.TriggerEnable                (triggerEnable),
-
-		.TotalReceivedPacketData 	( totalReceivedPacketData ), 
-		.TotalReceivedPackets 		( totalReceivedPackets ), 
-		.LastReceivedPacket_head 	( lastReceivedPacket_head ), 
-		.LastReceivedPacket_tail 	( lastReceivedPacket_tail ), 
 		
-		.S_AXI_ACLK			    (ADC_CLK),
+		
+		.S_AXI_ACLK			    (clk_100m),
 		.S_AXI_ARESETN			(aresetn),
 		.S_AXI_AWADDR			(s_axi_awaddr),
 		.S_AXI_AWPROT			(s_axi_awprot),
-		.S_AXI_AWVALID(s_axi_awvalid),
-		.S_AXI_AWREADY(s_axi_awready),
-		.S_AXI_WDATA(s_axi_wdata),
-		.S_AXI_WSTRB(s_axi_wstrb),
-		.S_AXI_WVALID(s_axi_wvalid),
-		.S_AXI_WREADY(s_axi_wready),
-		.S_AXI_BRESP(s_axi_bresp),
-		.S_AXI_BVALID(s_axi_bvalid),
-		.S_AXI_BREADY(s_axi_bready),
-		.S_AXI_ARADDR(s_axi_araddr),
-		.S_AXI_ARPROT(s_axi_arprot),
-		.S_AXI_ARVALID(s_axi_arvalid),
-		.S_AXI_ARREADY(s_axi_arready),
-		.S_AXI_RDATA(s_axi_rdata),
-		.S_AXI_RRESP(s_axi_rresp),
-		.S_AXI_RVALID(s_axi_rvalid),
-		.S_AXI_RREADY(s_axi_rready)
+		.S_AXI_AWVALID			(s_axi_awvalid),
+		.S_AXI_AWREADY			(s_axi_awready),
+		.S_AXI_WDATA			(s_axi_wdata),
+		.S_AXI_WSTRB			(s_axi_wstrb),
+		.S_AXI_WVALID			(s_axi_wvalid),
+		.S_AXI_WREADY			(s_axi_wready),
+		.S_AXI_BRESP			(s_axi_bresp),
+		.S_AXI_BVALID			(s_axi_bvalid),
+		.S_AXI_BREADY			(s_axi_bready),
+		.S_AXI_ARADDR			(s_axi_araddr),
+		.S_AXI_ARPROT			(s_axi_arprot),
+		.S_AXI_ARVALID			(s_axi_arvalid),
+		.S_AXI_ARREADY			(s_axi_arready),
+		.S_AXI_RDATA			(s_axi_rdata),
+		.S_AXI_RRESP			(s_axi_rresp),
+		.S_AXI_RVALID			(s_axi_rvalid),
+		.S_AXI_RREADY			(s_axi_rready)
 	);	
 	
 `endif 	
@@ -273,8 +251,9 @@ assign PacketSize = packetSize;
 		.LastReceivedPacket_head 	( lastReceivedPacket_head ), 
 		.LastReceivedPacket_tail 	( lastReceivedPacket_tail ), 
 		
-		.S_AXIS_ACLK			(ADC_CLK),
-		.S_AXIS_ARESETN			(aresetn),		.S_AXIS_TREADY			(s_axis_tready),
+		.S_AXIS_ACLK			(clk_100m),
+		.S_AXIS_ARESETN			(aresetn),		
+		.S_AXIS_TREADY			(s_axis_tready),
 		.S_AXIS_TDATA			(s_axis_tdata),
 		.S_AXIS_TSTRB			(s_axis_tstrb),
 		.S_AXIS_TKEEP			(s_axis_tkeep), 
@@ -283,53 +262,36 @@ assign PacketSize = packetSize;
 	);
 	
 	
-	
 	// Instantiation of Axi Bus Interface M_AXIS
 	ad9226_v1_m_axis # ( 
 		.C_M_AXIS_TDATA_WIDTH(AXIS_DATA_WIDTH),
-		.C_M_START_COUNT(C_M_AXIS_START_COUNT)
-	) ad9226_v1_m_axis_inst (
-	
-	    .clk_100m(clk_100m),
-		.adc_1(adc1_data),
-		.adc_2(adc2_data),
-		.adc_3(adc3_data),
-		.adc_trigger(adc_trigger),		
-		.irq(irq),
-		.button(button),	
-		.state(state),  
-		.eoc(eoc),  
-		//.AXIS_CLK(AXIS_CLK),
-		//.ARESETN_AXIS_M(ARESETN_AXIS_M),
-		    
-		.EnableSampleGeneration 	( enableSampleGeneration ), 
-		.PacketSize 			( packetSize ), 
-		.EnablePacket			( enablePacket ), 
-		
-		.ConfigZCDValue            (configZCDValue),
-		.TriggerLevel           (triggerLevel),
-		.ConfigSampler          (configSampler), 
-		.ConfigAdc              (configAdc), 	
-		.Decimator              (decimator),	
-		.MavgFactor             (mavgFactor),
-		
-		.FirstPositionZcd       (firstPositionZcd),
-		.LastPositionZcd        (lastPositionZcd),
-		.TriggerOffset          (triggerOffset),
-		.TriggerEnable          (triggerEnable),
-		.trigger_acq             (trigger_acq), 
+		.C_M_START_COUNT(C_M_AXIS_START_COUNT),
+		.ADC_DATA_WIDTH(AXIS_DATA_WIDTH)
+	) ad9226_v1_m_axis_inst (	
 
-		.M_AXIS_ACLK			(ADC_CLK),
-		.M_AXIS_ARESETN			(aresetn),		
+		.adc_1(s1_ad9226_data),
+		.adc_2(s2_ad9226_data),
+		.adc_3(s3_ad9226_data),
+		.adc_4(s4_ad9226_data),		
+		.irq(irq),
+		.adc_clk(clk_adc),
+
+		.EnableSampleGeneration 	( enableSampleGeneration ), 
+		.PacketSize 			    ( packetSize ), 
+		.PacketRate			        ( packetRate ), 
+		.ConfigAdc 			        ( configAdc  ), 
+		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+		
+		.M_AXIS_ACLK			(clk_100m),
+		.M_AXIS_ARESETN			(aresetn),
 		.M_AXIS_TVALID			(m_axis_tvalid),
 		.M_AXIS_TDATA			(m_axis_tdata),
 		.M_AXIS_TSTRB			(m_axis_tstrb),
 		.M_AXIS_TLAST			(m_axis_tlast),
 		.M_AXIS_TREADY			(m_axis_tready),
-		.M_AXIS_TKEEP 			( m_axis_tkeep ), 
-		.M_AXIS_TUSER 			( m_axis_tuser )
+		.M_AXIS_TKEEP 			(m_axis_tkeep), 
+		.M_AXIS_TUSER 			(m_axis_tuser)
 	);
-	
 
 /**********************************************************************************************************/
 /*axis_async_fifo #
@@ -383,7 +345,7 @@ assign PacketSize = packetSize;
 (
     // AXI input
      
-    .s_clk(ADC_CLK),
+    .s_clk(clk_adc),
     .s_rst(!ResetL),
     .s_axis_tdata(m_axis_fifo_tdata),
     .s_axis_tkeep(m_axis_fifo_tkeep),
@@ -420,4 +382,4 @@ assign PacketSize = packetSize;
     output wire                   m_status_good_frame
 );	*/
 
-	endmodule
+endmodule

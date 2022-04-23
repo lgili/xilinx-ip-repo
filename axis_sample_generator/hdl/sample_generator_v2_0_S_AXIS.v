@@ -1,3 +1,5 @@
+// Sadri - May - 22 - 2016 - Updated so that the C_S_AXIS_TDATA_WIDTH be used for the width of the axi stream data port. 
+// Sadri - May - 13 - 2016 - Added error detection for the counter received at the slave port. 
 // Sadri - May - 06 - 2015 - updated !
 
 // This is a simple axi stream slave plug which reads the incoming packets and reflects their statistics.
@@ -17,10 +19,15 @@ module sample_generator_v2_0_S_AXIS #
 )
 (
 	// Users to add ports here
-	output 	reg 	[31:0]		TotalReceivedPacketData,
-	output 	reg 	[31:0]		TotalReceivedPackets,
-	output 	reg 	[31:0]		LastReceivedPacket_head,
-	output 	reg 	[31:0]		LastReceivedPacket_tail,
+	output 	reg 	[31:0]					TotalReceivedPacketData,
+	output 	reg 	[31:0]					TotalReceivedPackets,
+	output 	reg 	[C_S_AXIS_TDATA_WIDTH-1:0]		LastReceivedPacket_head,
+	output 	reg 	[C_S_AXIS_TDATA_WIDTH-1:0]		LastReceivedPacket_tail,
+	
+	output 	reg 						ErrorDetectedInCounter, 
+	output 	reg 	[C_S_AXIS_TDATA_WIDTH-1:0]	 	ErrorDetectedCounterValue_current,
+	output 	reg 	[C_S_AXIS_TDATA_WIDTH-1:0]	 	ErrorDetectedCounterValue_prev,
+	
 	// User ports ends
 	// Do not modify the ports beyond this line
 
@@ -92,8 +99,8 @@ always @(posedge Clk)
 			packetSizeCounter <= packetSizeCounter; 
 		end 
 		
-		if ( S_AXIS_TVALID && S_AXIS_TLAST ) begin 
-			TotalReceivedPacketData <= TotalReceivedPacketData + packetSizeCounter + numberOfValidBytes; 
+		if ( S_AXIS_TVALID ) begin // && S_AXIS_TLAST ) begin 
+			TotalReceivedPacketData <= TotalReceivedPacketData + numberOfValidBytes; // packetSizeCounter + numberOfValidBytes; 
 		end 
 		else begin 
 			TotalReceivedPacketData <= TotalReceivedPacketData;
@@ -122,8 +129,8 @@ always @(posedge Clk)
 //
 /////////////////////////////////////////////////////////////////////////
 
-reg 		headIsGoingToArrive; 
-reg	[31:0]	lastReceivedPacket_headR; 
+reg 					headIsGoingToArrive; 
+reg	[C_S_AXIS_TDATA_WIDTH-1:0]	lastReceivedPacket_headR; 
 
 always @(posedge Clk)
 	if ( ! ResetL ) begin 
@@ -156,5 +163,40 @@ always @(posedge Clk)
 			end 
 		end 
 	end 
+
+/////////////////////////////////////////////////////////////////////////
+//
+// packet content check 
+//
+/////////////////////////////////////////////////////////////////////////
+// the packets coming back, if counter, we check here to see the counter is incrementing one by one. no data is added and no data is missed. 
+
+always @(posedge Clk)
+	if ( ! ResetL ) begin 
+		ErrorDetectedInCounter <= 0;
+		ErrorDetectedCounterValue_current <= 32'hffffffff; 
+		ErrorDetectedCounterValue_prev <= 0;
+	end 
+	else begin 
+	
+		if ( S_AXIS_TVALID ) begin
+		
+			if ( ! ErrorDetectedInCounter ) begin 
 			
+				ErrorDetectedCounterValue_current <= S_AXIS_TDATA; 
+				ErrorDetectedCounterValue_prev <= ErrorDetectedCounterValue_current; 
+				
+				if ( S_AXIS_TDATA != (ErrorDetectedCounterValue_current+1) ) begin 
+					ErrorDetectedInCounter <= 1;
+				end 
+				
+			end 
+			else begin 
+				ErrorDetectedCounterValue_current <= ErrorDetectedCounterValue_current; 
+				ErrorDetectedCounterValue_prev <= ErrorDetectedCounterValue_prev;
+			end 
+		end 
+		
+	end 
+
 endmodule

@@ -44,7 +44,6 @@ class TB:
 
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
-        #self.log.setLevel(logging.FATAL)
 
         # AXI
         #self.address_space = AddressSpace()
@@ -57,7 +56,7 @@ class TB:
         #self.address_space.register_region(self.axil_master, 0x10_0000_0000)
         #self.hw_regs = self.address_space.create_window(0x10_0000_0000, self.axil_master.size)
 
-        #self.sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.clk_100m, dut.aresetn,reset_active_level=False)
+        self.sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.clk_100m, dut.aresetn,reset_active_level=False)
 
         #tb.log.info("Packet: %s", pkt)
 
@@ -78,7 +77,7 @@ class TB:
         if generator:
             self.axil_master.write_if.b_channel.set_pause_generator(generator())
             self.axil_master.read_if.r_channel.set_pause_generator(generator())
-            self.sink.set_pause_generator(generator())
+            #self.sink.set_pause_generator(generator())
             
 
     async def reset(self):
@@ -90,7 +89,7 @@ class TB:
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         self.dut.aresetn.value = 1  
-        self.dut.m_axis_tready.value = 1      
+        #self.dut.m_axis_tready.value = 1      
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
 
@@ -100,12 +99,9 @@ class TB:
     async def write_to_axi_lite(self,addr, value):
 
         self.log.info("Writing data")
-        try:           
-            
+        try:            
             send_data = value.to_bytes(4, 'little') #bytearray(value)    
             await self.axil_master.write(addr, send_data)
-           
-
             await RisingEdge(self.dut.clk_100m)
             data = await self.axil_master.read(addr, 4)
 
@@ -117,18 +113,17 @@ class TB:
         for i in range(len(self.signal)): 
             v = int(self.signal[i])       
             await self.write(v)
-            
 
     async def write(self, data):    
         await RisingEdge(self.dut.clk_adc)    
         self.dut.s1_ad9226_data.value = data
-        self.dut.s2_ad9226_data.value = data
-        self.dut.s3_ad9226_data.value = data
         
         
     async def read_m_axis_thead(self):
         for data in range(2): #len(self.signal)
-            self.rx_frame = await self.sink.read()          
+            rx_frame = await self.sink.recv()
+
+          
 
 
     def generateSin(self, freq, time, amp, sample_rate, random, random_range):
@@ -147,9 +142,8 @@ class TB:
 async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=None):
 
     tb = TB(dut)
-    
 
-    tb.generateSin(0.3,0.3,3500,10e3,1,500)
+    tb.generateSin(0.3,10,3500,10e3,1,500)
     await tb.reset()
 
     tb.set_idle_generator(idle_inserter)
@@ -160,22 +154,22 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     await tb.write_to_axi_lite(tb.PacketSizeAddr, 1000)
 
     # set adc config
-    await RisingEdge(dut.clk_100m)
-    useSigned = 1
-    if(useSigned):
-        val = 1 << 31
-        val |= 2048
-        tb.log.info("Adc config %d", val)
-        await tb.write_to_axi_lite(tb.ConfigAdcAddr, val)
-    else:
-        await tb.write_to_axi_lite(tb.ConfigAdcAddr, 0)    
+    val = 1 << 31
+    val |= 2048
+    tb.log.info("Adc config %d", val)
+    await tb.write_to_axi_lite(tb.ConfigAdcAddr, val)
 
     # set enable
-    await RisingEdge(dut.clk_100m)
-    await RisingEdge(dut.clk_100m)
-    await tb.write_to_axi_lite(tb.EnableSampleGenerationAddr, 1)    
+    await tb.write_to_axi_lite(tb.EnableSampleGenerationAddr, 1)
+    
 
     write_thread_a = cocotb.start_soon(tb.gen_adc_input_thead())
+    #write_thread_b = cocotb.start_soon(tb.read_m_axis_thead())
+   
+    
+    
+
+
    
    
     assert 1 == 1   
@@ -184,17 +178,11 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
      # Wait for the other thread to complete
     await write_thread_a
-
-    #result = await tb.sink.read(100)
-    #tb.log("values from m_axis %d", result)
-
-    #write_thread_b = cocotb.start_soon(tb.read_m_axis_thead())
     #await write_thread_b
 
 
 def cycle_pause():
     return itertools.cycle([1, 1, 1, 0])
-    #return itertools.cycle([1])
 
 if cocotb.SIM_NAME:
 
@@ -231,7 +219,6 @@ def test_ad9226_wrapper(request, data_width):
         os.path.join(hdl_dir, "moving_average_fir.v"),
         os.path.join(hdl_dir, "zero_crossing_detector.v"),
         os.path.join(hdl_dir, "passband_filter.v"),
-        os.path.join(hdl_dir, "skidbuffer.v"),
         
     ]
 

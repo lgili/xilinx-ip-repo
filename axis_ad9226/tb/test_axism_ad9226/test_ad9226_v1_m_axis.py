@@ -43,7 +43,7 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.cocotb.start_soon(Clock(dut.clk_100m, 10,units="ns").start())        
+        cocotb.cocotb.start_soon(Clock(dut.M_AXIS_ACLK, 10,units="ns").start())        
         cocotb.cocotb.start_soon(Clock(dut.M_AXIS_ACLK, 40, units="ns").start())
                 
         
@@ -52,28 +52,28 @@ class TB:
         self.dut.M_AXIS_ARESETN.setimmediatevalue(0)
         self.dut.M_AXIS_TREADY.setimmediatevalue(0)
         self.dut.EnableSampleGeneration.setimmediatevalue(0)
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.M_AXIS_ACLK)
+        await RisingEdge(self.dut.M_AXIS_ACLK)
         self.dut.M_AXIS_ARESETN.value = 0
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.M_AXIS_ACLK)
+        await RisingEdge(self.dut.M_AXIS_ACLK)
         self.dut.M_AXIS_ARESETN.value = 1  
         self.dut.M_AXIS_TREADY.value = 1      
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.M_AXIS_ACLK)
+        await RisingEdge(self.dut.M_AXIS_ACLK)
 
         self.dut.EnableSampleGeneration.value = 1
         self.dut.PacketSize.value             = 1000  #verilog code pkg is 8 bits so 16/4 = 4 u32 will be send
-        self.dut.EnablePacket.value           = 0  
-        self.dut.TriggerLevel.value           = 100
+        #self.dut.EnablePacket.value           = 0  
+        #self.dut.TriggerLevel.value           = 100
         self.dut.Decimator.value              = 0
         self.dut.MavgFactor.value             = 0
         
 
-        self.dut.ConfigZCDValue.value         = 6144 #10240
+        #self.dut.ConfigZCDValue.value         = 6144 #10240
 
         self.dut.M_AXIS_TREADY.value          = 1
-        self.dut.button.value                 = 1  
+        #self.dut.button.value                 = 1  
 
        
         self.dut.ConfigAdc.value            = 0  #2147485696
@@ -109,7 +109,6 @@ async def run_test(dut):
     #id_count = 2**len(tb.source.bus.tid)
 
     cur_id = 1
-
     tb.generateSin(0.3,10,3500,10e3,1,500)
     await tb.reset()
 
@@ -123,8 +122,8 @@ async def run_test(dut):
     #    assert v == int(out) , "output adc was incorrect on the {}th cycle".format(i)
    
     assert 1 == 1   
-    await RisingEdge(dut.clk_100m)
-    await RisingEdge(dut.clk_100m)
+    await RisingEdge(dut.M_AXIS_ACLK)
+    await RisingEdge(dut.M_AXIS_ACLK)
 
 
 

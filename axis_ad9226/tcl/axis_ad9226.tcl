@@ -23,8 +23,8 @@ set_property -dict ${ip_properties} ${ip_core}
 set_property SUPPORTED_FAMILIES ${family_lifecycle} ${ip_core}
 
 
-foreach interface_name [list adc1 adc2 adc3 adc4] data_name [list s1_ad9226_data s2_ad9226_data s3_ad9226_data s4_ad9226_data] clk_name [list s1_ad9226_clk s2_ad9226_clk s3_ad9226_clk s4_ad9226_clk] \
- enable_name [list ADC1_ENABLE ADC2_ENABLE ADC3_ENABLE ADC4_ENABLE] enable_debug_name [list button posTrigger state eoc] {
+foreach interface_name [list adc_1 adc_2 adc_3 adc_4] data_name [list s1_ad9226_data s2_ad9226_data s3_ad9226_data s4_ad9226_data] clk_name [list s1_ad9226_clk s2_ad9226_clk s3_ad9226_clk s4_ad9226_clk] \
+ otr_name [list s1_otr s2_otr s3_otr s4_otr] enable_name [list ADC1_ENABLE ADC2_ENABLE ADC3_ENABLE ADC4_ENABLE] enable_debug_name [list button posTrigger state eoc] {
 
     ipx::add_bus_interface $interface_name ${ip_core}
     set_property abstraction_type_vlnv gili.com:user:ad9226_rtl:1.0 [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]
@@ -33,6 +33,8 @@ foreach interface_name [list adc1 adc2 adc3 adc4] data_name [list s1_ad9226_data
     set_property physical_name $data_name [ipx::get_port_maps data -of_objects [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]]
     ipx::add_port_map clk [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]
     set_property physical_name $clk_name [ipx::get_port_maps clk -of_objects [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]]
+    ipx::add_port_map otr [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]
+    set_property physical_name $otr_name [ipx::get_port_maps otr -of_objects [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]]
     #enable
     set enName ${enable_name}=true
     set_property enablement_dependency $enName [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]
@@ -65,14 +67,31 @@ set_property physical_name clk_100m [ipx::get_port_maps CLK -of_objects [ipx::ge
 ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 set_property value aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
-set_property value m_axis:s_axi:s_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
+set_property value s_axi:s_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
+
+ipx::add_bus_interface clk_adc [ipx::current_core]
+set_property abstraction_type_vlnv xilinx.com:signal:clock_rtl:1.0 [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
+set_property bus_type_vlnv xilinx.com:signal:clock:1.0 [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
+ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
+set_property value 25000000 [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
+ipx::add_port_map CLK [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
+set_property physical_name clk_adc [ipx::get_port_maps CLK -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
+ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
+ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
+set_property value aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
+set_property value m_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
+
+
+set_property range 4096 [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps s_axi -of_objects [ipx::current_core]]]
+set_property range_dependency {pow(2,(spirit:decode(id('MODELPARAM_VALUE.AXI_ADDR_WIDTH')) - 1) + 1)} [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps s_axi -of_objects [ipx::current_core]]]
+
 
 # Associate AXI/AXIS interfaces and reset with clock
-# set aclk_intf [ipx::get_bus_interfaces clk_100m -of_objects ${ip_core}]
-# set aclk_assoc_intf [ipx::add_bus_parameter ASSOCIATED_BUSIF $aclk_intf]
-# set_property value s_axi:s_axis:m_axis $aclk_assoc_intf
-# set aclk_assoc_reset [ipx::add_bus_parameter ASSOCIATED_RESET $aclk_intf]
-# set_property value aresetn $aclk_assoc_reset
+#set aclk_intf [ipx::get_bus_interfaces clk_100m -of_objects ${ip_core}]
+#set aclk_assoc_intf [ipx::add_bus_parameter ASSOCIATED_BUSIF $aclk_intf]
+#set_property value s_axi:s_axis:m_axis $aclk_assoc_intf
+#set aclk_assoc_reset [ipx::add_bus_parameter ASSOCIATED_RESET $aclk_intf]
+#set_property value aresetn $aclk_assoc_reset
 
 
 # Set reset polarity
