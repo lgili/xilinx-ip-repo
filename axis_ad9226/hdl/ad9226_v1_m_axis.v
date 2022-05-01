@@ -354,10 +354,10 @@ assign M_AXIS_TUSER = 0;
 // ADC Interface
 //
 /////////////////////////////////////////////////
-wire  [11:0] adc_result_1;
-wire  [11:0] adc_result_2;
-wire  [11:0] adc_result_3;
-wire  [11:0] adc_result_4;
+wire  [ADC_DATA_WIDTH-1:0] adc_result_1;
+wire  [ADC_DATA_WIDTH-1:0] adc_result_2;
+wire  [ADC_DATA_WIDTH-1:0] adc_result_3;
+wire  [ADC_DATA_WIDTH-1:0] adc_result_4;
 wire adc_result_1_ready;
 wire adc_result_2_ready;
 wire adc_result_3_ready;
@@ -387,8 +387,8 @@ ADC
 	.data_out0(adc_result_1),
 	.data_out1(adc_result_2),
 	.data_out2(adc_result_3),
-	.data_out3(adc_result_4),
-	.configAdc(ConfigAdc)           
+	.data_out3(adc_result_4)
+	//.configAdc(ConfigAdc)           
 );
 
 /*
@@ -439,6 +439,6 @@ always @(posedge Clk_Adc)
 		somator <= somator +1;		 
 	end 
 
-assign M_AXIS_TDATA = {8'd0, adc_result_2, adc_result_1}; 
+assign M_AXIS_TDATA = {20'd0 ,adc_result_1}; 
 
 endmodule

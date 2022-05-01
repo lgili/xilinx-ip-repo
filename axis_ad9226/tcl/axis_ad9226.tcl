@@ -11,7 +11,7 @@ set v_src_files [glob ./hdl/*.v]
 read_verilog ${v_src_files}
 update_compile_order -fileset sources_1
 
-read_ip ./src/clk_wiz_0/clk_wiz_0.xci 
+#read_ip ./src/clk_wiz_0/clk_wiz_0.xci 
 #set v_src_files [glob ./src/clk_wiz_0/*.v ]
 #read_verilog ${v_src_files}
 #update_compile_order -fileset sources_1
@@ -115,4 +115,4 @@ set_property value_format bool [ipx::get_hdl_parameters DEBUG_PORTS_ENABLE -of_o
 ipx::check_integrity ${ip_core}
 ipx::save_core ${ip_core}
 close_project
-file delete -force ${proj_dir}
+#file delete -force ${proj_dir}

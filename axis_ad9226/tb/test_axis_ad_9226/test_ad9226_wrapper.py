@@ -149,7 +149,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     tb = TB(dut)
     
 
-    tb.generateSin(0.3,0.3,3500,10e3,1,500)
+    tb.generateSin(0.3,10,3500,10e3,1,500)
     await tb.reset()
 
     tb.set_idle_generator(idle_inserter)
@@ -161,7 +161,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
     # set adc config
     await RisingEdge(dut.clk_100m)
-    useSigned = 1
+    useSigned = 0
     if(useSigned):
         val = 1 << 31
         val |= 2048

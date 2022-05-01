@@ -85,6 +85,9 @@ THE SOFTWARE.
 		output wire [2:0] state,
 		output wire eoc,
 		output wire [AXIS_DATA_WIDTH-1 : 0] PacketSize,
+		output wire [ADC_DATA_WIDTH-1 : 0] adc_data_out,
+		output wire [ADC_DATA_WIDTH-1 : 0] adc_data_in,
+		
 		//output wire AXIS_CLK,
 		//output wire ARESETN_AXIS_M,
 		//input wire [(ADC_TRIGGER_ON)-1:0] otr,
@@ -183,6 +186,9 @@ assign s2_ad9226_clk = clk_adc;
 assign s3_ad9226_clk = clk_adc;
 assign s4_ad9226_clk = clk_adc;
 
+assign adc_data_out = m_axis_tdata[ADC_DATA_WIDTH-1 : 0];
+assign adc_data_in = s1_ad9226_data;
+
 assign posTrigger = triggerOffset;
 
 `ifdef POST_SYNTHESIS_SIMULATION
@@ -266,7 +272,7 @@ assign PacketSize = packetSize;
 	ad9226_v1_m_axis # ( 
 		.C_M_AXIS_TDATA_WIDTH(AXIS_DATA_WIDTH),
 		.C_M_START_COUNT(C_M_AXIS_START_COUNT),
-		.ADC_DATA_WIDTH(AXIS_DATA_WIDTH)
+		.ADC_DATA_WIDTH(ADC_DATA_WIDTH)
 	) ad9226_v1_m_axis_inst (	
 
 		.adc_1(s1_ad9226_data),

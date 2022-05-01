@@ -26,12 +26,12 @@ WAVES ?= 1
 COCOTB_HDL_TIMEUNIT = 1ns
 COCOTB_HDL_TIMEPRECISION = 1ps
 
-DUT      = axi_dma
+DUT      = axi_dma_wrapper
 TOPLEVEL = $(DUT)
 MODULE   = test_$(DUT)
 VERILOG_SOURCES += ../../hdl/$(DUT).v
-VERILOG_SOURCES += ../../hdl/$(DUT)_wr.v
-VERILOG_SOURCES += ../../hdl/$(DUT)_rd.v
+VERILOG_SOURCES += ../../hdl/axi_dma_wr.v
+VERILOG_SOURCES += ../../hdl/axi_dma_rd.v
 
 # module parameters
 export PARAM_AXI_DATA_WIDTH = 32
