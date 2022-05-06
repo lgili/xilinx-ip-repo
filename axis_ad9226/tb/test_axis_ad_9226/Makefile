@@ -23,8 +23,8 @@ TOPLEVEL_LANG = verilog
 SIM ?= icarus
 WAVES ?= 1
 
-COCOTB_HDL_TIMEUNIT = 1ns
-COCOTB_HDL_TIMEPRECISION = 1ps
+COCOTB_HDL_TIMEUNIT = 100ns
+COCOTB_HDL_TIMEPRECISION = 10ns
 
 DUT      = ad9226_wrapper
 TOPLEVEL = $(DUT)
@@ -39,6 +39,7 @@ VERILOG_SOURCES += ../../hdl/trigger_level_acq.v
 VERILOG_SOURCES += ../../hdl/moving_average_fir.v
 VERILOG_SOURCES += ../../hdl/zero_crossing_detector.v
 VERILOG_SOURCES += ../../hdl/passband_filter.v
+VERILOG_SOURCES += ../../hdl/passband_iir.v
 VERILOG_SOURCES += ../../hdl/skidbuffer.v
 
 

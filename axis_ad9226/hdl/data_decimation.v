@@ -39,10 +39,10 @@ parameter DATA_IN_WIDTH = 12;
 parameter DATA_OUT_WIDTH = 12;
 parameter DATA_REG_WIDTH = 32;
 							  
-input 								clk;
-input 								rst_n;
-input 	  [DATA_REG_WIDTH-1:0]  	decimate_reg;
-input 	  [DATA_IN_WIDTH-1:0]	    in_data;				 
+input wire								clk;
+input wire								rst_n;
+input wire	  [DATA_REG_WIDTH-1:0]  	decimate_reg;
+input wire	  [DATA_IN_WIDTH-1:0]	    in_data;				 
 input  wire					 		in_data_valid;		 
 output reg					 		in_data_ready;		 
 output reg [DATA_OUT_WIDTH-1:0] 	out_data;			 

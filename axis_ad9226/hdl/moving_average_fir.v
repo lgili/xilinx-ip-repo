@@ -20,8 +20,8 @@ parameter OUT_DATA_WIDTH = 16;
 // Inout Section
 // =====================	
 		
-input clk;
-input rst;
+input wire clk;
+input wire rst;
 
 input wire [31:0] mavg_factor;
 input wire [IN_DATA_WIDTH-1:0] in_data;
@@ -31,11 +31,11 @@ output reg out_data_valid;
 output reg [OUT_DATA_WIDTH-1:0] out_data;
 
 reg [IN_DATA_WIDTH-1:0] din_cnt = 0;
-reg [OUT_DATA_WIDTH-1:0] accumulator = 0;
+reg signed [OUT_DATA_WIDTH-1:0] accumulator = 0;
 
 wire signed_data_valid;
-wire [IN_DATA_WIDTH-1:0] signed_in_data;
-reg [OUT_DATA_WIDTH-1:0] signed_out_data;
+wire signed [IN_DATA_WIDTH-1:0] signed_in_data;
+reg signed [OUT_DATA_WIDTH-1:0] signed_out_data;
 
 // =====================
 // Code Section

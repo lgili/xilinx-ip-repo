@@ -65,6 +65,9 @@ class TB:
         self.PacketSizeAddr             = 0x04
         self.PacketRate                 = 0x08
         self.ConfigAdcAddr              = 0x0C
+        self.ConfigZCDValueAddr         = 0x10
+        self.ConfigDecimatorAddr        = 0x14
+        self.ConfigMavgFactorAddr       = 0x18
 
                        
         
@@ -78,7 +81,7 @@ class TB:
         if generator:
             self.axil_master.write_if.b_channel.set_pause_generator(generator())
             self.axil_master.read_if.r_channel.set_pause_generator(generator())
-            self.sink.set_pause_generator(generator())
+            #self.sink.set_pause_generator(generator())
             
 
     async def reset(self):
@@ -87,21 +90,25 @@ class TB:
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         self.dut.aresetn.value = 0
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
+        for i in range(20):
+            await RisingEdge(self.dut.clk_100m)
+        
         self.dut.aresetn.value = 1  
         self.dut.m_axis_tready.value = 1      
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
 
         
-
+    async def loggingTime(self):
+        while(1):
+            for i in range(10000): 
+                await RisingEdge(self.dut.clk_100m)
+            self.log.info("is runnig")    
 
     async def write_to_axi_lite(self,addr, value):
 
         self.log.info("Writing data")
-        try:           
-            
+        try:
             send_data = value.to_bytes(4, 'little') #bytearray(value)    
             await self.axil_master.write(addr, send_data)
            
@@ -148,10 +155,13 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
     tb = TB(dut)
     
-
-    tb.generateSin(0.3,10,3500,10e3,1,500)
+    realCLk = 100e6
+    fakeClk = 100e3
+    dife = realCLk/fakeClk
+    tb.generateSin(60,0.5,3500,25e6,1,500)
     await tb.reset()
 
+    
     tb.set_idle_generator(idle_inserter)
     tb.set_backpressure_generator(backpressure_inserter)
 
@@ -161,14 +171,27 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
     # set adc config
     await RisingEdge(dut.clk_100m)
-    useSigned = 0
+    useSigned = 1
     if(useSigned):
         val = 1 << 31
         val |= 2048
         tb.log.info("Adc config %d", val)
         await tb.write_to_axi_lite(tb.ConfigAdcAddr, val)
     else:
-        await tb.write_to_axi_lite(tb.ConfigAdcAddr, 0)    
+        await tb.write_to_axi_lite(tb.ConfigAdcAddr, 0)  
+
+
+    # set Decimator     
+    await tb.write_to_axi_lite(tb.ConfigDecimatorAddr, 1)
+
+    #set MavgFactor
+    await tb.write_to_axi_lite(tb.ConfigMavgFactorAddr, 1)
+
+    #set Zero Crossing
+    zcv = 3 << 12  # number os cycles to save
+    zcv |= 3 << 20 # jump saved
+    zcv |= 0       # value to compare
+    await tb.write_to_axi_lite(tb.ConfigZCDValueAddr, zcv)   
 
     # set enable
     await RisingEdge(dut.clk_100m)
@@ -176,7 +199,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     await tb.write_to_axi_lite(tb.EnableSampleGenerationAddr, 1)    
 
     write_thread_a = cocotb.start_soon(tb.gen_adc_input_thead())
-   
+    time_tread_b = cocotb.start_soon(tb.loggingTime())
    
     assert 1 == 1   
     await RisingEdge(dut.clk_100m)
@@ -184,6 +207,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
      # Wait for the other thread to complete
     await write_thread_a
+    await time_tread_b
 
     #result = await tb.sink.read(100)
     #tb.log("values from m_axis %d", result)
@@ -203,8 +227,8 @@ if cocotb.SIM_NAME:
     max_burst_size = (byte_lanes-1).bit_length()
 
     factory = TestFactory(run_test)    
-    factory.add_option("idle_inserter", [None, cycle_pause])
-    factory.add_option("backpressure_inserter", [None, cycle_pause])    
+    #factory.add_option("idle_inserter", [None, cycle_pause])
+    #factory.add_option("backpressure_inserter", [None, cycle_pause])    
     factory.generate_tests()
 
 
@@ -231,6 +255,7 @@ def test_ad9226_wrapper(request, data_width):
         os.path.join(hdl_dir, "moving_average_fir.v"),
         os.path.join(hdl_dir, "zero_crossing_detector.v"),
         os.path.join(hdl_dir, "passband_filter.v"),
+        os.path.join(hdl_dir, "passband_iir.v"),
         os.path.join(hdl_dir, "skidbuffer.v"),
         
     ]

@@ -61,13 +61,14 @@ foreach debug_enable [list button eoc posTrigger trigger_acq state PacketSize] {
 ipx::add_bus_interface clk ${ip_core}
 set_property abstraction_type_vlnv xilinx.com:signal:clock_rtl:1.0 [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 set_property bus_type_vlnv xilinx.com:signal:clock:1.0 [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
-ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
+#ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
+#set_property value 100000000 [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces clk -of_objects [ipx::current_core]]]
 ipx::add_port_map CLK [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 set_property physical_name clk_100m [ipx::get_port_maps CLK -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
 ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 set_property value aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
-set_property value s_axi:s_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
+set_property value s_axi:s_axis:m_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
 
 ipx::add_bus_interface clk_adc [ipx::current_core]
 set_property abstraction_type_vlnv xilinx.com:signal:clock_rtl:1.0 [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
@@ -78,8 +79,8 @@ ipx::add_port_map CLK [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current
 set_property physical_name clk_adc [ipx::get_port_maps CLK -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
 ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
 ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
-set_property value aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
-set_property value m_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
+#set_property value aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
+#set_property value m_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
 
 
 set_property range 4096 [ipx::get_address_blocks reg0 -of_objects [ipx::get_memory_maps s_axi -of_objects [ipx::current_core]]]

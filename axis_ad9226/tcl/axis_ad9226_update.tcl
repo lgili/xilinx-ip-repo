@@ -25,6 +25,19 @@ puts "Current version of IP is $version"
 puts "======================================"
 
 
+ipgui::add_param -name {ADC1_ENABLE} -component [ipx::current_core]
+ipgui::add_param -name {ADC2_ENABLE} -component [ipx::current_core]
+ipgui::add_param -name {ADC3_ENABLE} -component [ipx::current_core]
+ipgui::add_param -name {ADC4_ENABLE} -component [ipx::current_core]
+ipgui::add_param -name {DEBUG_PORTS_ENABLE} -component [ipx::current_core]
+ipgui::add_param -name {ADC_DATA_WIDTH} -component [ipx::current_core]
+ipgui::add_param -name {FIFO_SIZE} -component [ipx::current_core]
+ipgui::add_param -name {AXI_LITE_DATA_WIDTH} -component [ipx::current_core]
+ipgui::add_param -name {AXIS_DATA_WIDTH} -component [ipx::current_core]
+ipgui::add_param -name {AXI_ADDR_WIDTH} -component [ipx::current_core]
+ipgui::add_param -name {C_M_AXIS_START_COUNT} -component [ipx::current_core]
+
+
 
 ipx::update_source_project_archive -component [ipx::current_core]
 ipx::create_xgui_files [ipx::current_core]

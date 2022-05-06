@@ -46,7 +46,7 @@ module	ad9226_v1_s_axi #(
 		// Size of the AXI-lite bus.  These are fixed, since 1) AXI-lite
 		// is fixed at a width of 32-bits by Xilinx def'n, and 2) since
 		// we only ever have 4 configuration words.
-		parameter	AXI_ADDR_WIDTH = 4,
+		parameter	AXI_ADDR_WIDTH = 6,
 		parameter	AXI_DATA_WIDTH = 32,
 		parameter [0:0]	OPT_SKIDBUFFER = 1'b0,
 		parameter [0:0]	OPT_LOWPOWER = 0
@@ -59,6 +59,9 @@ module	ad9226_v1_s_axi #(
 		output wire [AXI_DATA_WIDTH-1:0] PacketRate, 
 		output wire [AXI_DATA_WIDTH-1:0] ConfigAdc, 
 		output wire [AXI_DATA_WIDTH-1:0] NumberOfPacketsToSend, 
+		output wire [AXI_DATA_WIDTH-1:0] ConfigZCDValue,
+		output wire	[AXI_DATA_WIDTH-1:0] Decimator,
+	    output wire	[AXI_DATA_WIDTH-1:0] MavgFactor,
 		//
 		input	wire					S_AXI_ACLK,
 		input	wire					S_AXI_ARESETN,
@@ -111,13 +114,16 @@ module	ad9226_v1_s_axi #(
 	reg	[AXI_DATA_WIDTH-1:0]	axil_read_data;
 	reg				axil_read_valid;
 
-	reg	[31:0]	r0, r1, r2, r3;
-	wire	[31:0]	wskd_r0, wskd_r1, wskd_r2, wskd_r3;
+	reg	[31:0]	r0, r1, r2, r3, r4, r5, r6, r7;
+	wire	[31:0]	wskd_r0, wskd_r1, wskd_r2, wskd_r3, wskd_r4, wskd_r5, wskd_r6, wskd_r7;
 
 	assign EnableSampleGeneration = r0[0];
 	assign PacketSize             = r1;
 	assign PacketRate             = r2; 
 	assign ConfigAdc              = r3; 
+	assign ConfigZCDValue         = r4;
+	assign Decimator              = r5; 
+	assign MavgFactor             = r6;
 	//assign NumberOfPacketsToSend,
 	// }}}
 	////////////////////////////////////////////////////////////////////////
@@ -262,11 +268,19 @@ module	ad9226_v1_s_axi #(
 	assign	wskd_r1 = apply_wstrb(r1, wskd_data, wskd_strb);
 	assign	wskd_r2 = apply_wstrb(r2, wskd_data, wskd_strb);
 	assign	wskd_r3 = apply_wstrb(r3, wskd_data, wskd_strb);
+	assign	wskd_r4 = apply_wstrb(r4, wskd_data, wskd_strb);
+	assign	wskd_r5 = apply_wstrb(r5, wskd_data, wskd_strb);
+	assign	wskd_r6 = apply_wstrb(r6, wskd_data, wskd_strb);
+	assign	wskd_r7 = apply_wstrb(r7, wskd_data, wskd_strb);
 
 	initial	r0 = 0;
 	initial	r1 = 0;
 	initial	r2 = 0;
 	initial	r3 = 0;
+	initial	r4 = 0;
+	initial	r5 = 0;
+	initial	r6 = 0;
+	initial	r7 = 0;
 	always @(posedge S_AXI_ACLK)
 	if (i_reset)
 	begin
@@ -274,13 +288,21 @@ module	ad9226_v1_s_axi #(
 		r1 <= 0;
 		r2 <= 0;
 		r3 <= 0;
+		r4 <= 0;
+		r5 <= 0;
+		r6 <= 0;
+		r7 <= 0;
 	end else if (axil_write_ready)
 	begin
 		case(awskd_addr)
-		2'b00:	r0 <= wskd_r0;
-		2'b01:	r1 <= wskd_r1;
-		2'b10:	r2 <= wskd_r2;
-		2'b11:	r3 <= wskd_r3;
+		4'h0:	r0 <= wskd_r0;
+		4'h1:	r1 <= wskd_r1;
+		4'h2:	r2 <= wskd_r2;
+		4'h3:	r3 <= wskd_r3;
+		4'h4:	r4 <= wskd_r4;
+		4'h5:	r5 <= wskd_r5;
+		4'h6:	r6 <= wskd_r6;
+		4'h7:	r7 <= wskd_r7;
 		endcase
 	end
 
@@ -291,10 +313,14 @@ module	ad9226_v1_s_axi #(
 	else if (!S_AXI_RVALID || S_AXI_RREADY)
 	begin
 		case(arskd_addr)
-		2'b00:	axil_read_data	<= r0;
-		2'b01:	axil_read_data	<= r1;
-		2'b10:	axil_read_data	<= r2;
-		2'b11:	axil_read_data	<= r3;
+		4'h0:	axil_read_data	<= r0;
+		4'h1:	axil_read_data	<= r1;
+		4'h2:	axil_read_data	<= r2;
+		4'h3:	axil_read_data	<= r3;
+		4'h4:	axil_read_data	<= r4;
+		4'h5:	axil_read_data	<= r5;
+		4'h6:	axil_read_data	<= r6;
+		4'h7:	axil_read_data	<= r7;
 		endcase
 
 		if (OPT_LOWPOWER && !axil_read_ready)

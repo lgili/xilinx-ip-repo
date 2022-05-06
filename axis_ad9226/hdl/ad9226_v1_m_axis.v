@@ -31,8 +31,8 @@ module ad9226_v1_m_axis #
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
-		// Width of S_AXIS address bus. The slave accepts the read and write addresses of width C_M_AXIS_TDATA_WIDTH.
-		parameter integer C_M_AXIS_TDATA_WIDTH	= 32,
+		// Width of S_AXIS address bus. The slave accepts the read and write addresses of width AXIS_DATA_WIDTH.
+		parameter integer AXIS_DATA_WIDTH	= 32,
 		// Start count is the numeber of clock cycles the master will wait before initiating/issuing any transaction.
 		parameter integer C_M_START_COUNT	= 32
 	)
@@ -64,6 +64,7 @@ module ad9226_v1_m_axis #
 		input   wire    [31:0]     			MavgFactor,
 		input   wire    [31:0]     			ConfigPassBand,
 		input   wire    [31:0]     			ConfigAdc,
+		input 	wire 	[31:0]	            ConfigZCDValue,
 		// User ports ends
 		// Do not modify the ports beyond this line
 
@@ -71,12 +72,17 @@ module ad9226_v1_m_axis #
 		input wire  						M_AXIS_ACLK,
 		input wire  						M_AXIS_ARESETN,
 		output wire  						M_AXIS_TVALID,
-		output wire 	[C_M_AXIS_TDATA_WIDTH-1 : 0] 		M_AXIS_TDATA,
-		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TSTRB,
+		output reg 	[AXIS_DATA_WIDTH-1 : 0] 		M_AXIS_TDATA,
+		output wire 	[(AXIS_DATA_WIDTH/8)-1 : 0] 	M_AXIS_TSTRB,
 		output wire  						M_AXIS_TLAST,
 		input wire  						M_AXIS_TREADY,
-		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
-		output wire 						M_AXIS_TUSER
+		output wire 	[(AXIS_DATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
+		output wire 						M_AXIS_TUSER,
+
+		/*
+		* Debug 
+		*/
+		output wire saved
 	);
 	
 /////////////////////////////////////////////////
@@ -193,7 +199,7 @@ assign lastDataIsBeingTransferred = dataIsBeingTransferred & M_AXIS_TLAST;
 //
 /////////////////////////////////////////////////
 
-reg 	[C_M_AXIS_TDATA_WIDTH-1-2:0]	packetSizeInDwords; 
+reg 	[AXIS_DATA_WIDTH-1-2:0]	packetSizeInDwords; 
 reg 	[1:0]				validBytesInLastChunk; 
 
 always @(posedge Clk) 
@@ -203,7 +209,10 @@ always @(posedge Clk)
 	end 
 	else begin 
 		if ( enableSampleGenerationPosEdge ) begin 
-			packetSizeInDwords <= PacketSize >> 2;
+			if (AXIS_DATA_WIDTH == 32)
+				packetSizeInDwords <= PacketSize >> 2;
+			else
+				packetSizeInDwords <= PacketSize >> 3;	
 			validBytesInLastChunk <= PacketSize - packetSizeInDwords * 4;
 		end 
 	end 
@@ -216,19 +225,24 @@ always @(posedge Clk)
 // global counterdataIsBeingTransferred
 //
 /////////////////////////////////////////////////
-// this is a C_M_AXIS_TDATA_WIDTH bits counter which counts up with every successful data transfer. this creates the body of the packets. 
+// this is a AXIS_DATA_WIDTH bits counter which counts up with every successful data transfer. this creates the body of the packets. 
 
-reg 	[C_M_AXIS_TDATA_WIDTH-1:0]		globalCounter; 
-
-always @(posedge Clk_Adc) 
+reg 	[AXIS_DATA_WIDTH-1:0]		globalCounter; 
+reg     [1:0] channelPosTransfer; 
+always @(posedge Clk) 
 	if ( ! ResetL ) begin 
 		globalCounter <= 0; 
+		channelPosTransfer <= 0;
 	end 
 	else begin 
-		if ( dataIsBeingTransferred ) 
+		if ( dataIsBeingTransferred ) begin
 			globalCounter <= globalCounter + 1; 
-		else 
+			channelPosTransfer <= channelPosTransfer + 1;
+		end
+		else  begin
 			globalCounter <= globalCounter; 
+			channelPosTransfer <= channelPosTransfer;
+		end
 	end 
 
 
@@ -242,7 +256,7 @@ always @(posedge Clk_Adc)
 
 reg 	[29:0]		packetDWORDCounter; 
 
-always @(posedge Clk_Adc) 
+always @(posedge Clk) 
 	if ( ! ResetL ) begin 
 		packetDWORDCounter <= 0; 
 	end 
@@ -274,7 +288,7 @@ always @(posedge Clk_Adc)
 reg 	[7:0]		packetRate_Counter; 
 wire 			packetRate_allowData;
 
-always @(posedge Clk_Adc)
+always @(posedge Clk)
 	if ( ! ResetL ) begin 
 		packetRate_Counter <= 0; 
 	end 
@@ -293,7 +307,7 @@ assign packetRate_allowData = ( packetRate_Counter >= PacketRate ) ? 1 : 0;
 
 reg 	[31:0]		sentPacketCounter;
 
-always @(posedge Clk_Adc)
+always @(posedge Clk)
 	if ( ! ResetL ) begin 
 		sentPacketCounter <= 0; 
 	end 
@@ -387,11 +401,11 @@ ADC
 	.data_out0(adc_result_1),
 	.data_out1(adc_result_2),
 	.data_out2(adc_result_3),
-	.data_out3(adc_result_4)
-	//.configAdc(ConfigAdc)           
+	.data_out3(adc_result_4),
+	.configAdc(ConfigAdc)           
 );
 
-/*
+
 data_decimation#(
     .DATA_IN_WIDTH(12),
     .DATA_OUT_WIDTH(12),
@@ -414,7 +428,7 @@ data_decimation#(
 wire [15:0] out_data_fir;
 wire out_data_valid_fir;
 
-moving_average_fir #
+moving_average_fir#
 (
 	.IN_DATA_WIDTH(12),
 	.OUT_DATA_WIDTH(16)
@@ -428,7 +442,62 @@ moving_average_fir #
 	.out_data_valid(out_data_valid_fir), 
 	.out_data(out_data_fir)
 );
-*/
+
+
+wire [15:0] out_data_filter; 
+wire out_filter_valid;
+
+/*passband_filter filter
+(
+	.rst(ResetL),
+	.clk(Clk),
+	.in_data_valid(out_data_valid_fir),
+	.in_data(out_data_fir),
+	.out_data_valid(out_filter_valid),
+	.out_data_filter(out_data_filter)
+);*/
+
+passband_iir #(
+	.inout_width(16),
+	.inout_decimal_width(15),
+	.coefficient_width(32),
+	.coefficient_decimal_width(28),
+	.internal_width(32),
+	.internal_decimal_width(28)
+) filter
+(
+	.aclk(Clk),
+  	.resetn(ResetL),
+
+	.in_data_valid(out_data_valid_fir),
+	.in_data(out_data_fir),
+	.out_data_valid(out_filter_valid),
+	.out_data(out_data_filter)  
+
+);
+
+wire [15:0] out_data_zcd;    
+wire save;    
+zero_crossing_detector#
+(
+    .DATA_WIDTH(16),
+    .REG_WIDTH(32)
+) zcd_dut
+(
+    .clk(Clk),
+    .rst(ResetL),
+    .in_data_valid(out_filter_valid),
+    .in_data(out_data_filter), 
+    .in_counter_pos(packetDWORDCounter),
+    .out_data(out_data_zcd),    
+    .config_reg(ConfigZCDValue),
+    //.out_zcd_first_pos(FirstPositionZcd),
+	//.out_zcd_last_pos(LastPositionZcd)
+	.save(save)
+);
+
+
+
 
 reg [31:0] somator;
 always @(posedge Clk_Adc) 
@@ -439,6 +508,20 @@ always @(posedge Clk_Adc)
 		somator <= somator +1;		 
 	end 
 
-assign M_AXIS_TDATA = {20'd0 ,adc_result_1}; 
+wire [15:0] out_ff;
+assign out_ff = (out_filter_valid) ? out_data_filter : out_ff;
+assign saved = save;
+
+always@(Clk, channelPosTransfer) begin
+	case(channelPosTransfer)
+		2'h0 : M_AXIS_TDATA = adc_result_1;
+		2'h1 : M_AXIS_TDATA = adc_result_2;
+		2'h2 : M_AXIS_TDATA = adc_result_3;
+		2'h3 : M_AXIS_TDATA = {save, 15'b0, out_ff};
+		default : M_AXIS_TDATA = 0;
+
+	endcase
+end
+//assign M_AXIS_TDATA = (AXIS_DATA_WIDTH == 32) ? {packetDWORDCounter[19:0] ,adc_result_1} : {5'd0,packetDWORDCounter, out_data_filter, adc_result_1}; 
 
 endmodule

@@ -3,21 +3,24 @@ module passband_filter(rst,
 							in_data_valid,
 							in_data,
 							out_data_valid,
-							out_data
+							out_data_filter
 							);
-input rst;
-input clk;
-input in_data_valid;
+input wire rst;
+input wire clk;
+input wire in_data_valid;
 input wire signed [15:0] in_data;
 
 output reg out_data_valid;
-output reg [45:0] out_data;
 
-reg signed [32:0] b0 = 33'd28633; 
-reg signed [32:0] b1 = 33'd0;
-reg signed [32:0] b2 = -33'd28633;
-reg signed [34:0] a1 = -35'd8589876241; //sum at the equationing
-reg signed [34:0] a2 = 35'd4294910030;
+output wire [15:0] out_data_filter;
+
+reg [45:0] out_data;
+
+reg signed [32:0] b0 = -33'd269894; //33'd28633; 
+reg signed [32:0] b1 = 33'd0; //33'd0;
+reg signed [32:0] b2 = 33'd269894; //-33'd28633;
+reg signed [34:0] a1 = -35'd4295499488;//-35'd8589876241; //sum at the equationing
+reg signed [34:0] a2 = 35'd4294967296; //35'd4294910030;
 
 reg signed [15:0] x_n = 0;
 reg signed [15:0] x_n1 = 0;
@@ -26,6 +29,8 @@ reg signed [15:0] x_n2 = 0;
 reg signed [48:0] y_n = 0;
 reg signed [48:0] y_n1 = 0;
 reg signed [48:0] y_n2 = 0;
+
+assign out_data_filter = out_data[45:30];
 					
 						
 reg signed [83:0] ya1 = 0,
@@ -65,7 +70,8 @@ end
 
 // Multiplication of the input variables x[n], x[n-1] and x[n-2] in the format of Q1.15 
 // by Q1.32 coefficients b0, b1 and b2.
-// The result is Q2.47
+//    Q2.32 coefficients a0 a1
+// The result is Q3.47
 always@* begin 
 	xb0 <= x_n * b0;
 	xb1 <= x_n1 * b1;

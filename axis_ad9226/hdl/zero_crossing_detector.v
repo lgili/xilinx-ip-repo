@@ -10,7 +10,8 @@ module zero_crossing_detector(clk,
 									int_stop,
 									config_reg,
 									out_zcd_first_pos,
-									out_zcd_last_pos
+									out_zcd_last_pos,
+									save
 									);
 									
 parameter DATA_WIDTH = 46;			
@@ -21,11 +22,11 @@ parameter BLACK_TIME = 10000; // Time in which zero cross detector ignores chang
 // Variable Section
 // ======================
 
-input clk;
-input rst;
-input 						in_data_valid;
-input [DATA_WIDTH-1:0]	in_data;
-input [REG_WIDTH-1:0] 	config_reg;
+input wire clk;
+input wire  rst;
+input wire						in_data_valid;
+input wire [DATA_WIDTH-1:0]	in_data;
+input wire [REG_WIDTH-1:0] 	config_reg;
 input wire [REG_WIDTH-1:0] 	 in_counter_pos;
 
 output reg out_data_valid;
@@ -36,6 +37,7 @@ output wire [31:0]  out_zcd_last_pos;
 
 output reg int_start; // Used to trigger the integrators for RMS value and Energy
 output reg int_stop; 
+output reg save;
 
 // ======================
 // Code Section
@@ -50,17 +52,21 @@ parameter idle = 0, samples_cnt = 1, cnt_periods = 2, cnt_data_out = 3;
 reg [1:0] state;
 
 reg  [7:0] cnt_waveform_periods;
-wire [7:0] average_periods;
+wire [7:0] save_periods;
+wire [7:0] jump_periods;
 wire       filter_rst;
 reg firsTime;
 reg sigZeroCross;
-wire [11:0] zero_value;
+wire signed [11:0] zero_value;
 
 reg [31:0] first;
 reg [31:0] last;
+reg [31:0] countWaves;
+
 
 assign signed_in_data = in_data;
-assign average_periods = config_reg[19:12];
+assign save_periods = config_reg[19:12];
+assign jump_periods = config_reg[27:20];
 assign filter_rst = config_reg[31];
 assign zero_value = config_reg[11:0];
 
@@ -72,12 +78,14 @@ always@(posedge clk) begin
 if(rst == 0 || filter_rst || in_counter_pos == 0) begin 		
 		first <= 0;
 		last <= 0;
+		
 end
 end
 
 always@(posedge clk) begin 
 	if(rst == 0 || filter_rst) begin 
-		state <= idle;		
+		state <= idle;
+		countWaves <= 0;		
 	end 
 	else begin 
 		if(state == idle) begin 
@@ -93,7 +101,7 @@ always@(posedge clk) begin
 				state <= samples_cnt;
 		end 
 		else if (state == cnt_periods) begin 
-			if(cnt_waveform_periods >= (average_periods-1)) 
+			if(cnt_waveform_periods >= (save_periods-1)) 
 				state <= cnt_data_out;
 			else state <= samples_cnt;
 		end
@@ -147,7 +155,7 @@ always@(posedge clk) begin
 			int_stop <= 1'b0;
 		end 
 		else if (state == cnt_periods) begin 
-			if(cnt_waveform_periods >= (average_periods-1)) begin 
+			if(cnt_waveform_periods >= (save_periods-1)) begin 
 				int_stop <= 1'b1;
 				
 			end
@@ -178,7 +186,22 @@ always@(posedge clk) begin
 		end 
 	end
 end	
-									
+
+
+
+always@(posedge int_start) begin
+	countWaves <= countWaves +1;
+
+	if(countWaves < 1)
+		save <= 1;
+	else if (countWaves < jump_periods)
+		save <= 0;
+	else 
+		countWaves <= 0;
+
+
+end
+
 endmodule 
 										
 										

@@ -1,0 +1,85 @@
+/*
+
+Xilinx Vitis v2021.1.0 (64-bit) [Major: 2021, Minor: 1]
+SW Build 3245906 on 2021-06-09-18:10:55
+
+Process ID (PID): 190039
+License: Customer
+
+Current time: 	Mon May 02 17:39:32 BRT 2022
+Time zone: 	Brasilia Standard Time (America/Sao_Paulo)
+
+OS: NAME="Pop!_OS"
+OS Version: 5.16.19-76051619-generic
+OS Architecture: amd64
+Available processors (cores): 8
+
+Display: :1
+Screen size: 1920x1080
+Available screens: 1
+Available disk space: 62 GB
+
+Java version: 	11.0.2 64-bit
+Java home: 	/tools/Xilinx/Vitis/2021.1/tps/lnx64/jre11.0.2
+Java executable location: 	/tools/Xilinx/Vitis/2021.1/tps/lnx64/jre11.0.2/bin/java
+Java initial memory (-Xms): 	64 MB
+Java maximum memory (-Xmx):	 1,024 MB
+
+Java library paths: /tools/Xilinx/Vitis/2021.1/tps/lnx64/javafx-sdk-11.0.2/lib:/tools/Xilinx/Vitis/2021.1/lib/lnx64.o/Default:/tools/Xilinx/Vitis/2021.1/lib/lnx64.o:/tools/Xilinx/Vitis/2021.1/tps/lnx64/jre11.0.2/lib/:/tools/Xilinx/Vitis/2021.1/tps/lnx64/jre11.0.2/lib//server:/tools/Xilinx/Vitis/2021.1/lib/lnx64.o:/tools/Xilinx/Vitis/2021.1/lib/lnx64.o/Default:/tools/Xilinx/Vitis/2021.1/lib/lnx64.o:/tools/Xilinx/Vitis/2021.1/tps/lnx64/python-3.8.3/lib:/tools/Xilinx/Vitis/2021.1/aietools/lib/lnx64.o:/tools/Xilinx/Vitis/2021.1/bin/../lnx64/tools/dot/lib:/usr/java/packages/lib:/usr/lib64:/lib64:/lib:/usr/lib
+
+Java class paths: /tools/Xilinx/Vitis/2021.1/eclipse/lnx64.o//plugins/org.eclipse.equinox.launcher_1.5.700.v20200207-2156.jar
+LD_LIBRARY_PATH: /tools/Xilinx/Vitis
+
+User name: 	lgili
+User home directory: /home/lgili
+User working directory: /home/lgili/Documents/FPGA/Projects/xilinx-ip-repo
+User country: 	US
+User language: 	en
+User locale: 	en_US
+
+RDI_BASEROOT: /tools/Xilinx/Vitis
+HDI_APPROOT: /tools/Xilinx/Vitis/2021.1
+RDI_DATADIR: /tools/Xilinx/Vitis/2021.1/data
+RDI_BINDIR: /tools/Xilinx/Vitis/2021.1/bin
+
+Vitis preferences directory: /home/lgili/.Xilinx/Vitis/2021.1/
+Vitis workspace directory: /home/lgili/Documents/FPGA/Projects/oscilloscope/arm_code
+Vitis workspace log file location: /home/lgili/Documents/FPGA/Projects/oscilloscope/arm_code/.metadata/.log
+Engine tmp dir: 	
+
+Xilinx Environment Variables
+----------------------------
+XILINX_DSP: 
+XILINX_HLS: /tools/Xilinx/Vitis_HLS/2021.1
+XILINX_PLANAHEAD: /tools/Xilinx/Vitis/2021.1
+XILINX_SDK: /tools/Xilinx/Vitis/2021.1
+XILINX_VITIS: /tools/Xilinx/Vitis/2021.1
+XILINX_VIVADO: /tools/Xilinx/Vivado/2021.1
+XILINX_VIVADO_HLS: /tools/Xilinx/Vivado/2021.1
+_RDI_DONT_SET_XILINX_AS_PATH: True
+
+
+Copyright 1986-2020 Xilinx, Inc. All Rights Reserved.
+
+*/
+
+selectTreeTable("Debug", "appAdc_system > appAdc", "main.cpp", "CEditor", "TreeViewer.NavigatorContentServiceContentProvider");
+selectToolBarButton("Debug", "appAdc", "WorkbenchWindow", "ToolItem.DEBUG");
+selectToolBarButton("Design", "appAdc", "WorkbenchWindow", "ToolItem.DESIGN");
+activateView("Explorer", "ProjectExplorer", "CTabItem.EXPLORER");
+selectTreeTable("appAdc_system", "Explorer", "ProjectExplorer", "TreeViewer.NavigatorContentServiceContentProvider");
+selectTreeTable("adc_system", EventType.POPUP_TRIGGER_CLICK, "Explorer", "ProjectExplorer", "TreeViewer.NavigatorContentServiceContentProvider");
+selectMenuItem("Delete", "Explorer", "ProjectExplorer", "MenuItem.DELETE");
+selectCheckBox("Delete project contents on disk", Boolean.TRUE, "Delete Resources", "RefactoringWizardDialog2", "Button.DELETE_PROJECT_CONTENTS");
+selectButton("OK", "Delete Resources", "RefactoringWizardDialog2", "Button.OK");
+selectTreeTable("DmaManager.hpp", "appAdc_system > appAdc > src > fpga", EventType.DOUBLE_CLICK, "Explorer", "ProjectExplorer", "TreeViewer.NavigatorContentServiceContentProvider");
+activateView("Explorer", "ProjectExplorer", "CTabItem.EXPLORER");
+selectTreeTable("DmaManager.cpp", "appAdc_system > appAdc > src > fpga", EventType.DOUBLE_CLICK, "Explorer", "ProjectExplorer", "TreeViewer.NavigatorContentServiceContentProvider");
+activateView("Explorer", "ProjectExplorer", "CTabItem.EXPLORER");
+selectTreeTable("DmaManager.hpp", "appAdc_system > appAdc > src > fpga", EventType.DOUBLE_CLICK, "Explorer", "ProjectExplorer", "TreeViewer.NavigatorContentServiceContentProvider");
+activateView("Explorer", "ProjectExplorer", "CTabItem.EXPLORER");
+selectTreeTable("DmaManager.cpp", "appAdc_system > appAdc > src > fpga", EventType.DOUBLE_CLICK, "Explorer", "ProjectExplorer", "TreeViewer.NavigatorContentServiceContentProvider");
+selectButton("Exit", "Confirm Exit", "MessageDialogWithToggle", "Button.EXIT");
+// Exiting Xilinx Vitis with a status code '0' at 5/3/22, 2:26:53 PM BRT
+// Elapsed time: 20:47:22
+

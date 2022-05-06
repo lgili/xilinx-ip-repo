@@ -84,9 +84,10 @@ THE SOFTWARE.
 		output wire trigger_acq,
 		output wire [2:0] state,
 		output wire eoc,
-		output wire [AXIS_DATA_WIDTH-1 : 0] PacketSize,
+		output wire [AXI_LITE_DATA_WIDTH-1 : 0] PacketSize,
 		output wire [ADC_DATA_WIDTH-1 : 0] adc_data_out,
 		output wire [ADC_DATA_WIDTH-1 : 0] adc_data_in,
+		output wire saved,
 		
 		//output wire AXIS_CLK,
 		//output wire ARESETN_AXIS_M,
@@ -221,6 +222,9 @@ assign PacketSize = packetSize;
 		.PacketRate			( packetRate ), 
 		.ConfigAdc 			( configAdc ), 
 		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+		.ConfigZCDValue             (configZCDValue),
+		.Decimator                   (decimator),
+		.MavgFactor                  (mavgFactor),
 		
 		
 		
@@ -270,7 +274,7 @@ assign PacketSize = packetSize;
 	
 	// Instantiation of Axi Bus Interface M_AXIS
 	ad9226_v1_m_axis # ( 
-		.C_M_AXIS_TDATA_WIDTH(AXIS_DATA_WIDTH),
+		.AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
 		.C_M_START_COUNT(C_M_AXIS_START_COUNT),
 		.ADC_DATA_WIDTH(ADC_DATA_WIDTH)
 	) ad9226_v1_m_axis_inst (	
@@ -282,11 +286,16 @@ assign PacketSize = packetSize;
 		.irq(irq),
 		.adc_clk(clk_adc),
 
+		.saved(saved),
+
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			    ( packetSize ), 
 		.PacketRate			        ( packetRate ), 
 		.ConfigAdc 			        ( configAdc  ), 
 		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+		.ConfigZCDValue             (configZCDValue),
+		.Decimator                   (decimator),
+		.MavgFactor                  (mavgFactor),
 		
 		.M_AXIS_ACLK			(clk_100m),
 		.M_AXIS_ARESETN			(aresetn),
