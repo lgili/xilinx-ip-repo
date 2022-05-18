@@ -26,10 +26,10 @@ ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces s_axi_aclk -of_
 set_property value aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces s_axi_aclk -of_objects [ipx::current_core]]]
 set_property value s_axi [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces s_axi_aclk -of_objects [ipx::current_core]]]
 
-ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces clock -of_objects [ipx::current_core]]
-set_property value 25000000 [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces clock -of_objects [ipx::current_core]]]
+ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces out_clock -of_objects [ipx::current_core]]
+set_property value 25000000 [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces out_clock -of_objects [ipx::current_core]]]
 
-ipx::remove_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clock -of_objects [ipx::current_core]]
+ipx::remove_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces out_clock -of_objects [ipx::current_core]]
 
 
 # Associate AXI/AXIS interfaces and reset with clock

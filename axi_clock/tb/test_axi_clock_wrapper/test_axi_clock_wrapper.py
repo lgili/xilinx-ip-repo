@@ -45,10 +45,13 @@ class TB:
         self.log.setLevel(logging.DEBUG)
 
         # AXI 
-        cocotb.cocotb.start_soon(Clock(dut.clk_100m, 10,units="ns").start())        
+        cocotb.cocotb.start_soon(Clock(dut.s_axi_aclk, 10,units="ns").start())  
+        cocotb.cocotb.start_soon(Clock(dut.in_clock, 16,units="ns").start())      
         
 
-        self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.clk_100m, dut.aresetn,reset_active_level=False)
+        self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.s_axi_aclk, dut.aresetn,reset_active_level=False)
+        
+        
        
         
         
@@ -71,14 +74,14 @@ class TB:
 
     async def reset(self):
         self.dut.aresetn.setimmediatevalue(1)        
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.s_axi_aclk)
+        await RisingEdge(self.dut.s_axi_aclk)
         self.dut.aresetn.value = 0
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.s_axi_aclk)
+        await RisingEdge(self.dut.s_axi_aclk)
         self.dut.aresetn.value = 1             
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.s_axi_aclk)
+        await RisingEdge(self.dut.s_axi_aclk)
 
         
 
@@ -89,7 +92,7 @@ class TB:
         try:            
             send_data = value.to_bytes(4, 'little') #bytearray(value)    
             await self.axil_master.write(addr, send_data)
-            await RisingEdge(self.dut.clk_100m)
+            await RisingEdge(self.dut.s_axi_aclk)
             data = await self.axil_master.read(addr, 4)
 
             self.log.info("Writed: %s", data.data) 
@@ -106,15 +109,15 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     tb.set_idle_generator(idle_inserter)
     tb.set_backpressure_generator(backpressure_inserter)
 
-    CLK_DIV = 10
+    CLK_DIV = 1000000
     # set packet size
     await tb.write_to_axi_lite(tb.ClockDividerAddr, CLK_DIV)
        
        
     for data in range(CLK_DIV*100): #len(self.signal)
-           await RisingEdge(dut.clk_100m)
+           await RisingEdge(dut.s_axi_aclk)
    
-    await RisingEdge(dut.clk_100m)  
+    await RisingEdge(dut.s_axi_aclk)  
     assert 1 == 1    
     
 

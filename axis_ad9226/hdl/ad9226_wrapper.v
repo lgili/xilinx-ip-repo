@@ -44,7 +44,7 @@ THE SOFTWARE.
 		// Parameters of Axi Slave Bus Interface S00_AXI
 		parameter integer AXI_LITE_DATA_WIDTH	= 32,
 		parameter integer AXIS_DATA_WIDTH	= 32,
-		parameter integer AXI_ADDR_WIDTH	= 5,
+		parameter integer AXI_ADDR_WIDTH	= 6,
 		
 		
 		parameter integer C_M_AXIS_START_COUNT	= 32
@@ -80,25 +80,16 @@ THE SOFTWARE.
 		
 		output wire irq,		
 		input wire button,
-		output wire [31:0] posTrigger,
-		output wire trigger_acq,
-		output wire [2:0] state,
-		output wire eoc,
-		output wire [AXI_LITE_DATA_WIDTH-1 : 0] PacketSize,
-		output wire [ADC_DATA_WIDTH-1 : 0] adc_data_out,
-		output wire [ADC_DATA_WIDTH-1 : 0] adc_data_in,
-		output wire saved,
+		output wire debugPin,	
 		
-		//output wire AXIS_CLK,
-		//output wire ARESETN_AXIS_M,
-		//input wire [(ADC_TRIGGER_ON)-1:0] otr,
-
+		
 		// User ports ends
 		// Do not modify the ports beyond this line
 
 		// Ports of Axi Slave Bus Interface S00_AXI	
 		input wire  clk_100m,	
 		input wire  clk_adc,
+		input wire  clk_60hz,
         input wire                           aresetn,       
                          
 		
@@ -155,13 +146,13 @@ THE SOFTWARE.
 //
 ///////////////////////////////////////////////////////////////////////////
 
-wire                                    m_axis_fifo_tvalid;
+wire                               m_axis_fifo_tvalid;
 wire [AXIS_DATA_WIDTH-1 : 0]       m_axis_fifo_tdata;
 wire [(AXIS_DATA_WIDTH/8)-1 : 0]   m_axis_fifo_tstrb;
-wire                                    m_axis_fifo_tlast;
-wire                                    m_axis_fifo_tready; 
+wire                               m_axis_fifo_tlast;
+wire                               m_axis_fifo_tready; 
 wire 	[(AXIS_DATA_WIDTH/8)-1 : 0] m_axis_fifo_tkeep; 
-wire 	                                  m_axis_fifo_tuser;
+wire 	                           m_axis_fifo_tuser;
 		
 wire 	[7:0]  enablePacket; 
 wire	[AXI_LITE_DATA_WIDTH-1:0] configPassband; 
@@ -172,6 +163,10 @@ wire    [AXI_LITE_DATA_WIDTH-1:0] configSampler;
 wire    [AXI_LITE_DATA_WIDTH-1:0] configAdc;
 wire    [AXI_LITE_DATA_WIDTH-1:0] decimator;
 wire    [AXI_LITE_DATA_WIDTH-1:0] mavgFactor;
+wire    [AXI_LITE_DATA_WIDTH-1:0] packetSizeToStop;
+wire    [AXI_LITE_DATA_WIDTH-1:0] restart;
+wire    [AXI_LITE_DATA_WIDTH-1:0] adcData;
+wire    [AXI_LITE_DATA_WIDTH-1:0] status;
 
 wire    [AXI_LITE_DATA_WIDTH-1:0]  firstPositionZcd;
 wire    [AXI_LITE_DATA_WIDTH-1:0]  lastPositionZcd;
@@ -187,10 +182,11 @@ assign s2_ad9226_clk = clk_adc;
 assign s3_ad9226_clk = clk_adc;
 assign s4_ad9226_clk = clk_adc;
 
-assign adc_data_out = m_axis_tdata[ADC_DATA_WIDTH-1 : 0];
-assign adc_data_in = s1_ad9226_data;
 
-assign posTrigger = triggerOffset;
+
+
+
+
 
 `ifdef POST_SYNTHESIS_SIMULATION
 reg 		enableSampleGeneration =0; 
@@ -208,7 +204,7 @@ end
 
 wire 	enableSampleGeneration; 
 wire 	[31:0]	packetSize; 	
-assign PacketSize = packetSize;
+
 	
     
 // Instantiation of Axi Bus Interface S_AXI
@@ -219,13 +215,17 @@ assign PacketSize = packetSize;
 			
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			( packetSize ), 
-		.PacketRate			( packetRate ), 
+		//.PacketRate			( packetRate ), 
 		.ConfigAdc 			( configAdc ), 
-		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+		//.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
 		.ConfigZCDValue             (configZCDValue),
 		.Decimator                   (decimator),
 		.MavgFactor                  (mavgFactor),
-		
+		.PacketSizeToStop			(packetSizeToStop),	
+		.Restart                    (restart), 
+		.AdcData                    (adcData),
+		.Status                     (status), 
+		.TriggerLevel                (triggerLevel),
 		
 		
 		.S_AXI_ACLK			    (clk_100m),
@@ -285,8 +285,13 @@ assign PacketSize = packetSize;
 		.adc_4(s4_ad9226_data),		
 		.irq(irq),
 		.adc_clk(clk_adc),
+		.clk_60hz(clk_60hz),
+		.button(button),
 
-		.saved(saved),
+		//.saved(saved),
+		.debug(debugPin),
+		//.test_1(test_1),
+		//.test_2(test_2),
 
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			    ( packetSize ), 
@@ -294,8 +299,13 @@ assign PacketSize = packetSize;
 		.ConfigAdc 			        ( configAdc  ), 
 		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
 		.ConfigZCDValue             (configZCDValue),
-		.Decimator                   (decimator),
-		.MavgFactor                  (mavgFactor),
+		.Decimator                  (decimator),
+		.MavgFactor                 (mavgFactor),
+		.PacketSizeToStop			(packetSizeToStop),	
+		.Restart                    (restart),
+		.AdcData                    (adcData),
+		.Status                     (status), 
+		.TriggerLevel                (triggerLevel),
 		
 		.M_AXIS_ACLK			(clk_100m),
 		.M_AXIS_ARESETN			(aresetn),

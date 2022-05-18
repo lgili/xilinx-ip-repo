@@ -48,18 +48,13 @@ module ad_9226#
     /*
      * ADC input
      */
-    input wire  [ADC_DATA_WIDTH-1:0] data_in0,
-    input wire  [ADC_DATA_WIDTH-1:0] data_in1,
-    input wire  [ADC_DATA_WIDTH-1:0] data_in2,
-    input wire  [ADC_DATA_WIDTH-1:0] data_in3,
+    input wire  [ADC_DATA_WIDTH-1:0] data_in,  
 
     /*
      * ADC ouput
      */
-    output wire [ADC_DATA_WIDTH-1:0] data_out0,
-    output wire [ADC_DATA_WIDTH-1:0] data_out1,
-    output wire [ADC_DATA_WIDTH-1:0] data_out2,
-    output wire [ADC_DATA_WIDTH-1:0] data_out3,
+    (* mark_debug = "true", keep = "true" *) 
+    output wire [ADC_DATA_WIDTH-1:0] data_out,  
 
     /*
      * ADC config
@@ -86,16 +81,12 @@ wire [ADC_DATA_WIDTH-1:0] offsetUsed;
 reg [5:0] waitCycles = 4;
 reg [31:0] countCycles;
 
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out0;
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out1;
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out2;
-reg signed [ADC_DATA_WIDTH-1:0] signed_data_out3;
+reg signed [ADC_DATA_WIDTH-1:0] signed_data_out;
+
 
 assign offsetUsed = (configAdc[31] == 1) ? configAdc[30:0] : 0;
-assign data_out0 = signed_data_out0;
-assign data_out1 = signed_data_out1;
-assign data_out2 = signed_data_out2;
-assign data_out3 = signed_data_out3;
+assign data_out = signed_data_out;
+
  
 initial begin 
     fsm_cs   = HIGH;
@@ -103,15 +94,12 @@ initial begin
 end 
 
 // Clock enable  
-always @(negedge clk) begin
-    if((data_out0 >= 0))
-        eoc <= flag;
-    else
-        eoc <= 0;           
+always @(posedge clk) begin
+    eoc <= flag;           
 end
    
 // FSM Sequential Behaviour
-always @(negedge clk) begin
+always @(posedge clk) begin
     if(rst_n == 0) begin
         fsm_cs <= HIGH;
         countCycles <= 0;
@@ -166,30 +154,19 @@ end
 // Update Sample Register
 always @(negedge clk) begin
     if (rst_n == 0) begin // zera saidas em reset
-        signed_data_out0 <= 12'h0; 
-        signed_data_out1 <= 12'h0;
-        signed_data_out2 <= 12'h0;
-        signed_data_out3 <= 12'h0;
+        signed_data_out <= 12'h0;         
     end
     else if (sigma == 1) begin
         if(ready == 1) begin
-            signed_data_out0 <= data_in0 - offsetUsed; 
-            signed_data_out1 <= data_in1 - offsetUsed;
-            signed_data_out2 <= data_in2 - offsetUsed;
-            signed_data_out3 <= data_in3 - offsetUsed;
+            signed_data_out <= data_in - offsetUsed;             
         end
         else begin
-            signed_data_out0 <= 0; 
-            signed_data_out1 <= 0;
-            signed_data_out2 <= 0;
-            signed_data_out3 <= 0;
+            signed_data_out <= 0;             
         end
     end                 
 end
 
-// Output Mapping
-// End of Conversion (EOC)
-//assign eoc = flag;
+
 endmodule
 
 

@@ -1,12 +1,14 @@
 module moving_average_fir
 (
-	clk, 
-	rst, 
-	mavg_factor,
-	in_data_valid, 
-	in_data, 
-	out_data_valid, 
-	out_data
+	input wire clk, 
+	input wire rst, 
+	input wire [31:0] mavg_factor,
+	input wire in_data_valid, 
+	(* mark_debug = "true", keep = "true" *)
+	input wire [IN_DATA_WIDTH-1:0] in_data, 
+	output reg out_data_valid, 
+	(* mark_debug = "true", keep = "true" *)
+	output reg [OUT_DATA_WIDTH-1:0]out_data
 );
 
 // =====================
@@ -16,19 +18,6 @@ module moving_average_fir
 parameter IN_DATA_WIDTH = 12;
 parameter OUT_DATA_WIDTH = 16;
 
-// =====================
-// Inout Section
-// =====================	
-		
-input wire clk;
-input wire rst;
-
-input wire [31:0] mavg_factor;
-input wire [IN_DATA_WIDTH-1:0] in_data;
-input wire in_data_valid;
-
-output reg out_data_valid;
-output reg [OUT_DATA_WIDTH-1:0] out_data;
 
 reg [IN_DATA_WIDTH-1:0] din_cnt = 0;
 reg signed [OUT_DATA_WIDTH-1:0] accumulator = 0;

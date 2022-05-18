@@ -44,9 +44,10 @@ THE SOFTWARE.
 				
 			
 		input wire                        s_axi_aclk,			
-                input wire                        aresetn, 
-                
-                output wire                       clock,		
+        input wire                        aresetn, 
+        input wire 						  in_clock,        
+        
+		output wire                       out_clock,		
 		output wire                       resetn,      
                          
 		
@@ -123,10 +124,10 @@ wire	[AXI_LITE_DATA_WIDTH-1:0] clockDivider;
 		.AXI_DATA_WIDTH(AXI_LITE_DATA_WIDTH)		
 	) axi_clock_divider_inst
 	(
-	    .clk(s_axi_aclk),
+	    .clk(in_clock),
 	    .rstn(aresetn),
 	    .clockDiv(clockDivider),
-	    .clk_div(clock)
+	    .clk_div(out_clock)
     );
    
    
@@ -139,7 +140,7 @@ reg [N-1:0] sync_reg = {N{1'b1}};
 
 assign resetn = !sync_reg[N-1];
 
-always @(posedge clock or negedge aresetn) begin
+always @(posedge out_clock or negedge aresetn) begin
     if (!aresetn) begin
         sync_reg <= {N{1'b1}};
     end else begin

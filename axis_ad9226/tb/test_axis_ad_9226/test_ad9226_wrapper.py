@@ -52,6 +52,7 @@ class TB:
 
         cocotb.cocotb.start_soon(Clock(dut.clk_100m, 10,units="ns").start())        
         cocotb.cocotb.start_soon(Clock(dut.clk_adc, 40, units="ns").start())
+        cocotb.cocotb.start_soon(Clock(dut.clk_60hz, 16, units="ns").start())
 
         self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.clk_100m, dut.aresetn,reset_active_level=False)
         #self.address_space.register_region(self.axil_master, 0x10_0000_0000)
@@ -61,6 +62,9 @@ class TB:
 
         #tb.log.info("Packet: %s", pkt)
 
+        self.totalTimeSimulation        = 0.005
+        self.currentTime                = 0
+
         self.EnableSampleGenerationAddr = 0x00
         self.PacketSizeAddr             = 0x04
         self.PacketRate                 = 0x08
@@ -68,6 +72,7 @@ class TB:
         self.ConfigZCDValueAddr         = 0x10
         self.ConfigDecimatorAddr        = 0x14
         self.ConfigMavgFactorAddr       = 0x18
+        self.ConfigResetAddr            = 0x20
 
                        
         
@@ -98,12 +103,38 @@ class TB:
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
 
+        self.dut.button.value = 0
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        self.dut.button.value = 1
+
         
     async def loggingTime(self):
+        
         while(1):
             for i in range(10000): 
                 await RisingEdge(self.dut.clk_100m)
-            self.log.info("is runnig")    
+            self.log.info("is runnig")  
+            self.currentTime += (10000*(1/100e6))
+
+            if(self.currentTime == 40000*(1/100e6)):
+                await self.write_to_axi_lite(self.ConfigResetAddr, 1)
+                await self.write_to_axi_lite(self.ConfigResetAddr, 0)
+
+            if(self.currentTime == 50000*(1/100e6)):
+                self.dut.button.value = 0
+                await RisingEdge(self.dut.clk_100m)
+                self.dut.button.value = 1
+
+
+            if(self.currentTime > self.totalTimeSimulation):
+                break
 
     async def write_to_axi_lite(self,addr, value):
 
@@ -158,7 +189,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     realCLk = 100e6
     fakeClk = 100e3
     dife = realCLk/fakeClk
-    tb.generateSin(60,0.5,3500,25e6,1,500)
+    tb.generateSin(6000,0.005,3500,25e6,1,500)
     await tb.reset()
 
     
@@ -167,11 +198,11 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
 
     # set packet size
-    await tb.write_to_axi_lite(tb.PacketSizeAddr, 1000)
+    await tb.write_to_axi_lite(tb.PacketSizeAddr, 100)
 
     # set adc config
     await RisingEdge(dut.clk_100m)
-    useSigned = 1
+    useSigned = 0
     if(useSigned):
         val = 1 << 31
         val |= 2048
@@ -190,6 +221,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     #set Zero Crossing
     zcv = 3 << 12  # number os cycles to save
     zcv |= 3 << 20 # jump saved
+    zcv |= 1 << 28 # timer ou zero cross detection to trigger
     zcv |= 0       # value to compare
     await tb.write_to_axi_lite(tb.ConfigZCDValueAddr, zcv)   
 
@@ -200,6 +232,8 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
     write_thread_a = cocotb.start_soon(tb.gen_adc_input_thead())
     time_tread_b = cocotb.start_soon(tb.loggingTime())
+
+    #read_thread_b = cocotb.start_soon(tb.read_m_axis_thead())
    
     assert 1 == 1   
     await RisingEdge(dut.clk_100m)
@@ -212,8 +246,8 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     #result = await tb.sink.read(100)
     #tb.log("values from m_axis %d", result)
 
-    #write_thread_b = cocotb.start_soon(tb.read_m_axis_thead())
-    #await write_thread_b
+    
+    #await read_thread_b
 
 
 def cycle_pause():

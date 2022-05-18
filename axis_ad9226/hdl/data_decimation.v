@@ -24,30 +24,25 @@ THE SOFTWARE.
 
 `timescale 1ns / 1ps
 
-module data_decimation(clk,
-							  rst_n,
-							  in_data_ready,
-							  in_data_valid,
-							  in_data,
-							  out_data_ready,
-							  out_data_valid,
-							  out_data,
-							  decimate_reg
-							  );
+module data_decimation(
+	input wire clk,
+	input wire rst_n,
+	output reg in_data_ready,
+	input wire in_data_valid,
+	(* mark_debug = "true", keep = "true" *)
+	input wire [DATA_IN_WIDTH-1:0] in_data,
+	input wire out_data_ready,
+	output reg out_data_valid,
+	(* mark_debug = "true", keep = "true" *)
+	output reg [DATA_OUT_WIDTH-1:0] out_data,
+	input wire [DATA_REG_WIDTH-1:0] decimate_reg
+);
 
 parameter DATA_IN_WIDTH = 12;	
 parameter DATA_OUT_WIDTH = 12;
 parameter DATA_REG_WIDTH = 32;
 							  
-input wire								clk;
-input wire								rst_n;
-input wire	  [DATA_REG_WIDTH-1:0]  	decimate_reg;
-input wire	  [DATA_IN_WIDTH-1:0]	    in_data;				 
-input  wire					 		in_data_valid;		 
-output reg					 		in_data_ready;		 
-output reg [DATA_OUT_WIDTH-1:0] 	out_data;			 
-output reg							out_data_valid;	     
-input  wire							out_data_ready;	    
+   
 
 reg [DATA_REG_WIDTH-1:0] cnt;
 reg data_valid_mask = 0;
