@@ -103,7 +103,7 @@ wire 	enableSampleGenerationPosEdge;
 wire 	enableSampleGenerationNegEdge; 
 
 always @(posedge Clk) 
-	if ( ! ResetL  ) begin 
+	if ( ! ResetL   || Restart) begin 
 		enableSampleGenerationR <= 0; 
 	end 
 	else begin 

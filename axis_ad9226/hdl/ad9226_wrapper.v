@@ -163,6 +163,7 @@ wire [ADC_DATA_WIDTH-1:0] data_2;
 wire [ADC_DATA_WIDTH-1:0] data_3;
 wire [ADC_DATA_WIDTH-1:0] data_4;
 wire trigger;
+wire tlast_assert;
 
 //wire              clk_adc;
 assign s1_ad9226_clk = clk_adc;
@@ -253,6 +254,7 @@ ad9226_v1_s_axi # (
 		.adc_clk(clk_adc),		
 		.button(button),	
 		.trigger(trigger),	
+		.tlast_assert(tlast_assert),
 		.debug(debugPin),
 		
 		/*
@@ -299,6 +301,7 @@ ad9226_v1_s_axi # (
 		.PacketRate			        ( packetRate ), 		
 		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
 		.Restart                    (restart),
+		.tlast_assert(tlast_assert),
 				
 		.M_AXIS_ACLK			(clk_100m),
 		.M_AXIS_ARESETN			(aresetn),
