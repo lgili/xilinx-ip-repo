@@ -52,7 +52,7 @@ class TB:
 
         cocotb.cocotb.start_soon(Clock(dut.clk_100m, 10,units="ns").start())        
         cocotb.cocotb.start_soon(Clock(dut.clk_adc, 40, units="ns").start())
-        cocotb.cocotb.start_soon(Clock(dut.clk_60hz, 16, units="ns").start())
+        #cocotb.cocotb.start_soon(Clock(dut.clk_60hz, 16, units="ns").start())
 
         self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.clk_100m, dut.aresetn,reset_active_level=False)
         #self.address_space.register_region(self.axil_master, 0x10_0000_0000)
@@ -95,6 +95,9 @@ class TB:
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         self.dut.aresetn.value = 0
+        self.dut.s1_ad9226_data.value = 0
+        self.dut.s2_ad9226_data.value = 0
+        self.dut.s3_ad9226_data.value = 0
         for i in range(20):
             await RisingEdge(self.dut.clk_100m)
         
@@ -213,10 +216,10 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
 
     # set Decimator     
-    await tb.write_to_axi_lite(tb.ConfigDecimatorAddr, 1)
+    await tb.write_to_axi_lite(tb.ConfigDecimatorAddr, 0)
 
     #set MavgFactor
-    await tb.write_to_axi_lite(tb.ConfigMavgFactorAddr, 1)
+    await tb.write_to_axi_lite(tb.ConfigMavgFactorAddr, 15)
 
     #set Zero Crossing
     zcv = 3 << 12  # number os cycles to save
@@ -281,7 +284,7 @@ def test_ad9226_wrapper(request, data_width):
     verilog_sources = [
         os.path.join(hdl_dir, f"{dut}.v"),        
         os.path.join(hdl_dir, "ad9226_v1_m_axis.v"),
-        os.path.join(hdl_dir, "ad9226_v1_s_axis.v"),
+       
         os.path.join(hdl_dir, "ad9226_v1_s_axi.v"),
         os.path.join(hdl_dir, "ad_9226.v"),
         os.path.join(hdl_dir, "data_decimation.v"),
@@ -291,6 +294,14 @@ def test_ad9226_wrapper(request, data_width):
         os.path.join(hdl_dir, "passband_filter.v"),
         os.path.join(hdl_dir, "passband_iir.v"),
         os.path.join(hdl_dir, "skidbuffer.v"),
+
+        os.path.join(hdl_dir, "integrator.v"),
+        os.path.join(hdl_dir, "comb.sv"),
+        os.path.join(hdl_dir, "cic_d.v"),
+        os.path.join(hdl_dir, "downsampler.v"),
+        os.path.join(hdl_dir, "ad9226_if.v"),
+        
+        
         
     ]
 

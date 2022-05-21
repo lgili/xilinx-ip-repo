@@ -8,7 +8,11 @@ set_property source_mgmt_mode All ${ip_project}
 
 # Read source files from hdl directory
 set v_src_files [glob ./hdl/*.v]
+set sv_src_files [glob ./hdl/*.sv]
+#set mem_src_files [glob ./hdl/*.mem]
 read_verilog ${v_src_files}
+read_verilog -sv ${sv_src_files}
+#read_mem ${mem_src_files}
 update_compile_order -fileset sources_1
 
 #read_ip ./src/clk_wiz_0/clk_wiz_0.xci 
@@ -51,7 +55,7 @@ foreach interface_name [list adc_1 adc_2 adc_3 adc_4] data_name [list s1_ad9226_
 
 }
 
-foreach debug_enable [list button eoc posTrigger trigger_acq state PacketSize] {
+foreach debug_enable [list button  debugPin] {
     set_property enablement_resolve_type dependent [ipx::get_ports $debug_enable -of_objects [ipx::current_core]]
     set_property driver_value 0 [ipx::get_ports $debug_enable -of_objects [ipx::current_core]]
     set_property enablement_dependency spirit:decode(id('MODELPARAM_VALUE.DEBUG_PORTS_ENABLE'))=true [ipx::get_ports $debug_enable -of_objects [ipx::current_core]]

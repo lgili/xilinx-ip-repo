@@ -529,8 +529,8 @@ module ad9226_v1_s_axi #
 	        4'h7   : reg_data_out <= slv_reg7; 	//slv_reg7;
 	        4'h8   : reg_data_out <= slv_reg8;
 	        4'h9   : reg_data_out <= slv_reg9;
-	        4'hA   : reg_data_out <= AdcData;
-	        4'hB   : reg_data_out <= Status;
+	        4'hA   : reg_data_out <= slv_reg10;
+	        4'hB   : reg_data_out <= slv_reg11;
 	        default : reg_data_out <= 0;
 	      endcase
 	end

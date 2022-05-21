@@ -24,61 +24,23 @@ THE SOFTWARE.
 
 `timescale 1ns / 1ps
 
-module data_decimation(
-	input wire clk,
-	input wire rst_n,	
-	input wire in_data_valid,
-	(* mark_debug = "true", keep = "true" *)
-	input wire [DATA_IN_WIDTH-1:0] in_data,	
-	output reg out_data_valid,
-	(* mark_debug = "true", keep = "true" *)
-	output reg [DATA_OUT_WIDTH-1:0] out_data,
-	input wire [DATA_REG_WIDTH-1:0] decimate_reg
+module integrator
+/*********************************************************************************************/
+#(parameter DATA_IN_WIDTH = 8 , DATA_OUT_WIDTH = 9)
+/*********************************************************************************************/
+(
+    input   clk,
+    input   reset_n,
+    input   signed [DATA_IN_WIDTH-1:0] data_in,
+    output  reg signed [DATA_OUT_WIDTH-1:0] data_out
 );
-
-parameter DATA_IN_WIDTH = 12;	
-parameter DATA_OUT_WIDTH = 12;
-parameter DATA_REG_WIDTH = 32;
-			  
-   
-
-reg [DATA_REG_WIDTH-1:0] cnt;
-reg data_valid_mask = 0;
-
-always@(posedge clk) begin 
-	if(rst_n == 0) begin 
-		out_data <= 0;
-		cnt <= 0;
-	end
-	else begin 		
-		if(in_data_valid) begin
-			if(cnt == decimate_reg) begin 
-				cnt <= 0;
-				out_data <= in_data;
-			end
-			else begin 
-				cnt <= cnt + 1;
-			end
-		end		
-	end
+/*********************************************************************************************/
+always_ff @(posedge clk)
+begin
+    if (!reset_n)
+        data_out <= '0;
+    else
+        data_out <= data_out + data_in;
 end
-
-
-
-always@(posedge clk) begin 
-	if(rst_n == 0 ) begin 
-		out_data_valid <= 1'b0;
-	end
-	else begin 
-		if( in_data_valid && cnt == decimate_reg) begin 
-			out_data_valid <= 1'b1;
-			data_valid_mask <= 1'b1;
-		end
-		else if (data_valid_mask) begin 
-			out_data_valid <= 1'b0;
-			data_valid_mask <= 1'b0;
-		end
-	end	
-end
-
-endmodule 
+/*********************************************************************************************/
+endmodule

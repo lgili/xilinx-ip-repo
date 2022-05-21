@@ -41,8 +41,7 @@ module ad_9226#
      */
     input wire clk_sample,
 
-    // ADC ready and end of conversion status
-    input wire ready,        
+    // ADC end of conversion status       
     output reg eoc,
 
     /*
@@ -54,7 +53,7 @@ module ad_9226#
      * ADC ouput
      */
     (* mark_debug = "true", keep = "true" *) 
-    output wire [ADC_DATA_WIDTH-1:0] data_out,  
+    output wire signed [ADC_DATA_WIDTH-1:0] data_out,  
 
     /*
      * ADC config
@@ -90,7 +89,8 @@ assign data_out = signed_data_out;
  
 initial begin 
     fsm_cs   = HIGH;
-    fsm_ns   = HIGH;    
+    fsm_ns   = HIGH;   
+    countCycles = 0; 
 end 
 
 // Clock enable  
@@ -102,7 +102,6 @@ end
 always @(posedge clk) begin
     if(rst_n == 0) begin
         fsm_cs <= HIGH;
-        countCycles <= 0;
     end    
     else
         fsm_cs <= fsm_ns;         
@@ -156,13 +155,8 @@ always @(negedge clk) begin
     if (rst_n == 0) begin // zera saidas em reset
         signed_data_out <= 12'h0;         
     end
-    else if (sigma == 1) begin
-        if(ready == 1) begin
-            signed_data_out <= data_in - offsetUsed;             
-        end
-        else begin
-            signed_data_out <= 0;             
-        end
+    else  begin //if (sigma == 1)       
+        signed_data_out <= data_in - 2048;  
     end                 
 end
 

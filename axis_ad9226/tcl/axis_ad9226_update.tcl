@@ -10,6 +10,15 @@ set ip_project [ open_project ${proj_dir}/${design}.xpr ]
 
 ipx::edit_ip_in_project -upgrade true -name ${design}_project  -directory ${proj_dir}
 
+# Read source files from hdl directory
+set v_src_files [glob ./hdl/*.v]
+set sv_src_files [glob ./hdl/*.sv]
+#set mem_src_files [glob ./hdl/*.mem]
+read_verilog ${v_src_files}
+read_verilog -sv ${sv_src_files}
+#read_mem ${mem_src_files}
+update_compile_order -fileset sources_1
+
 
 ipx::merge_project_changes files [ipx::current_core]
 ipx::merge_project_changes ports [ipx::current_core]

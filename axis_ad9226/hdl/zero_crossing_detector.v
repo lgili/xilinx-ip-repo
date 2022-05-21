@@ -65,8 +65,8 @@ wire tc_or_zcd;
 
 
 assign signed_in_data = in_data;
-assign save_periods = (config_reg[19:12] == 0) ? 5 : config_reg[19:12];
-assign jump_periods = (config_reg[27:20] == 0) ? 5 : config_reg[27:20];
+assign save_periods = (config_reg[19:12] == 0) ? 2 : config_reg[19:12];
+assign jump_periods = (config_reg[27:20] == 0) ? 30 : config_reg[27:20];
 assign tc_or_zcd    = config_reg[28];
 assign filter_rst = config_reg[31];
 assign zero_value = config_reg[11:0];
@@ -190,10 +190,10 @@ end
 
 
 
-
+/*
 wire tc, tc_b,onTrigger;
 wire tc_60hz;
-reg saved;
+
 reg [REG_WIDTH-1:0] count_60Hz;
 wire zcd_clk;
 
@@ -210,7 +210,7 @@ always@(posedge clk_60hz, negedge rst) begin
  	if (!rst) clk_at_trigger_freq <= 0;
     else if (tc_60hz) clk_at_trigger_freq <= !clk_at_trigger_freq;		
 end
-
+*/
 
 //assign tc = (countWaves < save_periods) ? 0: 1;
 
@@ -228,6 +228,7 @@ end*/
 //assign tc_b = (countWaves < (save_periods+jump_periods)) ? 0: 1;
 //assign zcd_clk = int_start;
 
+reg saved;
 reg canSave;
 always@(posedge clk) begin
  	if (!rst) begin
@@ -236,7 +237,7 @@ always@(posedge clk) begin
 		canSave <= 1;
 	 end	
     else begin 
-		if(onTrigger == 1)
+		if(int_start == 1)
 			countWaves <= countWaves +1;
 
 		if(canSave == 1) begin
@@ -259,8 +260,8 @@ always@(posedge clk) begin
 end
 
 assign save = saved;
-assign onTrigger = (tc_or_zcd) ? int_start : tc_60hz;
-assign debug = (tc_or_zcd) ? int_start : tc_60hz;
+//assign onTrigger = (tc_or_zcd) ? int_start : tc_60hz;
+//assign debug = (tc_or_zcd) ? int_start : tc_60hz;
 
 
 

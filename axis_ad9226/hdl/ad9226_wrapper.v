@@ -88,9 +88,8 @@ THE SOFTWARE.
 
 		// Ports of Axi Slave Bus Interface S00_AXI	
 		input wire  clk_100m,	
-		input wire  clk_adc,
-		input wire  clk_60hz,
-        input wire                           aresetn,       
+		input wire  clk_adc,		
+        input wire  aresetn,       
                          
 		
 		input wire [AXI_LITE_DATA_WIDTH-1 : 0] s_axi_awaddr,
@@ -114,17 +113,7 @@ THE SOFTWARE.
 		input wire  s_axi_rready,
 		
 		
-		//////////////////////////////////////////////////////////////////
-		// Ports of Axi Slave Bus Interface S_AXIS
-		//input wire  s_axis_aclk,
-		//input wire  s_axis_aresetn,
-		output wire  s_axis_tready,
-		input wire [AXIS_DATA_WIDTH-1 : 0] s_axis_tdata,
-		input wire [(AXIS_DATA_WIDTH/8)-1 : 0] s_axis_tstrb,
-		input wire [(AXIS_DATA_WIDTH/8)-1 : 0] s_axis_tkeep,
-		input wire  s_axis_tlast,
-		input wire  s_axis_tvalid,
-
+		
 		// Ports of Axi Master Bus Interface M_AXIS
 		//input wire  m_axis_aclk,
 		//input wire  m_axis_aresetn,
@@ -146,13 +135,6 @@ THE SOFTWARE.
 //
 ///////////////////////////////////////////////////////////////////////////
 
-wire                               m_axis_fifo_tvalid;
-wire [AXIS_DATA_WIDTH-1 : 0]       m_axis_fifo_tdata;
-wire [(AXIS_DATA_WIDTH/8)-1 : 0]   m_axis_fifo_tstrb;
-wire                               m_axis_fifo_tlast;
-wire                               m_axis_fifo_tready; 
-wire 	[(AXIS_DATA_WIDTH/8)-1 : 0] m_axis_fifo_tkeep; 
-wire 	                           m_axis_fifo_tuser;
 		
 wire 	[7:0]  enablePacket; 
 wire	[AXI_LITE_DATA_WIDTH-1:0] configPassband; 
@@ -176,6 +158,12 @@ wire 	[AXI_LITE_DATA_WIDTH-1:0]	totalReceivedPackets;
 wire 	[AXI_LITE_DATA_WIDTH-1:0]	lastReceivedPacket_head; 
 wire 	[AXI_LITE_DATA_WIDTH-1:0]	lastReceivedPacket_tail; 
 
+wire [ADC_DATA_WIDTH-1:0] data_1;
+wire [ADC_DATA_WIDTH-1:0] data_2;
+wire [ADC_DATA_WIDTH-1:0] data_3;
+wire [ADC_DATA_WIDTH-1:0] data_4;
+wire trigger;
+
 //wire              clk_adc;
 assign s1_ad9226_clk = clk_adc;
 assign s2_ad9226_clk = clk_adc;
@@ -186,118 +174,100 @@ assign s4_ad9226_clk = clk_adc;
 
 
 
-
-
-`ifdef POST_SYNTHESIS_SIMULATION
-reg 		enableSampleGeneration =0; 
-reg 	[31:0]	packetSize; 
-
-initial begin 
-	enableSampleGeneration = 1; 
-end 
-
-initial begin 
-	packetSize = 31; 
-end 
-
-`else 
-
 wire 	enableSampleGeneration; 
 wire 	[31:0]	packetSize; 	
 
-	
-    
+/////////////////////////////////////////////////
+// 
 // Instantiation of Axi Bus Interface S_AXI
-	ad9226_v1_s_axi # ( 
-		.AXI_DATA_WIDTH(AXI_LITE_DATA_WIDTH),
-		.AXI_ADDR_WIDTH(AXI_ADDR_WIDTH)
-	) 	ad9226_v1_s_axi_inst (
-			
-		.EnableSampleGeneration 	( enableSampleGeneration ), 
-		.PacketSize 			( packetSize ), 
-		//.PacketRate			( packetRate ), 
-		.ConfigAdc 			( configAdc ), 
-		//.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
-		.ConfigZCDValue             (configZCDValue),
-		.Decimator                   (decimator),
-		.MavgFactor                  (mavgFactor),
-		.PacketSizeToStop			(packetSizeToStop),	
-		.Restart                    (restart), 
-		.AdcData                    (adcData),
-		.Status                     (status), 
-		.TriggerLevel                (triggerLevel),
+//
+/////////////////////////////////////////////////	    
+ad9226_v1_s_axi # ( 
+	.AXI_DATA_WIDTH(AXI_LITE_DATA_WIDTH),
+	.AXI_ADDR_WIDTH(AXI_ADDR_WIDTH)
+) 	ad9226_v1_s_axi_inst (
 		
-		
-		.S_AXI_ACLK			    (clk_100m),
-		.S_AXI_ARESETN			(aresetn),
-		.S_AXI_AWADDR			(s_axi_awaddr),
-		.S_AXI_AWPROT			(s_axi_awprot),
-		.S_AXI_AWVALID			(s_axi_awvalid),
-		.S_AXI_AWREADY			(s_axi_awready),
-		.S_AXI_WDATA			(s_axi_wdata),
-		.S_AXI_WSTRB			(s_axi_wstrb),
-		.S_AXI_WVALID			(s_axi_wvalid),
-		.S_AXI_WREADY			(s_axi_wready),
-		.S_AXI_BRESP			(s_axi_bresp),
-		.S_AXI_BVALID			(s_axi_bvalid),
-		.S_AXI_BREADY			(s_axi_bready),
-		.S_AXI_ARADDR			(s_axi_araddr),
-		.S_AXI_ARPROT			(s_axi_arprot),
-		.S_AXI_ARVALID			(s_axi_arvalid),
-		.S_AXI_ARREADY			(s_axi_arready),
-		.S_AXI_RDATA			(s_axi_rdata),
-		.S_AXI_RRESP			(s_axi_rresp),
-		.S_AXI_RVALID			(s_axi_rvalid),
-		.S_AXI_RREADY			(s_axi_rready)
-	);	
-	
-`endif 	
-	// Instantiation of Axi Bus Interface S_AXIS
-	ad9226_v1_s_axis # ( 
-		.C_S_AXIS_TDATA_WIDTH(AXIS_DATA_WIDTH)
-	) ad9226_v1_s_axis_inst (
-		.TotalReceivedPacketData 	( totalReceivedPacketData ), 
-		.TotalReceivedPackets 		( totalReceivedPackets ), 
-		.LastReceivedPacket_head 	( lastReceivedPacket_head ), 
-		.LastReceivedPacket_tail 	( lastReceivedPacket_tail ), 
-		
-		.S_AXIS_ACLK			(clk_100m),
-		.S_AXIS_ARESETN			(aresetn),		
-		.S_AXIS_TREADY			(s_axis_tready),
-		.S_AXIS_TDATA			(s_axis_tdata),
-		.S_AXIS_TSTRB			(s_axis_tstrb),
-		.S_AXIS_TKEEP			(s_axis_tkeep), 
-		.S_AXIS_TLAST			(s_axis_tlast),
-		.S_AXIS_TVALID			(s_axis_tvalid)
-	);
+	.EnableSampleGeneration 	( enableSampleGeneration ), 
+	.PacketSize 			( packetSize ), 
+	//.PacketRate			( packetRate ), 
+	.ConfigAdc 			( configAdc ), 
+	//.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+	.ConfigZCDValue             (configZCDValue),
+	.Decimator                   (decimator),
+	.MavgFactor                  (mavgFactor),
+	.PacketSizeToStop			(packetSizeToStop),	
+	.Restart                    (restart), 
+	.AdcData                    (adcData),
+	.Status                     (status), 
+	.TriggerLevel                (triggerLevel),
 	
 	
-	// Instantiation of Axi Bus Interface M_AXIS
-	ad9226_v1_m_axis # ( 
-		.AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
-		.C_M_START_COUNT(C_M_AXIS_START_COUNT),
-		.ADC_DATA_WIDTH(ADC_DATA_WIDTH)
-	) ad9226_v1_m_axis_inst (	
+	.S_AXI_ACLK			    (clk_100m),
+	.S_AXI_ARESETN			(aresetn),
+	.S_AXI_AWADDR			(s_axi_awaddr),
+	.S_AXI_AWPROT			(s_axi_awprot),
+	.S_AXI_AWVALID			(s_axi_awvalid),
+	.S_AXI_AWREADY			(s_axi_awready),
+	.S_AXI_WDATA			(s_axi_wdata),
+	.S_AXI_WSTRB			(s_axi_wstrb),
+	.S_AXI_WVALID			(s_axi_wvalid),
+	.S_AXI_WREADY			(s_axi_wready),
+	.S_AXI_BRESP			(s_axi_bresp),
+	.S_AXI_BVALID			(s_axi_bvalid),
+	.S_AXI_BREADY			(s_axi_bready),
+	.S_AXI_ARADDR			(s_axi_araddr),
+	.S_AXI_ARPROT			(s_axi_arprot),
+	.S_AXI_ARVALID			(s_axi_arvalid),
+	.S_AXI_ARREADY			(s_axi_arready),
+	.S_AXI_RDATA			(s_axi_rdata),
+	.S_AXI_RRESP			(s_axi_rresp),
+	.S_AXI_RVALID			(s_axi_rvalid),
+	.S_AXI_RREADY			(s_axi_rready)
+);	
+	
 
+/////////////////////////////////////////////////
+// 
+// Instantiation of AD9226 with 4 channels
+//
+/////////////////////////////////////////////////
+	// 
+	ad9226_if # ( 
+		.QTD_ADC(4),
+		.AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),		
+		.ADC_DATA_WIDTH(ADC_DATA_WIDTH)
+	) ad9226_if_inst (	
+
+		.clk_100m(clk_100m),
+		.reset_n(aresetn),
+
+		/*
+		* ADC input
+		*/
 		.adc_1(s1_ad9226_data),
 		.adc_2(s2_ad9226_data),
 		.adc_3(s3_ad9226_data),
-		.adc_4(s4_ad9226_data),		
+		.adc_4(s4_ad9226_data),	
+
 		.irq(irq),
-		.adc_clk(clk_adc),
-		.clk_60hz(clk_60hz),
-		.button(button),
-
-		//.saved(saved),
+		.adc_clk(clk_adc),		
+		.button(button),	
+		.trigger(trigger),	
 		.debug(debugPin),
-		//.test_1(test_1),
-		//.test_2(test_2),
-
-		.EnableSampleGeneration 	( enableSampleGeneration ), 
-		.PacketSize 			    ( packetSize ), 
-		.PacketRate			        ( packetRate ), 
-		.ConfigAdc 			        ( configAdc  ), 
-		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+		
+		/*
+		* ADC output
+		*/
+		.data_1(data_1),
+		.data_2(data_2),
+		.data_3(data_3),
+		.data_4(data_4),
+		
+		/*
+		* Configurations 
+		*/
+		.PacketSize 			    ( packetSize ),
+		.ConfigAdc 			        ( configAdc  ), 		
 		.ConfigZCDValue             (configZCDValue),
 		.Decimator                  (decimator),
 		.MavgFactor                 (mavgFactor),
@@ -305,8 +275,31 @@ wire 	[31:0]	packetSize;
 		.Restart                    (restart),
 		.AdcData                    (adcData),
 		.Status                     (status), 
-		.TriggerLevel                (triggerLevel),
+		.TriggerLevel               (triggerLevel)		
+	);
+
+	
+	// Instantiation of Axi Bus Interface M_AXIS
+	ad9226_v1_m_axis # ( 
+		.AXIS_DATA_WIDTH(AXIS_DATA_WIDTH),
+		.C_M_START_COUNT(C_M_AXIS_START_COUNT),
+		.ADC_DATA_WIDTH(ADC_DATA_WIDTH)
+	) ad9226_v1_m_axis_inst (	
 		
+		.data_1(data_1),
+		.data_2(data_2),
+		.data_3(data_3),
+		.data_4(data_4),		
+		.trigger(trigger),
+
+		.adc_clk(clk_adc),		
+		
+		.EnableSampleGeneration 	( enableSampleGeneration ), 
+		.PacketSize 			    ( packetSize ), 
+		.PacketRate			        ( packetRate ), 		
+		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+		.Restart                    (restart),
+				
 		.M_AXIS_ACLK			(clk_100m),
 		.M_AXIS_ARESETN			(aresetn),
 		.M_AXIS_TVALID			(m_axis_tvalid),
@@ -318,93 +311,5 @@ wire 	[31:0]	packetSize;
 		.M_AXIS_TUSER 			(m_axis_tuser)
 	);
 
-/**********************************************************************************************************/
-/*axis_async_fifo #
-(
-    // FIFO depth in words
-    // KEEP_WIDTH words per cycle if KEEP_ENABLE set
-    // Rounded up to nearest power of 2 cycles
-    .DEPTH(FIFO_SIZE),
-    // Width of AXI stream interfaces in bits
-    .DATA_WIDTH(8),
-    // Propagate tkeep signal
-    // If disabled, tkeep assumed to be 1'b1
-    .KEEP_ENABLE( (C_S_AXIS_DATA_WIDTH>8)),
-    // tkeep signal width (words per cycle)
-    .KEEP_WIDTH(((C_S_AXIS_DATA_WIDTH+7)/8)),
-    // Propagate tlast signal
-    .LAST_ENABLE(1),
-    // Propagate tid signal
-    .ID_ENABLE(0),
-    // tid signal width
-    .ID_WIDTH(8),
-    // Propagate tdest signal
-    .DEST_ENABLE(0),
-    // tdest signal width
-    .DEST_WIDTH(8),
-    // Propagate tuser signal
-    .USER_ENABLE(1),
-    // tuser signal width
-    .USER_WIDTH(1),
-    // number of output pipeline registers
-    .PIPELINE_OUTPUT(2),
-    // Frame FIFO mode - operate on frames instead of cycles
-    // When set, m_axis_tvalid will not be deasserted within a frame
-    // Requires LAST_ENABLE set
-    .FRAME_FIFO(0),
-    // tuser value for bad frame marker
-    .USER_BAD_FRAME_VALUE(1'b1),
-    // tuser mask for bad frame marker
-    .USER_BAD_FRAME_MASK(1'b1),
-    // Drop frames larger than FIFO
-    // Requires FRAME_FIFO set
-    .DROP_OVERSIZE_FRAME(0),
-    // Drop frames marked bad
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_BAD_FRAME(0),
-    // Drop incoming frames when full
-    // When set, s_axis_tready is always asserted
-    // Requires FRAME_FIFO and DROP_OVERSIZE_FRAME set
-    .DROP_WHEN_FULL(0)
-) fifo
-(
-    // AXI input
-     
-    .s_clk(clk_adc),
-    .s_rst(!ResetL),
-    .s_axis_tdata(m_axis_fifo_tdata),
-    .s_axis_tkeep(m_axis_fifo_tkeep),
-    .s_axis_tvalid(m_axis_fifo_tvalid),
-    .s_axis_tready(m_axis_fifo_tready),
-    .s_axis_tlast(m_axis_fifo_tlast),
-    //.s_axis_tid(),
-    //.s_axis_tdest(),
-    .s_axis_tuser(m_axis_fifo_tuser),
-
-    // AXI output
-     
-    .m_clk(Clk),
-    .m_rst(!ResetL),
-    .m_axis_tdata(m_axis_fifo_tdata),
-    .m_axis_tkeep(m_axis_tkeep),
-    .m_axis_tvalid(m_axis_tvalid),
-    .m_axis_tready(m_axis_tready),
-    .m_axis_tlast(),
-    //.m_axis_tid(),
-    //.m_axis_tdest(),
-    .m_axis_tuser(m_axis_tuser),
-    
-    .totalPacket(packetSize),
-    .fake_tlast(m_axis_tlast)
-
-   // Status
-     
-    output wire                   s_status_overflow,
-    output wire                   s_status_bad_frame,
-    output wire                   s_status_good_frame,
-    output wire                   m_status_overflow,
-    output wire                   m_status_bad_frame,
-    output wire                   m_status_good_frame
-);	*/
 
 endmodule

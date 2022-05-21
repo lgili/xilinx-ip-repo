@@ -31,7 +31,7 @@ TOPLEVEL = $(DUT)
 MODULE   = test_$(DUT)
 VERILOG_SOURCES += ../../hdl/$(DUT).v
 VERILOG_SOURCES += ../../hdl/ad9226_v1_m_axis.v
-VERILOG_SOURCES += ../../hdl/ad9226_v1_s_axis.v
+
 VERILOG_SOURCES += ../../hdl/ad9226_v1_s_axi.v
 VERILOG_SOURCES += ../../hdl/ad_9226.v
 VERILOG_SOURCES += ../../hdl/data_decimation.v
@@ -41,6 +41,13 @@ VERILOG_SOURCES += ../../hdl/zero_crossing_detector.v
 VERILOG_SOURCES += ../../hdl/passband_filter.v
 VERILOG_SOURCES += ../../hdl/passband_iir.v
 VERILOG_SOURCES += ../../hdl/skidbuffer.v
+
+VERILOG_SOURCES += ../../hdl/integrator.v
+VERILOG_SOURCES += ../../hdl/comb.sv
+VERILOG_SOURCES += ../../hdl/cic_d.v
+VERILOG_SOURCES += ../../hdl/downsampler.v
+VERILOG_SOURCES += ../../hdl/ad9226_if.v
+
 
 
 # module parameters
