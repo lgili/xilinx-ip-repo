@@ -88,7 +88,8 @@ THE SOFTWARE.
 
 		// Ports of Axi Slave Bus Interface S00_AXI	
 		input wire  clk_100m,	
-		input wire  clk_adc,		
+		input wire  clk_adc,	
+		input wire  clk_adc_lf,	
         input wire  aresetn,       
                          
 		
@@ -164,6 +165,7 @@ wire [ADC_DATA_WIDTH-1:0] data_3;
 wire [ADC_DATA_WIDTH-1:0] data_4;
 wire trigger;
 wire tlast_assert;
+wire saved;
 
 //wire              clk_adc;
 assign s1_ad9226_clk = clk_adc;
@@ -250,12 +252,14 @@ ad9226_v1_s_axi # (
 		.adc_3(s3_ad9226_data),
 		.adc_4(s4_ad9226_data),	
 
-		.irq(irq),
-		.adc_clk(clk_adc),		
+		.irq_adc_lf(irq),
+		.adc_clk(clk_adc),	
+		.clk_adc_lf(clk_adc_lf),	
 		.button(button),	
 		.trigger(trigger),	
 		.tlast_assert(tlast_assert),
 		.debug(debugPin),
+		.saved(saved),
 		
 		/*
 		* ADC output
@@ -266,16 +270,18 @@ ad9226_v1_s_axi # (
 		.data_4(data_4),
 		
 		/*
+		* ADC output low freq
+		*/		
+		.data_lf_1(adcData),
+		/*
 		* Configurations 
 		*/
 		.PacketSize 			    ( packetSize ),
 		.ConfigAdc 			        ( configAdc  ), 		
-		.ConfigZCDValue             (configZCDValue),
 		.Decimator                  (decimator),
-		.MavgFactor                 (mavgFactor),
-		.PacketSizeToStop			(packetSizeToStop),	
+		.MavgFactor                 (mavgFactor),			
 		.Restart                    (restart),
-		.AdcData                    (adcData),
+		//.AdcData                    (adcData),
 		.Status                     (status), 
 		.TriggerLevel               (triggerLevel)		
 	);
@@ -300,8 +306,11 @@ ad9226_v1_s_axi # (
 		.PacketSize 			    ( packetSize ), 
 		.PacketRate			        ( packetRate ), 		
 		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
+		.PacketSizeToStop			(packetSizeToStop),
+		.ConfigZCDValue             (configZCDValue),
 		.Restart                    (restart),
 		.tlast_assert(tlast_assert),
+		.saved(saved),
 				
 		.M_AXIS_ACLK			(clk_100m),
 		.M_AXIS_ARESETN			(aresetn),

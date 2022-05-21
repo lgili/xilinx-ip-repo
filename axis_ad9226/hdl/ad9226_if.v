@@ -41,6 +41,7 @@ module ad9226_if #
 		* ADC input
 		*/
 		input wire adc_clk,
+		input wire clk_adc_lf,
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_1,
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_2,
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_3,	
@@ -55,12 +56,20 @@ module ad9226_if #
 		output wire [ADC_DATA_WIDTH-1 : 0] data_4,
 
 		/*
+		* ADC output low freq
+		*/
+		output wire irq_adc_lf,
+		output reg [11:0] data_lf_1,
+		output wire tx_data,
+
+		/*
 		* Interrupt 
 		*/		
 		output reg irq,		
 		input wire button,
 		output wire trigger,
 		output wire tlast_assert,
+		output wire saved,
 
 		/*
 		* Configurations 
@@ -69,9 +78,7 @@ module ad9226_if #
 		input 	wire 	[31:0]	 			Decimator,	
 		input   wire    [31:0]     			MavgFactor,
 		input   wire    [31:0]     			ConfigPassBand,
-		input   wire    [31:0]     			ConfigAdc,
-		input 	wire 	[31:0]	            ConfigZCDValue,
-		input 	wire 	[31:0]	            PacketSizeToStop,
+		input   wire    [31:0]     			ConfigAdc,			
 		input 	wire 	[31:0]	            Restart,
 		input 	wire 	[31:0]	            TriggerLevel,
 		output 	wire 	[31:0]	            AdcData,
@@ -345,32 +352,7 @@ wire [QTD_ADC-1:0] out_filter_valid;
 );*/
 
 
-/////////////////////////////////////////////////
-// 
-// Zero Cross Detection
-//
-/////////////////////////////////////////////////
 
-wire [QTD_ADC*16-1:0] out_data_zcd;    
-wire [QTD_ADC-1:0] save;  
-    
-zero_crossing_detector#
-(
-    .DATA_WIDTH(16),
-    .REG_WIDTH(AXIS_DATA_WIDTH)
-) zcd_dut [QTD_ADC-1:0]
-(
-    .clk(Clk),
-	//.clk_60hz(clk_60hz),
-    .rst(ResetL),
-    .in_data_valid(out_data_valid_fir),
-    .in_data(out_data_fir), 
-    //.in_counter_pos({packetDWORDCounter,packetDWORDCounter,packetDWORDCounter,packetDWORDCounter}),
-    .out_data(out_data_zcd),    
-    .config_reg({ConfigZCDValue,ConfigZCDValue,ConfigZCDValue,ConfigZCDValue}),
-	.PacketSizeToStop(PacketSizeToStop),    
-	.save(save)	
-);
 
 /////////////////////////////////////////////////
 // 
@@ -378,7 +360,7 @@ zero_crossing_detector#
 //
 /////////////////////////////////////////////////
 
-assign saved = save[0];
+
 
 wire signed [11:0] ddr_data_1;
 wire signed [11:0] ddr_data_2;
@@ -408,5 +390,58 @@ assign data_3 = to_unsigned(ddr_data_3, 2048, 12);
 assign data_4 = to_unsigned(ddr_data_4, 2048, 12);
 
 
+/////////////////////////////////////////////////
+// 
+// LOW FRED DATA GENERARION
+//
+/////////////////////////////////////////////////
 
+
+reg [31:0] count_60Hz;
+
+assign irq_adc_lf = (count_60Hz == ((1_000_000 >> 1) -1));
+
+
+always@(posedge clk_adc_lf) begin
+ 	if (!ResetL) count_60Hz <= 0;
+    else if (irq_adc_lf) begin 
+		 count_60Hz <=0;		// Reset counter when terminal count reached   
+		 data_lf_1 <= ddr_data_1;	
+	end 
+	else count_60Hz <= count_60Hz +1;	
+end
+
+
+
+wire TxD_busy;
+wire TxD_start = ~TxD_busy & ~rdempty;
+assign rdreq = TxD_start;
+/*
+async_transmitter uart(
+	.clk(clk_adc),
+	.TxD_start(TxD_start),
+	.TxD_data(ddr_data_1[11:3]),
+	.TxD(tx_data),
+	.TxD_busy(TxD_busy)
+);
+
+
+
+fifo #(
+    .WIDTH(12),
+    .DEPTH(1024)
+)buffer
+(
+    .data_in({data_4,data_3,data_2,data_1}),
+    .clk(Clk),
+	.rst_n(ResetL),
+    .write(wr_en),
+    .read(rd_en),
+    .data_out({data_out_4,data_out_3,data_out_2,data_out_1})
+    //.fifo_full(),
+    //.fifo_empty(),
+    //.fifo_not_empty(fifo_not_empty),
+    //.fifo_not_full(fifo_not_full)
+);
+*/
 endmodule

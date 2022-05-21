@@ -300,6 +300,8 @@ def test_ad9226_wrapper(request, data_width):
         os.path.join(hdl_dir, "cic_d.v"),
         os.path.join(hdl_dir, "downsampler.v"),
         os.path.join(hdl_dir, "ad9226_if.v"),
+
+        os.path.join(hdl_dir, "fifo.v"),
         
         
         

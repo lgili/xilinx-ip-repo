@@ -48,6 +48,7 @@ module ad9226_v1_m_axis #
 		input wire [ADC_DATA_WIDTH-1 : 0] data_4,
 		input wire trigger,
 		input wire tlast_assert,
+		input wire saved,
 
 		/*
 		* Configurations 
@@ -58,6 +59,8 @@ module ad9226_v1_m_axis #
 		input 	wire 	[31:0]				PacketPattern,
 		input 	wire 	[31:0]				NumberOfPacketsToSend,
 		input 	wire 	[31:0]	            Restart,
+		input 	wire 	[31:0]	            PacketSizeToStop,
+		input 	wire 	[31:0]	            ConfigZCDValue,	
 		
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -353,7 +356,78 @@ assign M_AXIS_TKEEP = M_AXIS_TSTRB; // 4'hf;
 assign M_AXIS_TUSER = 0; 
 
 
+/////////////////////////////////////////////////
+// 
+// Zero Cross Detection
+//
+/////////////////////////////////////////////////
 
+//wire [4*16-1:0] out_data_zcd;    
+wire [4-1:0] save;  
+    
+zero_crossing_detector#
+(
+    .DATA_WIDTH(12),
+    .REG_WIDTH(AXIS_DATA_WIDTH)
+) zcd_dut [4-1:0]
+(
+    .clk(Clk),
+	//.clk_60hz(clk_60hz),
+    .rst(ResetL),
+    .in_data_valid(4'b1111),
+    .in_data(data_out_1), // data_1 data_out_1
+    .in_counter_pos({packetDWORDCounter,packetDWORDCounter,packetDWORDCounter,packetDWORDCounter}),
+    //.out_data(out_data_zcd),    
+    .config_reg({ConfigZCDValue,ConfigZCDValue,ConfigZCDValue,ConfigZCDValue}),
+	.PacketSizeToStop(PacketSizeToStop),    
+	.save(save)	
+);
+
+/////////////////////////////////////////////////
+// 
+// FIFO
+//
+/////////////////////////////////////////////////
+reg wr_en, rd_en;
+wire [11:0] data_out_1,data_out_2,data_out_3,data_out_4;
+
+always@(posedge Clk) begin 
+	if ( ! ResetL ) begin 
+		wr_en <= 0; 
+		rd_en <= 0;
+	end 
+	else begin
+		if(adc_clk)
+			wr_en = 1;		
+		else 
+			wr_en = 0;
+
+
+		if((dataIsBeingTransferred || lastDataIsBeingTransferred))
+			rd_en <= 1;
+		else
+			rd_en <= 0;		
+	end
+
+end
+
+
+fifo #(
+    .WIDTH(12),
+    .DEPTH(32768)
+)buffer [3:0]
+(
+    .data_in({data_4,data_3,data_2,data_1}),
+    .clk(Clk),
+	.rst_n(ResetL),
+    .write(wr_en),
+    .read(rd_en),
+    .data_out({data_out_4,data_out_3,data_out_2,data_out_1})
+    //.fifo_full(),
+    //.fifo_empty(),
+    //.fifo_not_empty(fifo_not_empty),
+    //.fifo_not_full(fifo_not_full)
+);
 
 /////////////////////////////////////////////////
 // 
@@ -375,11 +449,11 @@ function [AXIS_DATA_WIDTH - 1:0] getData;
 			// 32'h1 : getData = {save[1], 19'd2, adc_result[23:12]};
 			// 32'h2 : getData = {save[2], 19'd3, adc_result[35:24]};
 
-			32'h0 : getData = {20'd1, data_1};
-			32'h1 : getData = {20'd2, data_2};
-			32'h2 : getData = {20'd3, data_3};
+			32'h0 : getData = {save[0], 19'd0, data_out_1};
+			32'h1 : getData = {save[0], 19'd1, data_out_2};
+			32'h2 : getData = {save[0], 19'd2, data_out_3};
 			
-			32'h3 : getData = packetDWORDCounter;
+			32'h3 : getData = {2'd3, packetDWORDCounter};
 			default : getData = 0;
 		endcase
 	end
