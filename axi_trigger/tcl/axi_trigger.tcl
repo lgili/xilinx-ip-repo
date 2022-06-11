@@ -26,10 +26,10 @@ set aclk_intf [ipx::get_bus_interfaces ADC_CLK -of_objects ${ip_core}]
 set aclk_assoc_intf [ipx::add_bus_parameter ASSOCIATED_BUSIF $aclk_intf]
 set_property value s00_axi $aclk_assoc_intf
 set aclk_assoc_reset [ipx::add_bus_parameter ASSOCIATED_RESET $aclk_intf]
-set_property value ARESETN $aclk_assoc_reset
+set_property value s00_axi_aresetn $aclk_assoc_reset
 
 # Set reset polarity
-set aresetn_intf [ipx::get_bus_interfaces ARESETN -of_objects ${ip_core}]
+set aresetn_intf [ipx::get_bus_interfaces s00_axi_aresetn -of_objects ${ip_core}]
 set aresetn_polarity [ipx::add_bus_parameter POLARITY $aresetn_intf]
 set_property value ACTIVE_LOW ${aresetn_polarity}
 

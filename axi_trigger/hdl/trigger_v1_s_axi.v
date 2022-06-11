@@ -1,7 +1,7 @@
 
 `timescale 1 ns / 1 ps
 
-    module S_AXI #
+    module trigger_v1_s_axi #
     (
         // Users to add parameters here
 

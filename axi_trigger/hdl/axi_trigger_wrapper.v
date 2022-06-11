@@ -12,9 +12,8 @@
 	)
 	(
 		// Users to add ports here
-        input [11:0] ADC_1_DATA,
-		input [11:0] ADC_2_DATA,
-		input [11:0] ADC_3_DATA,
+        input [47:0] ADC,
+		
 		input ADC_CLK,
 //		input adc_1_otr,
 //		input adc_2_otr,
@@ -59,14 +58,17 @@
         wire [31:0] ADC2_MAX_DV;
         wire [31:0] ADC3_MAX_DV;
         wire [31:0] VERSION_CTE;
-
+		assign ADC_1_DATA = ADC[11:0];
+		assign ADC_2_DATA = ADC[23:12];
+		assign ADC_3_DATA = ADC[35:24];
+		assign ADC_4_DATA = ADC[47:36];
 
 
 // Instantiation of Axi Bus Interface S00_AXI
-	S_AXI # ( 
+	trigger_v1_s_axi # ( 
 		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
 		.C_S_AXI_ADDR_WIDTH(C_S00_AXI_ADDR_WIDTH)
-	) S_AXI (
+	) trigger_v1_s_axi_inst (
 		.S_AXI_ACLK(s00_axi_aclk),
 		.S_AXI_ARESETN(s00_axi_aresetn),
 		.S_AXI_AWADDR(s00_axi_awaddr),
