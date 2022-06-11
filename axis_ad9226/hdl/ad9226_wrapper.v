@@ -122,9 +122,9 @@ THE SOFTWARE.
 		output wire [AXIS_DATA_WIDTH-1 : 0] m_axis_tdata,
 		output wire [(AXIS_DATA_WIDTH/8)-1 : 0] m_axis_tstrb,
 		output wire  m_axis_tlast,
-		input wire  m_axis_tready, 
-		output wire 	[(AXIS_DATA_WIDTH/8)-1 : 0] m_axis_tkeep, 
-		output wire 	m_axis_tuser
+		input  wire  m_axis_tready, 
+		output wire [(AXIS_DATA_WIDTH/8)-1 : 0] m_axis_tkeep, 
+		output wire m_axis_tuser
 		
 		/////////////////////////////////////////////////////////////////	
 		
@@ -185,7 +185,7 @@ assign s4_ad9226_clk = clk_adc;
 wire 	enableSampleGeneration; 
 wire 	[31:0]	packetSize; 	
 
-assign adcs = {s1_ad9226_data,s1_ad9226_data,s1_ad9226_data,s1_ad9226_data};
+assign adcs = {s4_ad9226_data,s3_ad9226_data,s2_ad9226_data,s1_ad9226_data};
 
 /////////////////////////////////////////////////
 // 

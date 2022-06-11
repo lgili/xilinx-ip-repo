@@ -80,68 +80,67 @@ module ad9226_v1_s_axi #
 	/*
      * AXI interface
      */
-	// Global Clock Signal
-	input wire  S_AXI_ACLK,
-	// Global Reset Signal. This Signal is Active LOW
-	input wire  S_AXI_ARESETN,
-	// Write address (issued by master, acceped by Slave)
-	input wire [AXI_ADDR_WIDTH-1 : 0] S_AXI_AWADDR,
-	// Write channel Protection type. This signal indicates the
-		// privilege and security level of the transaction, and whether
-		// the transaction is a data access or an instruction access.
-	input wire [2 : 0] S_AXI_AWPROT,
-	// Write address valid. This signal indicates that the master signaling
-		// valid write address and control information.
-	input wire  S_AXI_AWVALID,
-	// Write address ready. This signal indicates that the slave is ready
-		// to accept an address and associated control signals.
-	output wire  S_AXI_AWREADY,
-	// Write data (issued by master, acceped by Slave) 
-	input wire [AXI_DATA_WIDTH-1 : 0] S_AXI_WDATA,
-	// Write strobes. This signal indicates which byte lanes hold
-		// valid data. There is one write strobe bit for each eight
-		// bits of the write data bus.    
-	input wire [(AXI_DATA_WIDTH/8)-1 : 0] S_AXI_WSTRB,
-	// Write valid. This signal indicates that valid write
-		// data and strobes are available.
-	input wire  S_AXI_WVALID,
-	// Write ready. This signal indicates that the slave
-		// can accept the write data.
-	output wire  S_AXI_WREADY,
-	// Write response. This signal indicates the status
-		// of the write transaction.
-	output wire [1 : 0] S_AXI_BRESP,
-	// Write response valid. This signal indicates that the channel
-		// is signaling a valid write response.
-	output wire  S_AXI_BVALID,
-	// Response ready. This signal indicates that the master
-		// can accept a write response.
-	input wire  S_AXI_BREADY,
-	// Read address (issued by master, acceped by Slave)
-	input wire [AXI_ADDR_WIDTH-1 : 0] S_AXI_ARADDR,
-	// Protection type. This signal indicates the privilege
-		// and security level of the transaction, and whether the
-		// transaction is a data access or an instruction access.
-	input wire [2 : 0] S_AXI_ARPROT,
-	// Read address valid. This signal indicates that the channel
-		// is signaling valid read address and control information.
-	input wire  S_AXI_ARVALID,
-	// Read address ready. This signal indicates that the slave is
-		// ready to accept an address and associated control signals.
-	output wire  S_AXI_ARREADY,
-	// Read data (issued by slave)
-	output wire [AXI_DATA_WIDTH-1 : 0] S_AXI_RDATA,
-	// Read response. This signal indicates the status of the
-		// read transfer.
-	output wire [1 : 0] S_AXI_RRESP,
-	// Read valid. This signal indicates that the channel is
-		// signaling the required read data.
-	output wire  S_AXI_RVALID,
-	// Read ready. This signal indicates that the master can
-		// accept the read data and response information.
-	input wire  S_AXI_RREADY
-);
-	
+		// Global Clock Signal
+		input wire  S_AXI_ACLK,
+		// Global Reset Signal. This Signal is Active LOW
+		input wire  S_AXI_ARESETN,
+		// Write address (issued by master, acceped by Slave)
+		input wire [AXI_ADDR_WIDTH-1 : 0] S_AXI_AWADDR,
+		// Write channel Protection type. This signal indicates the
+    		// privilege and security level of the transaction, and whether
+    		// the transaction is a data access or an instruction access.
+		input wire [2 : 0] S_AXI_AWPROT,
+		// Write address valid. This signal indicates that the master signaling
+    		// valid write address and control information.
+		input wire  S_AXI_AWVALID,
+		// Write address ready. This signal indicates that the slave is ready
+    		// to accept an address and associated control signals.
+		output wire  S_AXI_AWREADY,
+		// Write data (issued by master, acceped by Slave) 
+		input wire [AXI_DATA_WIDTH-1 : 0] S_AXI_WDATA,
+		// Write strobes. This signal indicates which byte lanes hold
+    		// valid data. There is one write strobe bit for each eight
+    		// bits of the write data bus.    
+		input wire [(AXI_DATA_WIDTH/8)-1 : 0] S_AXI_WSTRB,
+		// Write valid. This signal indicates that valid write
+    		// data and strobes are available.
+		input wire  S_AXI_WVALID,
+		// Write ready. This signal indicates that the slave
+    		// can accept the write data.
+		output wire  S_AXI_WREADY,
+		// Write response. This signal indicates the status
+    		// of the write transaction.
+		output wire [1 : 0] S_AXI_BRESP,
+		// Write response valid. This signal indicates that the channel
+    		// is signaling a valid write response.
+		output wire  S_AXI_BVALID,
+		// Response ready. This signal indicates that the master
+    		// can accept a write response.
+		input wire  S_AXI_BREADY,
+		// Read address (issued by master, acceped by Slave)
+		input wire [AXI_ADDR_WIDTH-1 : 0] S_AXI_ARADDR,
+		// Protection type. This signal indicates the privilege
+    		// and security level of the transaction, and whether the
+    		// transaction is a data access or an instruction access.
+		input wire [2 : 0] S_AXI_ARPROT,
+		// Read address valid. This signal indicates that the channel
+    		// is signaling valid read address and control information.
+		input wire  S_AXI_ARVALID,
+		// Read address ready. This signal indicates that the slave is
+    		// ready to accept an address and associated control signals.
+		output wire  S_AXI_ARREADY,
+		// Read data (issued by slave)
+		output wire [AXI_DATA_WIDTH-1 : 0] S_AXI_RDATA,
+		// Read response. This signal indicates the status of the
+    		// read transfer.
+		output wire [1 : 0] S_AXI_RRESP,
+		// Read valid. This signal indicates that the channel is
+    		// signaling the required read data.
+		output wire  S_AXI_RVALID,
+		// Read ready. This signal indicates that the master can
+    		// accept the read data and response information.
+		input wire  S_AXI_RREADY
+	);
 
 	// AXI4LITE signals
 	reg [AXI_ADDR_WIDTH-1 : 0] 	axi_awaddr;
@@ -165,34 +164,28 @@ module ad9226_v1_s_axi #
 	//----------------------------------------------
 	//-- Signals for user logic register space example
 	//------------------------------------------------
-	//-- Number of Slave Registers 8
-	(* mark_debug = "true", keep = "true" *)
+	//-- Number of Slave Registers 16
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg0;
-	(* mark_debug = "true", keep = "true" *)
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg1;
-	(* mark_debug = "true", keep = "true" *)
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg2;
-	(* mark_debug = "true", keep = "true" *)
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg3;
-	(* mark_debug = "true", keep = "true" *)
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg4;
-	(* mark_debug = "true", keep = "true" *)
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg5;
-	(* mark_debug = "true", keep = "true" *)
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg6;
-	(* mark_debug = "true", keep = "true" *)
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg7;
-	
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg8;
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg9;
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg10;
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg11;
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg12;
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg13;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg14;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg15;
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [AXI_DATA_WIDTH-1:0]	 reg_data_out;
 	integer	 byte_index;
+	reg	 aw_en;
 
 	// I/O Connections assignments
 
@@ -214,17 +207,24 @@ module ad9226_v1_s_axi #
 	  if ( S_AXI_ARESETN == 1'b0 )
 	    begin
 	      axi_awready <= 1'b0;
+	      aw_en <= 1'b1;
 	    end 
 	  else
 	    begin    
-	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID)
+	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
 	        begin
 	          // slave is ready to accept write address when 
 	          // there is a valid write address and write data
 	          // on the write address and data bus. This design 
 	          // expects no outstanding transactions. 
 	          axi_awready <= 1'b1;
+	          aw_en <= 1'b0;
 	        end
+	        else if (S_AXI_BREADY && axi_bvalid)
+	            begin
+	              aw_en <= 1'b1;
+	              axi_awready <= 1'b0;
+	            end
 	      else           
 	        begin
 	          axi_awready <= 1'b0;
@@ -244,7 +244,7 @@ module ad9226_v1_s_axi #
 	    end 
 	  else
 	    begin    
-	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID)
+	      if (~axi_awready && S_AXI_AWVALID && S_AXI_WVALID && aw_en)
 	        begin
 	          // Write Address latching 
 	          axi_awaddr <= S_AXI_AWADDR;
@@ -265,7 +265,7 @@ module ad9226_v1_s_axi #
 	    end 
 	  else
 	    begin    
-	      if (~axi_wready && S_AXI_WVALID && S_AXI_AWVALID)
+	      if (~axi_wready && S_AXI_WVALID && S_AXI_AWVALID && aw_en )
 	        begin
 	          // slave is ready to accept write data when 
 	          // there is a valid write address and write data
@@ -305,8 +305,10 @@ module ad9226_v1_s_axi #
 	      slv_reg9 <= 0;
 	      slv_reg10 <= 0;
 	      slv_reg11 <= 0;
-		  slv_reg12 <= 0;
-		  slv_reg13 <= 0;
+	      slv_reg12 <= 0;
+	      slv_reg13 <= 0;
+	      slv_reg14 <= 0;
+	      slv_reg15 <= 0;
 	    end 
 	  else begin
 	    if (slv_reg_wren)
@@ -395,21 +397,35 @@ module ad9226_v1_s_axi #
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 11
 	                slv_reg11[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end 
-			  4'hC:
+	              end  
+	          4'hC:
 	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
-	                // Slave register 11
+	                // Slave register 12
 	                slv_reg12[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end
-		      4'hD:
+	              end  
+	          4'hD:
 	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
 	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
 	                // Respective byte enables are asserted as per write strobes 
-	                // Slave register 11
+	                // Slave register 13
 	                slv_reg13[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end		   	   
+	              end  
+	          4'hE:
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 14
+	                slv_reg14[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end  
+	          4'hF:
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 15
+	                slv_reg15[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end  
 	          default : begin
 	                      slv_reg0 <= slv_reg0;
 	                      slv_reg1 <= slv_reg1;
@@ -423,8 +439,10 @@ module ad9226_v1_s_axi #
 	                      slv_reg9 <= slv_reg9;
 	                      slv_reg10 <= slv_reg10;
 	                      slv_reg11 <= slv_reg11;
-						  slv_reg12 <= slv_reg12;
-						  slv_reg13 <= slv_reg13;
+	                      slv_reg12 <= slv_reg12;
+	                      slv_reg13 <= slv_reg13;
+	                      slv_reg14 <= slv_reg14;
+	                      slv_reg15 <= slv_reg15;
 	                    end
 	        endcase
 	      end
@@ -537,16 +555,18 @@ module ad9226_v1_s_axi #
 	        4'h1   : reg_data_out <= slv_reg1;
 	        4'h2   : reg_data_out <= slv_reg2;
 	        4'h3   : reg_data_out <= slv_reg3;
-	        4'h4   : reg_data_out <= slv_reg4; 	//slv_reg4;
-	        4'h5   : reg_data_out <= slv_reg5; 	//slv_reg5;
-	        4'h6   : reg_data_out <= slv_reg6; 	//slv_reg6;
-	        4'h7   : reg_data_out <= slv_reg7; 	//slv_reg7;
+	        4'h4   : reg_data_out <= slv_reg4;
+	        4'h5   : reg_data_out <= slv_reg5;
+	        4'h6   : reg_data_out <= slv_reg6;
+	        4'h7   : reg_data_out <= slv_reg7;
 	        4'h8   : reg_data_out <= slv_reg8;
 	        4'h9   : reg_data_out <= slv_reg9;
-	        4'hA   : reg_data_out <= Status;
-	        4'hB   : reg_data_out <= Adc1_data_slow;
-			4'hC   : reg_data_out <= Adc2_data_slow;
-			4'hD   : reg_data_out <= Adc3_data_slow;
+	        4'hA   : reg_data_out <= slv_reg10;
+	        4'hB   : reg_data_out <= slv_reg11;
+	        4'hC   : reg_data_out <= Status;
+	        4'hD   : reg_data_out <= Adc1_data_slow;
+	        4'hE   : reg_data_out <= Adc2_data_slow;
+	        4'hF   : reg_data_out <= Adc3_data_slow;
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -568,7 +588,7 @@ module ad9226_v1_s_axi #
 	          axi_rdata <= reg_data_out;     // register read data
 	        end   
 	    end
-	end    
+	end  
 
 	// Add user logic here
 
@@ -579,9 +599,10 @@ module ad9226_v1_s_axi #
 	assign ConfigAdc              = slv_reg4;
 	assign Decimator              = slv_reg5;
 	assign MavgFactor             = slv_reg6;
-	assign PacketSizeToStop       = slv_reg7;
-	assign Controle				  = slv_reg8;
-	assign TriggerLevel           = slv_reg9;
+	assign PacketSizeToStop       = slv_reg7;	
+	assign TriggerLevel           = slv_reg8;
+
+	assign Controle				  = slv_reg11;
 	
 	// User logic ends
 

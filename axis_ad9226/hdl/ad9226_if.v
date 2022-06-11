@@ -315,8 +315,6 @@ wire [QTD_ADC*16-1:0] out_data_filter;
 wire [QTD_ADC-1:0] out_filter_valid;
 
 
-
-
 /////////////////////////////////////////////////
 // 
 // M_AXIS_TDATA
@@ -330,10 +328,10 @@ wire signed [11:0] ddr_data_3;
 wire signed [11:0] ddr_data_4;
 
 
-assign ddr_data_1 = out_data_fir[15:4] ;
-assign ddr_data_2 = out_data_fir[31:20] ;
-assign ddr_data_3 = adc_result[11:0];
-assign ddr_data_4 = out_data_fir[47:36] ;
+assign ddr_data_1 = adc_result[11:0] ;
+assign ddr_data_2 = adc_result[23:12] ;
+assign ddr_data_3 = adc_result[35:24];
+assign ddr_data_4 = adc_result[47:36] ;
 
 
 function integer to_unsigned;
