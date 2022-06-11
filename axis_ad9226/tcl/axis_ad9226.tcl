@@ -28,7 +28,7 @@ set_property SUPPORTED_FAMILIES ${family_lifecycle} ${ip_core}
 
 
 foreach interface_name [list adc_1 adc_2 adc_3 adc_4] data_name [list s1_ad9226_data s2_ad9226_data s3_ad9226_data s4_ad9226_data] clk_name [list s1_ad9226_clk s2_ad9226_clk s3_ad9226_clk s4_ad9226_clk] \
- otr_name [list s1_otr s2_otr s3_otr s4_otr] enable_name [list ADC1_ENABLE ADC2_ENABLE ADC3_ENABLE ADC4_ENABLE] enable_debug_name [list button posTrigger state eoc] {
+ otr_name [list s1_otr s2_otr s3_otr s4_otr] enable_name [list ADC1_ENABLE ADC2_ENABLE ADC3_ENABLE ADC4_ENABLE] enable_debug_name [list posTrigger state eoc] {
 
     ipx::add_bus_interface $interface_name ${ip_core}
     set_property abstraction_type_vlnv gili.com:user:ad9226_rtl:1.0 [ipx::get_bus_interfaces $interface_name -of_objects ${ip_core}]
@@ -55,7 +55,7 @@ foreach interface_name [list adc_1 adc_2 adc_3 adc_4] data_name [list s1_ad9226_
 
 }
 
-foreach debug_enable [list button  debugPin] {
+foreach debug_enable [list  debugPin] {
     set_property enablement_resolve_type dependent [ipx::get_ports $debug_enable -of_objects [ipx::current_core]]
     set_property driver_value 0 [ipx::get_ports $debug_enable -of_objects [ipx::current_core]]
     set_property enablement_dependency spirit:decode(id('MODELPARAM_VALUE.DEBUG_PORTS_ENABLE'))=true [ipx::get_ports $debug_enable -of_objects [ipx::current_core]]
@@ -78,7 +78,7 @@ ipx::add_bus_interface clk_adc [ipx::current_core]
 set_property abstraction_type_vlnv xilinx.com:signal:clock_rtl:1.0 [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
 set_property bus_type_vlnv xilinx.com:signal:clock:1.0 [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
 ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
-set_property value 25000000 [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
+# set_property value 25000000 [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
 ipx::add_port_map CLK [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]
 set_property physical_name clk_adc [ipx::get_port_maps CLK -of_objects [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]]
 ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk_adc -of_objects [ipx::current_core]]

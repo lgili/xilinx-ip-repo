@@ -166,8 +166,8 @@ always @(posedge Clk)
 	
 		case ( fsm_trigger_currentState )
 		`FSM_TRIGGER_STATE_IDLE: begin
-		      if(trigger_comb == 1'b1 || ext_trigger == 1'b0 )
-			//   if(ext_trigger == 1'b0 )
+		    //   if(trigger_comb == 1'b1 || ext_trigger == 1'b0 )
+			  if(ext_trigger == 1'b0 )
 		          fsm_trigger_currentState <=  `FSM_TRIGGER_STATE_WAITING;
 		      else
 		          fsm_trigger_currentState <=  `FSM_TRIGGER_STATE_IDLE ;             

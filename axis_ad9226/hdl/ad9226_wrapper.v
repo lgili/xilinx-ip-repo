@@ -83,14 +83,13 @@ THE SOFTWARE.
 		input wire restart,
 		output wire debugPin,	
 		
-		
+		output [(ADC_DATA_WIDTH*4)-1 : 0] adcs,
 		// User ports ends
 		// Do not modify the ports beyond this line
 
 		// Ports of Axi Slave Bus Interface S00_AXI	
 		input wire  clk_100m,	
 		input wire  clk_adc,	
-		input wire  clk_adc_lf,	
         input wire  aresetn,       
                          
 		
@@ -185,6 +184,8 @@ assign s4_ad9226_clk = clk_adc;
 
 wire 	enableSampleGeneration; 
 wire 	[31:0]	packetSize; 	
+
+assign adcs = {s1_ad9226_data,s1_ad9226_data,s1_ad9226_data,s1_ad9226_data};
 
 /////////////////////////////////////////////////
 // 
