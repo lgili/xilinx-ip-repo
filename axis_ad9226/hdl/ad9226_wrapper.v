@@ -80,6 +80,7 @@ THE SOFTWARE.
 		
 		output wire irq,		
 		input wire ext_trigger,
+		input wire restart,
 		output wire debugPin,	
 		
 		
@@ -152,7 +153,7 @@ wire    [AXI_LITE_DATA_WIDTH-1:0] configAdc;
 wire    [AXI_LITE_DATA_WIDTH-1:0] decimator;
 wire    [AXI_LITE_DATA_WIDTH-1:0] mavgFactor;
 wire    [AXI_LITE_DATA_WIDTH-1:0] packetSizeToStop;
-wire    [AXI_LITE_DATA_WIDTH-1:0] restart;
+// wire    [AXI_LITE_DATA_WIDTH-1:0] restart;
 wire    [AXI_LITE_DATA_WIDTH-1:0] adcData;
 
 
@@ -201,6 +202,7 @@ ad9226_v1_s_axi # (
 	.Decimator                  (decimator),
 	.MavgFactor                 (mavgFactor),
 	.PacketSizeToStop			(packetSizeToStop),	
+	.TriggerLevel				(triggerLevel),
 
 	.Controle  					(controle),
 	.Status						(status),
@@ -255,14 +257,14 @@ ad9226_v1_s_axi # (
 		.adc_3(s3_ad9226_data),
 		.adc_4(s4_ad9226_data),	
 
-		.irq_adc_lf(irq),
-		.adc_clk(clk_adc),	
-		.clk_adc_lf(clk_adc_lf),	
+		
+		.adc_clk(clk_adc),				
 		.ext_trigger(ext_trigger),	
 		.trigger(trigger),	
 		.tlast_assert(tlast_assert),
 		.debug(debugPin),
 		.saved(saved),
+		
 		
 		/*
 		* ADC output
@@ -272,10 +274,7 @@ ad9226_v1_s_axi # (
 		.data_3(data_3),
 		.data_4(data_4),
 		
-		/*
-		* ADC output low freq
-		*/		
-		.data_lf_1(adcData),
+		
 		/*
 		* Configurations 
 		*/
@@ -283,9 +282,7 @@ ad9226_v1_s_axi # (
 		.ConfigAdc 			        ( configAdc  ), 		
 		.Decimator                  (decimator),
 		.MavgFactor                 (mavgFactor),			
-		.Restart                    (restart),
-		//.AdcData                    (adcData),
-		// .Status                     (status), 
+		.Restart                    (restart),		
 		.TriggerLevel               (triggerLevel)		
 	);
 

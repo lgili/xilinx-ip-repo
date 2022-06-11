@@ -31,7 +31,7 @@ THE SOFTWARE.
 // base address + 0x14 : Decimator
 // base address + 0x18 : MavgFactor 
 // base address + 0x1c : PacketSizeToStop
-// base address + 0x20 : 
+// base address + 0x20 : TriggerLevel
 // base address + 0x24 : Controle
 // base address + 0x28 : Status
 // base address + 0x2c : Adc1_data_slow
@@ -65,7 +65,7 @@ module ad9226_v1_s_axi #
 	output 	wire 	[AXI_DATA_WIDTH-1:0]	Decimator,
 	output 	wire 	[AXI_DATA_WIDTH-1:0]	MavgFactor,
 	output 	wire 	[AXI_DATA_WIDTH-1:0]	PacketSizeToStop,
-	// output 	wire 	[AXI_DATA_WIDTH-1:0]	Restart,	
+	output 	wire 	[AXI_DATA_WIDTH-1:0]	TriggerLevel,	
 
 	output 	wire 	[AXI_DATA_WIDTH-1:0] Controle,
 	input 	wire 	[AXI_DATA_WIDTH-1:0] Status,
@@ -581,6 +581,7 @@ module ad9226_v1_s_axi #
 	assign MavgFactor             = slv_reg6;
 	assign PacketSizeToStop       = slv_reg7;
 	assign Controle				  = slv_reg8;
+	assign TriggerLevel           = slv_reg9;
 	
 	// User logic ends
 

@@ -40,8 +40,7 @@ module ad9226_if #
 		/*
 		* ADC input
 		*/
-		input wire adc_clk,
-		input wire clk_adc_lf,
+		input wire adc_clk,		
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_1,
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_2,
 		input wire [ADC_DATA_WIDTH-1 : 0] adc_3,	
@@ -55,13 +54,7 @@ module ad9226_if #
 		output wire [ADC_DATA_WIDTH-1 : 0] data_3,	
 		output wire [ADC_DATA_WIDTH-1 : 0] data_4,
 
-		/*
-		* ADC output low freq
-		*/
-		output wire irq_adc_lf,
-		output reg [11:0] data_lf_1,
-		output wire tx_data,
-
+		
 		/*
 		* Interrupt 
 		*/		
@@ -79,10 +72,9 @@ module ad9226_if #
 		input   wire    [31:0]     			MavgFactor,
 		input   wire    [31:0]     			ConfigPassBand,
 		input   wire    [31:0]     			ConfigAdc,			
-		input 	wire 	[31:0]	            Restart,
+		input 	wire 	     	            Restart,
 		input 	wire 	[31:0]	            TriggerLevel,
-		output 	wire 	[31:0]	            AdcData,
-		output 	reg 	[31:0]	            Status,
+			
 		// User ports ends
 		// Do not modify the ports beyond this line
 

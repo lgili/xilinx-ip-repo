@@ -58,7 +58,7 @@ module ad9226_v1_m_axis #
 		input 	wire 	[7:0]				PacketRate, 
 		input 	wire 	[31:0]				PacketPattern,
 		input 	wire 	[31:0]				NumberOfPacketsToSend,
-		input 	wire 	[31:0]	            Restart,
+		input 	wire 	     	            Restart,
 		input 	wire 	[31:0]	            PacketSizeToStop,
 		input 	wire 	[31:0]	            ConfigZCDValue,	
 		
