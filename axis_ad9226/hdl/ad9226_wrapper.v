@@ -79,7 +79,7 @@ THE SOFTWARE.
 		
 		
 		output wire irq,		
-		input wire button,
+		input wire ext_trigger,
 		output wire debugPin,	
 		
 		
@@ -136,6 +136,11 @@ THE SOFTWARE.
 //
 ///////////////////////////////////////////////////////////////////////////
 
+wire [AXI_LITE_DATA_WIDTH-1:0] controle;
+wire [AXI_LITE_DATA_WIDTH-1:0] status;
+wire [AXI_LITE_DATA_WIDTH-1:0] adc1_data_slow;
+wire [AXI_LITE_DATA_WIDTH-1:0] adc2_data_slow;
+wire [AXI_LITE_DATA_WIDTH-1:0] adc3_data_slow;
 		
 wire 	[7:0]  enablePacket; 
 wire	[AXI_LITE_DATA_WIDTH-1:0] configPassband; 
@@ -149,7 +154,7 @@ wire    [AXI_LITE_DATA_WIDTH-1:0] mavgFactor;
 wire    [AXI_LITE_DATA_WIDTH-1:0] packetSizeToStop;
 wire    [AXI_LITE_DATA_WIDTH-1:0] restart;
 wire    [AXI_LITE_DATA_WIDTH-1:0] adcData;
-wire    [AXI_LITE_DATA_WIDTH-1:0] status;
+
 
 wire    [AXI_LITE_DATA_WIDTH-1:0]  firstPositionZcd;
 wire    [AXI_LITE_DATA_WIDTH-1:0]  lastPositionZcd;
@@ -191,19 +196,17 @@ ad9226_v1_s_axi # (
 ) 	ad9226_v1_s_axi_inst (
 		
 	.EnableSampleGeneration 	( enableSampleGeneration ), 
-	.PacketSize 			( packetSize ), 
-	//.PacketRate			( packetRate ), 
-	.ConfigAdc 			( configAdc ), 
-	//.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
-	.ConfigZCDValue             (configZCDValue),
-	.Decimator                   (decimator),
-	.MavgFactor                  (mavgFactor),
+	.PacketSize 			    ( packetSize ), 	
+	.ConfigAdc 			        ( configAdc ), 	
+	.Decimator                  (decimator),
+	.MavgFactor                 (mavgFactor),
 	.PacketSizeToStop			(packetSizeToStop),	
-	.Restart                    (restart), 
-	.AdcData                    (adcData),
-	.Status                     (status), 
-	.TriggerLevel                (triggerLevel),
-	
+
+	.Controle  					(controle),
+	.Status						(status),
+	.Adc1_data_slow				(adc1_data_slow),
+	.Adc2_data_slow				(adc2_data_slow),
+	.Adc3_data_slow				(adc3_data_slow),	
 	
 	.S_AXI_ACLK			    (clk_100m),
 	.S_AXI_ARESETN			(aresetn),
@@ -255,7 +258,7 @@ ad9226_v1_s_axi # (
 		.irq_adc_lf(irq),
 		.adc_clk(clk_adc),	
 		.clk_adc_lf(clk_adc_lf),	
-		.button(button),	
+		.ext_trigger(ext_trigger),	
 		.trigger(trigger),	
 		.tlast_assert(tlast_assert),
 		.debug(debugPin),
@@ -282,7 +285,7 @@ ad9226_v1_s_axi # (
 		.MavgFactor                 (mavgFactor),			
 		.Restart                    (restart),
 		//.AdcData                    (adcData),
-		.Status                     (status), 
+		// .Status                     (status), 
 		.TriggerLevel               (triggerLevel)		
 	);
 
@@ -322,6 +325,24 @@ ad9226_v1_s_axi # (
 		.M_AXIS_TKEEP 			(m_axis_tkeep), 
 		.M_AXIS_TUSER 			(m_axis_tuser)
 	);
+
+
+	display display_inst(
+		.ENABLE(controle[0]),  
+    	.COMPARE(controle[31:1]),
+    	.ADC_1_DATA_INPUT(data_1),
+    	.ADC_2_DATA_INPUT(data_2),
+    	.ADC_3_DATA_INPUT(data_3),
+    	.CLK(clk_adc),
+    	.ADC_1_DATA_OUTPUT(adc1_data_slow),
+    	.ADC_2_DATA_OUTPUT(adc2_data_slow),
+    	.ADC_3_DATA_OUTPUT(adc3_data_slow),
+    	.NEW_DATA(status[1:0])
+		
+	);
+
+	assign status[4:2] = {s1_otr, s2_otr, s3_otr};
+	// assign OTR = ~ADC_1_OTR & ~ADC_2_OTR & ~ADC_1_OTR; // APENAS PARA PISCAR UM LED
 
 
 endmodule

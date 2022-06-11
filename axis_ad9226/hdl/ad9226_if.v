@@ -66,7 +66,7 @@ module ad9226_if #
 		* Interrupt 
 		*/		
 		output reg irq,		
-		input wire button,
+		input wire ext_trigger,
 		output wire trigger,
 		output wire tlast_assert,
 		output wire saved,
@@ -174,8 +174,8 @@ always @(posedge Clk)
 	
 		case ( fsm_trigger_currentState )
 		`FSM_TRIGGER_STATE_IDLE: begin
-		      if(trigger_comb == 1'b1 || button == 1'b0 )
-			  //if(button == 1'b0 )
+		      if(trigger_comb == 1'b1 || ext_trigger == 1'b0 )
+			//   if(ext_trigger == 1'b0 )
 		          fsm_trigger_currentState <=  `FSM_TRIGGER_STATE_WAITING;
 		      else
 		          fsm_trigger_currentState <=  `FSM_TRIGGER_STATE_IDLE ;             
@@ -322,35 +322,6 @@ moving_average_fir#
 wire [QTD_ADC*16-1:0] out_data_filter; 
 wire [QTD_ADC-1:0] out_filter_valid;
 
-/*passband_filter filter
-(
-	.rst(ResetL),
-	.clk(Clk),
-	.in_data_valid(out_data_valid_fir),
-	.in_data(out_data_fir),
-	.out_data_valid(out_filter_valid),
-	.out_data_filter(out_data_filter)
-);*/
-
-/*passband_iir #(
-	.inout_width(16),
-	.inout_decimal_width(15),
-	.coefficient_width(32),
-	.coefficient_decimal_width(28),
-	.internal_width(32),
-	.internal_decimal_width(28)
-) filter
-(
-	.aclk(Clk),
-  	.resetn(ResetL),
-
-	.in_data_valid(out_data_valid_fir),
-	.in_data(out_data_fir),
-	.out_data_valid(out_filter_valid),
-	.out_data(out_data_filter)  
-
-);*/
-
 
 
 
@@ -359,7 +330,6 @@ wire [QTD_ADC-1:0] out_filter_valid;
 // M_AXIS_TDATA
 //
 /////////////////////////////////////////////////
-
 
 
 wire signed [11:0] ddr_data_1;
@@ -390,58 +360,5 @@ assign data_3 = to_unsigned(ddr_data_3, 2048, 12);
 assign data_4 = to_unsigned(ddr_data_4, 2048, 12);
 
 
-/////////////////////////////////////////////////
-// 
-// LOW FRED DATA GENERARION
-//
-/////////////////////////////////////////////////
 
-
-reg [31:0] count_60Hz;
-
-assign irq_adc_lf = (count_60Hz == ((1_000_000 >> 1) -1));
-
-
-always@(posedge clk_adc_lf) begin
- 	if (!ResetL) count_60Hz <= 0;
-    else if (irq_adc_lf) begin 
-		 count_60Hz <=0;		// Reset counter when terminal count reached   
-		 data_lf_1 <= ddr_data_1;	
-	end 
-	else count_60Hz <= count_60Hz +1;	
-end
-
-
-
-wire TxD_busy;
-wire TxD_start = ~TxD_busy & ~rdempty;
-assign rdreq = TxD_start;
-/*
-async_transmitter uart(
-	.clk(clk_adc),
-	.TxD_start(TxD_start),
-	.TxD_data(ddr_data_1[11:3]),
-	.TxD(tx_data),
-	.TxD_busy(TxD_busy)
-);
-
-
-
-fifo #(
-    .WIDTH(12),
-    .DEPTH(1024)
-)buffer
-(
-    .data_in({data_4,data_3,data_2,data_1}),
-    .clk(Clk),
-	.rst_n(ResetL),
-    .write(wr_en),
-    .read(rd_en),
-    .data_out({data_out_4,data_out_3,data_out_2,data_out_1})
-    //.fifo_full(),
-    //.fifo_empty(),
-    //.fifo_not_empty(fifo_not_empty),
-    //.fifo_not_full(fifo_not_full)
-);
-*/
 endmodule

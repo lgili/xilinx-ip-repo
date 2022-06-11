@@ -48,6 +48,7 @@ VERILOG_SOURCES += ../../hdl/cic_d.v
 VERILOG_SOURCES += ../../hdl/downsampler.v
 VERILOG_SOURCES += ../../hdl/ad9226_if.v
 VERILOG_SOURCES += ../../hdl/fifo.v
+VERILOG_SOURCES += ../../hdl/display.v
 
 
 

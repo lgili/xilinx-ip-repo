@@ -106,7 +106,7 @@ class TB:
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
 
-        self.dut.button.value = 0
+        self.dut.ext_trigger.value = 0
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
@@ -115,7 +115,7 @@ class TB:
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
-        self.dut.button.value = 1
+        self.dut.ext_trigger.value = 1
 
         
     async def loggingTime(self):
@@ -131,9 +131,9 @@ class TB:
                 await self.write_to_axi_lite(self.ConfigResetAddr, 0)
 
             if(self.currentTime == 50000*(1/100e6)):
-                self.dut.button.value = 0
+                self.dut.ext_trigger.value = 0
                 await RisingEdge(self.dut.clk_100m)
-                self.dut.button.value = 1
+                self.dut.ext_trigger.value = 1
 
 
             if(self.currentTime > self.totalTimeSimulation):
@@ -302,6 +302,7 @@ def test_ad9226_wrapper(request, data_width):
         os.path.join(hdl_dir, "ad9226_if.v"),
 
         os.path.join(hdl_dir, "fifo.v"),
+        os.path.join(hdl_dir, "display.v"),
         
         
         

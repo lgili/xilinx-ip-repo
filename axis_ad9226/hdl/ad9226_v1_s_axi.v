@@ -26,16 +26,18 @@ THE SOFTWARE.
 // base address + 0x00 : EnableSampleGeneration 	
 // base address + 0x04 : PacketSize			
 // base address + 0x08 : EnablePacket -> Enable/disenable		
-// base address + 0x0c : ConfigAdc 
-// base address + 0x10 : ConfigZCDValue 
+// base address + 0x0c : ConfigPassband 
+// base address + 0x10 : ConfigAdc 
 // base address + 0x14 : Decimator
 // base address + 0x18 : MavgFactor 
 // base address + 0x1c : PacketSizeToStop
-// base address + 0x20 : Restart
-// base address + 0x24 : AdcData
-// base address + 0x28 :TriggerEnable
-// base address + 0x2c :Status
-
+// base address + 0x20 : 
+// base address + 0x24 : Controle
+// base address + 0x28 : Status
+// base address + 0x2c : Adc1_data_slow
+// base address + 0x30 : Adc2_data_slow
+// base address + 0x34 : Adc3_data_slow
+	
 `timescale 1 ns / 1 ps
 
 module ad9226_v1_s_axi #
@@ -58,28 +60,20 @@ module ad9226_v1_s_axi #
 	output 	wire					        EnableSampleGeneration, 
 	output 	wire 	[AXI_DATA_WIDTH-1:0]	PacketSize, 
 	output 	wire 	[7:0]				    EnablePacket, 
-	output 	wire 	[AXI_DATA_WIDTH-1:0]	ConfigPassband,
-	output 	wire 	[AXI_DATA_WIDTH-1:0]	DMABaseAddr,
-	output 	wire 	[AXI_DATA_WIDTH-1:0]	TriggerLevel,
-	output 	wire 	[AXI_DATA_WIDTH-1:0]	ConfigAdc,
-	output 	wire 	[AXI_DATA_WIDTH-1:0]	ConfigZCDValue,
+	output 	wire 	[AXI_DATA_WIDTH-1:0]	ConfigPassband,	
+	output 	wire 	[AXI_DATA_WIDTH-1:0]	ConfigAdc,	
 	output 	wire 	[AXI_DATA_WIDTH-1:0]	Decimator,
 	output 	wire 	[AXI_DATA_WIDTH-1:0]	MavgFactor,
 	output 	wire 	[AXI_DATA_WIDTH-1:0]	PacketSizeToStop,
-	output 	wire 	[AXI_DATA_WIDTH-1:0]	Restart,
-	input 	wire 	[AXI_DATA_WIDTH-1:0]	AdcData,
-	input 	wire 	[AXI_DATA_WIDTH-1:0]	Status,
-	
-	/*
-     * Status to ARM
-     */
-	input       [31:0]              TriggerOffset,    
-	input       [31:0]              TriggerEnable,
-	input 		[31:0]				TotalReceivedPacketData,
-	input 		[31:0]				TotalReceivedPackets,
-	input 		[31:0]				LastReceivedPacket_head,
-	input 		[31:0]				LastReceivedPacket_tail,
+	// output 	wire 	[AXI_DATA_WIDTH-1:0]	Restart,	
 
+	output 	wire 	[AXI_DATA_WIDTH-1:0] Controle,
+	input 	wire 	[AXI_DATA_WIDTH-1:0] Status,
+	input 	wire 	[AXI_DATA_WIDTH-1:0] Adc1_data_slow,
+	input 	wire 	[AXI_DATA_WIDTH-1:0] Adc2_data_slow,
+	input 	wire 	[AXI_DATA_WIDTH-1:0] Adc3_data_slow,
+	
+	
 	// User ports ends
 	// Do not modify the ports beyond this line
 
@@ -193,6 +187,8 @@ module ad9226_v1_s_axi #
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg9;
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg10;
 	reg [AXI_DATA_WIDTH-1:0]	slv_reg11;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg12;
+	reg [AXI_DATA_WIDTH-1:0]	slv_reg13;
 	wire	 slv_reg_rden;
 	wire	 slv_reg_wren;
 	reg [AXI_DATA_WIDTH-1:0]	 reg_data_out;
@@ -309,6 +305,8 @@ module ad9226_v1_s_axi #
 	      slv_reg9 <= 0;
 	      slv_reg10 <= 0;
 	      slv_reg11 <= 0;
+		  slv_reg12 <= 0;
+		  slv_reg13 <= 0;
 	    end 
 	  else begin
 	    if (slv_reg_wren)
@@ -397,7 +395,21 @@ module ad9226_v1_s_axi #
 	                // Respective byte enables are asserted as per write strobes 
 	                // Slave register 11
 	                slv_reg11[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
-	              end  
+	              end 
+			  4'hC:
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 11
+	                slv_reg12[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end
+		      4'hD:
+	            for ( byte_index = 0; byte_index <= (AXI_DATA_WIDTH/8)-1; byte_index = byte_index+1 )
+	              if ( S_AXI_WSTRB[byte_index] == 1 ) begin
+	                // Respective byte enables are asserted as per write strobes 
+	                // Slave register 11
+	                slv_reg13[(byte_index*8) +: 8] <= S_AXI_WDATA[(byte_index*8) +: 8];
+	              end		   	   
 	          default : begin
 	                      slv_reg0 <= slv_reg0;
 	                      slv_reg1 <= slv_reg1;
@@ -411,6 +423,8 @@ module ad9226_v1_s_axi #
 	                      slv_reg9 <= slv_reg9;
 	                      slv_reg10 <= slv_reg10;
 	                      slv_reg11 <= slv_reg11;
+						  slv_reg12 <= slv_reg12;
+						  slv_reg13 <= slv_reg13;
 	                    end
 	        endcase
 	      end
@@ -529,8 +543,10 @@ module ad9226_v1_s_axi #
 	        4'h7   : reg_data_out <= slv_reg7; 	//slv_reg7;
 	        4'h8   : reg_data_out <= slv_reg8;
 	        4'h9   : reg_data_out <= slv_reg9;
-	        4'hA   : reg_data_out <= AdcData;
-	        4'hB   : reg_data_out <= slv_reg11;
+	        4'hA   : reg_data_out <= Status;
+	        4'hB   : reg_data_out <= Adc1_data_slow;
+			4'hC   : reg_data_out <= Adc2_data_slow;
+			4'hD   : reg_data_out <= Adc3_data_slow;
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -559,19 +575,12 @@ module ad9226_v1_s_axi #
 	assign EnableSampleGeneration = slv_reg0[0]; 
 	assign PacketSize             = slv_reg1; 
 	assign EnablePacket           = slv_reg2[7:0]; 
-    assign ConfigAdc              = slv_reg3;
-	assign ConfigZCDValue         = slv_reg4;
+    assign ConfigPassband         = slv_reg3;
+	assign ConfigAdc              = slv_reg4;
 	assign Decimator              = slv_reg5;
 	assign MavgFactor             = slv_reg6;
 	assign PacketSizeToStop       = slv_reg7;
-	assign Restart				  = slv_reg8;
-	assign TriggerLevel           = slv_reg9;
-
-
-	//assign ConfigPassband = slv_reg3;
-	//assign DMABaseAddr = slv_reg4;
-	//assign TriggerLevel = slv_reg5;
-	
+	assign Controle				  = slv_reg8;
 	
 	// User logic ends
 
