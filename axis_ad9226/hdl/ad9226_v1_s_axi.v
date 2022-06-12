@@ -23,20 +23,22 @@ THE SOFTWARE.
 // Language: Verilog 2001
 
 // Addresses used : 
-// base address + 0x00 : EnableSampleGeneration 	
-// base address + 0x04 : PacketSize			
-// base address + 0x08 : EnablePacket -> Enable/disenable		
-// base address + 0x0c : ConfigPassband 
-// base address + 0x10 : ConfigAdc 
-// base address + 0x14 : Decimator
-// base address + 0x18 : MavgFactor 
-// base address + 0x1c : PacketSizeToStop
-// base address + 0x20 : TriggerLevel
-// base address + 0x24 : Controle
-// base address + 0x28 : Status
-// base address + 0x2c : Adc1_data_slow
-// base address + 0x30 : Adc2_data_slow
-// base address + 0x34 : Adc3_data_slow
+// base address + 0x00 - [00] : EnableSampleGeneration 	
+// base address + 0x04 - [01] : PacketSize			
+// base address + 0x08 - [02] : EnablePacket -> Enable/disenable		
+// base address + 0x0c - [03] : ConfigPassband 
+// base address + 0x10 - [04] : ConfigAdc 
+// base address + 0x14 - [05] : Decimator
+// base address + 0x18 - [06] : MavgFactor 
+// base address + 0x1c - [07] : PacketSizeToStop
+// base address + 0x20 - [08] : TriggerLevel
+// base address + 0x24 - [09] : 
+// base address + 0x28 - [10] : 
+// base address + 0x2c - [11] : Controle
+// base address + 0x30 - [12] : Status
+// base address + 0x34 - [13] : Adc1_data_slow
+// base address + 0x38 - [14] : Adc2_data_slow
+// base address + 0x3c - [15] : Adc3_data_slow
 	
 `timescale 1 ns / 1 ps
 

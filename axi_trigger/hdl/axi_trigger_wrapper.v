@@ -101,49 +101,19 @@
 	);
 
 	// Add user logic here
-    derivada dvdt_1_inst
+    derivada dvdt_1_inst [2:0]
 	(
-	   .MOD_ENABLED(CONTROLE[0]),
-	   .CH_ENABLED(CONTROLE[1]),
-	   .ADC_DATA(ADC_1_DATA),
-	   .CLK(ADC_CLK),
-	   .RST(s00_axi_aresetn),
-	   .USER_DV(USER_DV),
-	   .USER_DT(USER_DT),
-	   .TRIGGED(STATUS[0]),
-	   .TRIG_EDGE(STATUS[3]),
-	   .MAX_DV(ADC1_MAX_DV)
+	   .MOD_ENABLED({CONTROLE[0],CONTROLE[0],CONTROLE[0]}),
+	   .CH_ENABLED(CONTROLE[3:1]),
+	   .ADC_DATA(ADC[35:0]),
+	   .CLK({ADC_CLK,ADC_CLK,ADC_CLK}),
+	   .RST({s00_axi_aresetn,s00_axi_aresetn,s00_axi_aresetn}),
+	   .USER_DV({USER_DV,USER_DV,USER_DV}),
+	   .USER_DT({USER_DT,USER_DT,USER_DT}),
+	   .TRIGGED(STATUS[2:0]),
+	   .TRIG_EDGE(STATUS[5:3]),
+	   .MAX_DV({ADC3_MAX_DV,ADC2_MAX_DV,ADC1_MAX_DV})
 	);
-
-	derivada dvdt_2_inst
-	(
-	   .MOD_ENABLED(CONTROLE[0]),
-	   .CH_ENABLED(CONTROLE[2]),
-	   .ADC_DATA(ADC_2_DATA),
-	   .CLK(ADC_CLK),
-	   .RST(s00_axi_aresetn),
-	   .USER_DV(USER_DV),
-	   .USER_DT(USER_DT),
-	   .TRIGGED(STATUS[1]),
-	   .TRIG_EDGE(STATUS[4]),
-	   .MAX_DV(ADC2_MAX_DV)
-	);
-
-	derivada dvdt_3_inst
-	(
-	   .MOD_ENABLED(CONTROLE[0]),
-	   .CH_ENABLED(CONTROLE[3]),
-	   .ADC_DATA(ADC_3_DATA),
-	   .CLK(ADC_CLK),
-	   .RST(s00_axi_aresetn),
-	   .USER_DV(USER_DV),
-	   .USER_DT(USER_DT),
-	   .TRIGGED(STATUS[2]),
-	   .TRIG_EDGE(STATUS[5]),
-	   .MAX_DV(ADC3_MAX_DV)
-	);
-
-
 
 	//assign TRIG_ON = CONTROLE[0];
 	assign DMA_ENA = CONTROLE[0];
