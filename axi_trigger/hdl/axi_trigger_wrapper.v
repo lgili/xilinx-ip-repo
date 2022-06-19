@@ -116,7 +116,7 @@
 	);
 
 	//assign TRIG_ON = CONTROLE[0];
-	assign DMA_ENA = CONTROLE[0];
+	assign DMA_ENA = CONTROLE[4];
 	assign DMA_TRIG =  (~STATUS[0] & ~STATUS[1] & ~STATUS[2]);	
 	assign VERSION_CTE = 79;
 

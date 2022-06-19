@@ -229,7 +229,7 @@ reg 	[AXIS_DATA_WIDTH-1:0]		globalCounter;
 (* mark_debug = "true", keep = "true" *)
 
 always @(posedge Clk) 
-	if ( ! ResetL ) begin 
+	if ( ! ResetL || Restart) begin 
 		globalCounter <= 0;		
 	end 
 	else begin 
@@ -302,7 +302,7 @@ wire 			packetRate_allowData; //trigger
 reg 	[31:0]		sentPacketCounter;
 
 always @(posedge Clk)
-	if ( ! ResetL ) begin 
+	if ( ! ResetL || Restart) begin 
 		sentPacketCounter <= 0; 
 	end 
 	else begin 
@@ -363,25 +363,25 @@ assign M_AXIS_TUSER = 0;
 /////////////////////////////////////////////////
 
 //wire [4*16-1:0] out_data_zcd;    
-wire [4-1:0] save;  
+// wire [4-1:0] save;  
     
-zero_crossing_detector#
-(
-    .DATA_WIDTH(12),
-    .REG_WIDTH(AXIS_DATA_WIDTH)
-) zcd_dut [4-1:0]
-(
-    .clk(Clk),
-	//.clk_60hz(clk_60hz),
-    .rst(ResetL),
-    .in_data_valid(4'b1111),
-    .in_data(data_out_1), // data_1 data_out_1
-    .in_counter_pos({packetDWORDCounter,packetDWORDCounter,packetDWORDCounter,packetDWORDCounter}),
-    //.out_data(out_data_zcd),    
-    .config_reg({ConfigZCDValue,ConfigZCDValue,ConfigZCDValue,ConfigZCDValue}),
-	.PacketSizeToStop(PacketSizeToStop),    
-	.save(save)	
-);
+// zero_crossing_detector#
+// (
+//     .DATA_WIDTH(12),
+//     .REG_WIDTH(AXIS_DATA_WIDTH)
+// ) zcd_dut [4-1:0]
+// (
+//     .clk(Clk),
+// 	//.clk_60hz(clk_60hz),
+//     .rst(ResetL),
+//     .in_data_valid(4'b1111),
+//     .in_data(data_out_1), // data_1 data_out_1
+//     .in_counter_pos({packetDWORDCounter,packetDWORDCounter,packetDWORDCounter,packetDWORDCounter}),
+//     //.out_data(out_data_zcd),    
+//     .config_reg({ConfigZCDValue,ConfigZCDValue,ConfigZCDValue,ConfigZCDValue}),
+// 	.PacketSizeToStop(PacketSizeToStop),    
+// 	.save(save)	
+// );
 
 /////////////////////////////////////////////////
 // 
@@ -392,12 +392,12 @@ reg wr_en, rd_en;
 wire [11:0] data_out_1,data_out_2,data_out_3,data_out_4;
 
 always@(posedge Clk) begin 
-	if ( ! ResetL ) begin 
+	if ( ! ResetL || Restart) begin 
 		wr_en <= 0; 
 		rd_en <= 0;
 	end 
 	else begin
-		if(adc_clk)
+		if(Clk_Adc)
 			wr_en = 1;		
 		else 
 			wr_en = 0;
@@ -419,7 +419,7 @@ fifo #(
 (
     .data_in({data_4,data_3,data_2,data_1}),
     .clk(Clk),
-	.rst_n(ResetL),
+	.rst_n(ResetL || Restart),
     .write(wr_en),
     .read(rd_en),
     .data_out({data_out_4,data_out_3,data_out_2,data_out_1})
@@ -449,9 +449,9 @@ function [AXIS_DATA_WIDTH - 1:0] getData;
 			// 32'h1 : getData = {save[1], 19'd2, adc_result[23:12]};
 			// 32'h2 : getData = {save[2], 19'd3, adc_result[35:24]};
 
-			32'h0 : getData = {save[0], 19'd0, data_out_1};
-			32'h1 : getData = {save[0], 19'd1, data_out_2};
-			32'h2 : getData = {save[0], 19'd2, data_out_3};
+			32'h0 : getData = {1'b1, 19'd0, data_out_1};
+			32'h1 : getData = {1'b1, 19'd1, data_out_2};
+			32'h2 : getData = {1'b1, 19'd2, data_out_3};
 			
 			32'h3 : getData = {2'd3, packetDWORDCounter};
 			default : getData = 0;
@@ -460,7 +460,8 @@ function [AXIS_DATA_WIDTH - 1:0] getData;
 endfunction
 
 
+// assign data_to_send = (rd_en == 1 ) ? getData(channelPosTransfer) : 0;
 //assign M_AXIS_TDATA = data_1; 
-assign M_AXIS_TDATA = getData(channelPosTransfer);
+assign M_AXIS_TDATA =  0;
 
 endmodule

@@ -58,7 +58,7 @@ class TB:
         #self.address_space.register_region(self.axil_master, 0x10_0000_0000)
         #self.hw_regs = self.address_space.create_window(0x10_0000_0000, self.axil_master.size)
 
-        #self.sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.clk_100m, dut.aresetn,reset_active_level=False)
+        self.sink = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.clk_100m, dut.aresetn,reset_active_level=False)
 
         #tb.log.info("Packet: %s", pkt)
 
@@ -86,27 +86,30 @@ class TB:
         if generator:
             self.axil_master.write_if.b_channel.set_pause_generator(generator())
             self.axil_master.read_if.r_channel.set_pause_generator(generator())
-            #self.sink.set_pause_generator(generator())
+            self.sink.set_pause_generator(generator())
             
 
     async def reset(self):
         self.dut.aresetn.setimmediatevalue(1)
+        self.dut.restart.setimmediatevalue(0)
+        self.dut.ext_trigger.setimmediatevalue(1)
         
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
-        self.dut.aresetn.value = 0
+        self.dut.aresetn.value = 0        
         self.dut.s1_ad9226_data.value = 0
         self.dut.s2_ad9226_data.value = 0
         self.dut.s3_ad9226_data.value = 0
         for i in range(20):
             await RisingEdge(self.dut.clk_100m)
         
-        self.dut.aresetn.value = 1  
-        self.dut.m_axis_tready.value = 1      
-        await RisingEdge(self.dut.clk_100m)
-        await RisingEdge(self.dut.clk_100m)
-
         self.dut.ext_trigger.value = 0
+        self.dut.aresetn.value = 1  
+              
+        await RisingEdge(self.dut.clk_100m)
+        await RisingEdge(self.dut.clk_100m)
+        self.dut.aresetn.value = 0
+        
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
@@ -115,7 +118,10 @@ class TB:
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
         await RisingEdge(self.dut.clk_100m)
+        self.dut.restart.value = 0
         self.dut.ext_trigger.value = 1
+        self.dut.aresetn.value = 1
+        self.dut.m_axis_tready.value = 1
 
         
     async def loggingTime(self):
@@ -126,14 +132,29 @@ class TB:
             self.log.info("is runnig")  
             self.currentTime += (10000*(1/100e6))
 
-            if(self.currentTime == 40000*(1/100e6)):
-                await self.write_to_axi_lite(self.ConfigResetAddr, 1)
-                await self.write_to_axi_lite(self.ConfigResetAddr, 0)
+            # if(self.currentTime == 40000*(1/100e6)):
+                # self.dut.
+                # await self.write_to_axi_lite(self.ConfigResetAddr, 1)
+                # await self.write_to_axi_lite(self.ConfigResetAddr, 0)
 
             if(self.currentTime == 50000*(1/100e6)):
                 self.dut.ext_trigger.value = 0
-                await RisingEdge(self.dut.clk_100m)
+                for i in range(10): 
+                    await RisingEdge(self.dut.clk_100m)                
+
                 self.dut.ext_trigger.value = 1
+                for i in range(1000): 
+                    await RisingEdge(self.dut.clk_100m)
+                self.dut.restart.value = 1
+                for i in range(10): 
+                    await RisingEdge(self.dut.clk_100m)
+                self.dut.restart.value = 0   
+
+            if(self.currentTime == 70000*(1/100e6)):
+                self.dut.restart.value = 1
+                for i in range(10): 
+                    await RisingEdge(self.dut.clk_100m)
+                self.dut.restart.value = 0   
 
 
             if(self.currentTime > self.totalTimeSimulation):
@@ -205,28 +226,28 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
 
     # set adc config
     await RisingEdge(dut.clk_100m)
-    useSigned = 0
-    if(useSigned):
-        val = 1 << 31
-        val |= 2048
-        tb.log.info("Adc config %d", val)
-        await tb.write_to_axi_lite(tb.ConfigAdcAddr, val)
-    else:
-        await tb.write_to_axi_lite(tb.ConfigAdcAddr, 0)  
+    # useSigned = 0
+    # if(useSigned):
+    #     val = 1 << 31
+    #     val |= 2048
+    #     tb.log.info("Adc config %d", val)
+    #     await tb.write_to_axi_lite(tb.ConfigAdcAddr, val)
+    # else:
+    #     await tb.write_to_axi_lite(tb.ConfigAdcAddr, 0)  
 
 
     # set Decimator     
-    await tb.write_to_axi_lite(tb.ConfigDecimatorAddr, 0)
+    #await tb.write_to_axi_lite(tb.ConfigDecimatorAddr, 0)
 
     #set MavgFactor
-    await tb.write_to_axi_lite(tb.ConfigMavgFactorAddr, 15)
+    #await tb.write_to_axi_lite(tb.ConfigMavgFactorAddr, 15)
 
     #set Zero Crossing
-    zcv = 3 << 12  # number os cycles to save
-    zcv |= 3 << 20 # jump saved
-    zcv |= 1 << 28 # timer ou zero cross detection to trigger
-    zcv |= 0       # value to compare
-    await tb.write_to_axi_lite(tb.ConfigZCDValueAddr, zcv)   
+    # zcv = 3 << 12  # number os cycles to save
+    # zcv |= 3 << 20 # jump saved
+    # zcv |= 1 << 28 # timer ou zero cross detection to trigger
+    # zcv |= 0       # value to compare
+    # await tb.write_to_axi_lite(tb.ConfigZCDValueAddr, zcv)   
 
     # set enable
     await RisingEdge(dut.clk_100m)
@@ -236,7 +257,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     write_thread_a = cocotb.start_soon(tb.gen_adc_input_thead())
     time_tread_b = cocotb.start_soon(tb.loggingTime())
 
-    #read_thread_b = cocotb.start_soon(tb.read_m_axis_thead())
+    read_thread_b = cocotb.start_soon(tb.read_m_axis_thead())
    
     assert 1 == 1   
     await RisingEdge(dut.clk_100m)
@@ -250,7 +271,7 @@ async def run_test(dut, idle_inserter=None, backpressure_inserter=None, size=Non
     #tb.log("values from m_axis %d", result)
 
     
-    #await read_thread_b
+    await read_thread_b
 
 
 def cycle_pause():
