@@ -462,6 +462,6 @@ endfunction
 
 // assign data_to_send = (rd_en == 1 ) ? getData(channelPosTransfer) : 0;
 //assign M_AXIS_TDATA = data_1; 
-assign M_AXIS_TDATA =  0;
+assign M_AXIS_TDATA =  getData(channelPosTransfer);
 
 endmodule
