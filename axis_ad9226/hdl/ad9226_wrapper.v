@@ -80,7 +80,7 @@ THE SOFTWARE.
 		
 		output wire irq,		
 		input wire ext_trigger,
-		input wire restart,
+		// input wire restart,
 		output wire debugPin,	
 		
 		output [(ADC_DATA_WIDTH*4)-1 : 0] adcs,
@@ -135,6 +135,7 @@ THE SOFTWARE.
 // signals 
 //
 ///////////////////////////////////////////////////////////////////////////
+wire GlobalRestart;
 
 wire [AXI_LITE_DATA_WIDTH-1:0] controle;
 wire [AXI_LITE_DATA_WIDTH-1:0] status;
@@ -152,7 +153,7 @@ wire    [AXI_LITE_DATA_WIDTH-1:0] configAdc;
 wire    [AXI_LITE_DATA_WIDTH-1:0] decimator;
 wire    [AXI_LITE_DATA_WIDTH-1:0] mavgFactor;
 wire    [AXI_LITE_DATA_WIDTH-1:0] packetSizeToStop;
-// wire    [AXI_LITE_DATA_WIDTH-1:0] restart;
+wire    [AXI_LITE_DATA_WIDTH-1:0] restart;
 wire    [AXI_LITE_DATA_WIDTH-1:0] adcData;
 
 
@@ -186,6 +187,7 @@ wire 	enableSampleGeneration;
 wire 	[31:0]	packetSize; 	
 
 assign adcs = {s4_ad9226_data,s3_ad9226_data,s2_ad9226_data,s1_ad9226_data};
+assign GlobalRestart = (aresetn == 0 && restart == 1) ? 0 : 1;
 
 /////////////////////////////////////////////////
 // 
@@ -204,6 +206,7 @@ ad9226_v1_s_axi # (
 	.MavgFactor                 (mavgFactor),
 	.PacketSizeToStop			(packetSizeToStop),	
 	.TriggerLevel				(triggerLevel),
+	.Restart                    (restart),
 
 	.Controle  					(controle),
 	.Status						(status),

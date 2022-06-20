@@ -449,11 +449,11 @@ function [AXIS_DATA_WIDTH - 1:0] getData;
 			// 32'h1 : getData = {save[1], 19'd2, adc_result[23:12]};
 			// 32'h2 : getData = {save[2], 19'd3, adc_result[35:24]};
 
-			32'h0 : getData = {1'b1, 19'd0, data_out_1};
-			32'h1 : getData = {1'b1, 19'd1, data_out_2};
-			32'h2 : getData = {1'b1, 19'd2, data_out_3};
+			32'h0 : getData = {1'b0, 19'd0, data_out_1};
+			32'h1 : getData = {1'b0, 19'd1, data_out_2};
+			32'h2 : getData = {1'b0, 19'd2, data_out_3};
 			
-			32'h3 : getData = {2'd3, packetDWORDCounter};
+			32'h3 : getData = {1'b0, 19'd3, 12'd0}; //2'd3, packetDWORDCounter
 			default : getData = 0;
 		endcase
 	end
