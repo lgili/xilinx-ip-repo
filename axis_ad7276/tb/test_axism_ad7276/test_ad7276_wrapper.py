@@ -47,35 +47,65 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.cocotb.start_soon(Clock(dut.Clk_100m, 10,units="ns").start())        
-        cocotb.cocotb.start_soon(Clock(dut.Clk_adc, 40, units="ns").start())
-                
+        cocotb.cocotb.start_soon(Clock(dut.CLK100MHz, 10,units="ns").start())        
+        
+        self.EnableSampleGeneration = 0x00	
+        self.PacketSize			    = 0x04
+        self.EnablePacket		    = 0x08
+        self.configPassband         = 0x0C
+        self.DMABaseAddr            = 0x10
+        self.TriggerLevel           = 0x14
+        self.ConfigSampler          = 0x18
+        self.DataFromArm            = 0x1C
+        self.Decimator              = 0x20
+        self.MavgFactor             = 0x24
+        self.TriggerEnable          = 0x28
+        self.TriggerOffset          = 0x2C  
         
     
     async def reset(self):
-        self.dut.Resetn.setimmediatevalue(0)
+        self.dut.ARESETN.setimmediatevalue(0)
         self.dut.inData[0].setimmediatevalue(0)
         #self.dut.m_axis_tready.setimmediatevalue(0)
-        self.dut.EnableSampleGeneration.setimmediatevalue(0)
-        await RisingEdge(self.dut.Clk_100m)
-        await RisingEdge(self.dut.Clk_100m)
-        self.dut.Resetn.value = 0
-        await RisingEdge(self.dut.Clk_100m)
-        await RisingEdge(self.dut.Clk_100m)
-        self.dut.Resetn.value = 1  
+        # self.dut.EnableSampleGeneration.setimmediatevalue(0)
+        await RisingEdge(self.dut.CLK100MHz)
+        await RisingEdge(self.dut.CLK100MHz)
+        self.dut.ARESETN.value = 0
+        await RisingEdge(self.dut.CLK100MHz)
+        await RisingEdge(self.dut.CLK100MHz)
+        self.dut.ARESETN.value = 1  
         #self.dut.m_axis_tready.value = 1      
-        await RisingEdge(self.dut.Clk_100m)
-        await RisingEdge(self.dut.Clk_100m)
+        await RisingEdge(self.dut.CLK100MHz)
+        await RisingEdge(self.dut.CLK100MHz)
 
-        self.dut.EnableSampleGeneration.value = 1
-        self.dut.PacketSize.value             = 100  #verilog code pkg is 8 bits so 16/4 = 4 u32 will be send
-        self.dut.EnablePacket.value           = 0  
-        self.dut.TriggerLevel.value           = 100
-        self.dut.Decimator.value              = 10
-        self.dut.MavgFactor.value             = 10
+        # self.dut.EnableSampleGeneration.value = 1
+        # self.dut.PacketSize.value             = 100  #verilog code pkg is 8 bits so 16/4 = 4 u32 will be send
+        # self.dut.EnablePacket.value           = 0  
+        # self.dut.TriggerLevel.value           = 100
+        # self.dut.Decimator.value              = 10
+        # self.dut.MavgFactor.value             = 10
+        # await self.write_to_axi_lite(self.EnableSampleGeneration, 1)
+        # await self.write_to_axi_lite(self.PacketSize, 100)
+        # await self.write_to_axi_lite(self.EnablePacket, 0)
+        # await self.write_to_axi_lite(self.Decimator, 0)
+        # await self.write_to_axi_lite(self.MavgFactor, 0)
 
         #self.dut.m_axis_tready.value          = 1
         
+    async def write_to_axi_lite(self,addr, value):
+
+        self.log.info("Writing data")
+        try:
+            send_data = value.to_bytes(4, 'little') #bytearray(value)    
+            await self.axil_master.write(addr, send_data)
+           
+
+            await RisingEdge(self.dut.clk_100m)
+            data = await self.axil_master.read(addr, 4)
+
+            self.log.info("Writed: %s", data.data) 
+        except:
+            print("An exception occurred")
 
     async def write_sig_a_thead(self):        
         for i in range(len(self.signal_a)):         
@@ -90,7 +120,7 @@ class TB:
     async def write(self, data, size, input_bit): 
         
         await FallingEdge(self.dut.cs)  
-        await FallingEdge(self.dut.Clk_adc)
+        await FallingEdge(self.dut.sclk)
         self.dut.inData[input_bit].value  = 0
 
         
@@ -99,14 +129,14 @@ class TB:
             for i in range(size): 
                 value = data
                 value >>= (size+1-i)
-                await RisingEdge(self.dut.Clk_adc) 
+                await RisingEdge(self.dut.sclk) 
                 self.dut.inData[input_bit].value        = value & 1
                 #data <<= 1  
                
             
-        await FallingEdge(self.dut.Clk_adc)
+        await FallingEdge(self.dut.sclk)
         self.dut.inData[input_bit].value        = 0
-        await FallingEdge(self.dut.Clk_adc)
+        await FallingEdge(self.dut.sclk)
         self.dut.inData[input_bit].value        = 0
     
     
@@ -168,8 +198,8 @@ async def run_test(dut):
     #write_angle_thread = cocotb.start_soon(tb.write_angle())
        
     assert 1 == 1   
-    await RisingEdge(dut.Clk_100m)
-    await RisingEdge(dut.Clk_100m)
+    await RisingEdge(dut.CLK100MHz)
+    await RisingEdge(dut.CLK100MHz)
 
     # Wait for the other thread to complete
     await write_thread_a
@@ -192,8 +222,8 @@ pll_dir = os.path.abspath(os.path.join(hdl_dir, '..',  'pll'))
 
 
 @pytest.mark.parametrize("data_width", [12])
-def test_ad9226(request, data_width):
-    dut = "adc_7276"
+def test_ad7276_wrapper(request, data_width):
+    dut = "ad7276_wrapper"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
 

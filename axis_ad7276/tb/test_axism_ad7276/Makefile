@@ -26,14 +26,15 @@ WAVES ?= 1
 COCOTB_HDL_TIMEUNIT = 1ns
 COCOTB_HDL_TIMEPRECISION = 1ps
 
-DUT      = adc_7276
+DUT      = ad7276_wrapper
 TOPLEVEL = $(DUT)
 MODULE   = test_$(DUT)
 VERILOG_SOURCES += ../../hdl/$(DUT).v
+VERILOG_SOURCES += ../../hdl/adc_7276.v
 VERILOG_SOURCES += ../../hdl/ad7276_if.v
 VERILOG_SOURCES += ../../hdl/data_decimation.v
 VERILOG_SOURCES += ../../hdl/moving_average_fir.v
-#VERILOG_SOURCES += ../../hdl/cordic.v
+VERILOG_SOURCES += ../../hdl/ad7276_v1_s_axi.v
 #VERILOG_SOURCES += ../../hdl/pi_controller.v 
 #VERILOG_SOURCES += ../../hdl/pll/fd.v 
 #VERILOG_SOURCES += ../../hdl/pll/lp.v 
@@ -49,9 +50,9 @@ export PARAM_KEEP_WIDTH ?= $(shell expr $(PARAM_DATA_WIDTH) / 8 )
 ifeq ($(SIM), icarus)
 	PLUSARGS += -fst
 
-	COMPILE_ARGS += -P $(TOPLEVEL).DATA_WIDTH=$(PARAM_DATA_WIDTH)
-	COMPILE_ARGS += -P $(TOPLEVEL).KEEP_ENABLE=$(PARAM_KEEP_ENABLE)
-	COMPILE_ARGS += -P $(TOPLEVEL).KEEP_WIDTH=$(PARAM_KEEP_WIDTH)
+	# COMPILE_ARGS += -P $(TOPLEVEL).DATA_WIDTH=$(PARAM_DATA_WIDTH)
+	# COMPILE_ARGS += -P $(TOPLEVEL).KEEP_ENABLE=$(PARAM_KEEP_ENABLE)
+	# COMPILE_ARGS += -P $(TOPLEVEL).KEEP_WIDTH=$(PARAM_KEEP_WIDTH)
 	
 
 	ifeq ($(WAVES), 1)

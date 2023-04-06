@@ -10,9 +10,13 @@
 *.zip
 *xgui/
 *sim_build/
+*ip_proj/
+*ip_user_files/
 *__pycache__/
 *component.xml
 *results.xml
+*.hier
+*.wpc
 # #########
 # #Exclude all
 # #########
@@ -67,7 +71,8 @@
 # #########
 # #XPR  +  *.XML ? XPR (Files are merged into a single XPR file for 2014.1 version)
 # #Do NOT ignore *.xpr files
-# !*.xpr
+*.xpr
+*.ipr
 # #Include *.xml files for 2013.4 or earlier version
 # *.xml
 # #########

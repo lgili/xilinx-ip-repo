@@ -31,7 +31,8 @@ THE SOFTWARE.
 		// Users to add parameters here
         parameter ADC_LENGTH = 12,
         parameter FIR_OUT_LENGTH = 16,
-	    parameter ADC_QTD = 1,     
+	    parameter ADC_QTD = 4,     
+		parameter ADC_CLK_DIV = 6,
 		// User parameters ends
 		// Do not modify the parameters beyond this line
 
@@ -53,7 +54,6 @@ THE SOFTWARE.
 	)
 	(
 		// Users to add ports here
-	    input wire  clk_100m,
 	    input  wire  [2*ADC_QTD-1:0]   inData,   
 		output wire [FIR_OUT_LENGTH-1 : 0] adc_1,
 		output wire [FIR_OUT_LENGTH-1 : 0] adc_2,
@@ -67,6 +67,8 @@ THE SOFTWARE.
 		output wire [ADC_QTD-1 : 0] cs,
 		output wire [ADC_QTD-1 : 0] sclk,
 		
+		output wire                       eoc_adc,
+		output wire 					  adc_clk,
 		
 		//input wire [ADC_LENGTH-1 : 0] adc_trigger,
 		output wire irq,		
@@ -84,9 +86,9 @@ THE SOFTWARE.
 
 
 		// Ports of Axi Slave Bus Interface S00_AXI
-		input wire                           ADC_CLK,
+		input wire                           CLK100MHz,
         input wire                           ARESETN,
-       
+		input wire clk_adc,
                          
 		
 		input wire [C_S00_AXI_ADDR_WIDTH-1 : 0] s00_axi_awaddr,
@@ -141,8 +143,8 @@ THE SOFTWARE.
 // signals 
 //
 ///////////////////////////////////////////////////////////////////////////
-wire 	[7:0]	enablePacket; 
-wire	[31:0]	configPassband; 
+wire 	[7:0]  enablePacket; 
+wire	[31:0] configPassband; 
 wire    [31:0] dmaBaseAddr;
 wire    [31:0] triggerLevel;
 wire    [31:0] triggerEnable;
@@ -164,7 +166,7 @@ assign posTrigger = triggerOffset;
 wire 		enableSampleGeneration; 
 wire 	[31:0]	packetSize; 	
 	
-	
+
 // Instantiation of Axi Bus Interface S_AXI
 	ad9226_v1_s_axi # ( 
 		.C_S_AXI_DATA_WIDTH(C_S00_AXI_DATA_WIDTH),
@@ -190,7 +192,7 @@ wire 	[31:0]	packetSize;
 		.LastReceivedPacket_head 	( lastReceivedPacket_head ), 
 		.LastReceivedPacket_tail 	( lastReceivedPacket_tail ), 
 		
-		.S_AXI_ACLK			    (ADC_CLK),
+		.S_AXI_ACLK			    (CLK100MHz),
 		.S_AXI_ARESETN			(ARESETN),
 		.S_AXI_AWADDR			(s00_axi_awaddr),
 		.S_AXI_AWPROT			(s00_axi_awprot),
@@ -215,7 +217,6 @@ wire 	[31:0]	packetSize;
 	
 
 
-
     wire [2*FIR_OUT_LENGTH-1:0] adc0_data;
     
     assign adc_2 = adc0_data[31:16];
@@ -226,14 +227,15 @@ wire 	[31:0]	packetSize;
         .ADC_LENGTH(ADC_LENGTH)
     ) adc_inst
     (
-        .Clk_100m(clk_100m),
-        .Clk_adc(ADC_CLK),
-        .Resetn(ARESETN),        
+        .CLK100MHz(CLK100MHz),
+        .ARESETN(ARESETN),   
+		.clk_adc(clk_adc),     
         .inData(inData),              
         .adcData(adc0_data),
         .cs(cs),  
         .sclk(sclk),      
-        .sampleDone(), 
+        .eoc_adc(eoc_adc), 
+		.adc_clk(adc_clk),
         .EnableSampleGeneration(enableSampleGeneration), 
         .PacketSize(packetSize), 
         .EnablePacket(enablePacket), 

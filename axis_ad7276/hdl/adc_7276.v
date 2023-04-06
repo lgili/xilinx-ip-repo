@@ -25,40 +25,40 @@ module adc_7276#
 	// Users to add parameters here
 	parameter ADC_LENGTH = 12,
 	parameter FIR_OUT_LENGTH = 16,
-	parameter DATA_REG_WIDTH = 32     
+	parameter DATA_REG_WIDTH = 32,
+	parameter ADC_CLK_DIV = 6    
 	// User parameters ends
 	// Do not modify the parameters beyond this line
 
 	
 )
 (
-    input  wire                         Clk_100m,
-	input  wire  						Clk_adc,
-	input  wire  						Resetn,
-	
+    input  wire                         CLK100MHz,
+	input  wire  						ARESETN,
+	input  wire							clk_adc,
 	/*
      * ADC port
      */	
-	input  wire  [1:0]                inData,              
-	output wire  [2*FIR_OUT_LENGTH-1:0]   adcData,
+	input  wire  [1:0]                   inData,              
+	output wire  [2*FIR_OUT_LENGTH-1:0]  adcData,
 	output wire                       cs,  
 	output wire                       sclk,      
-	output wire                       sampleDone,
-	
+	output wire                       eoc_adc,
+	output wire 					  adc_clk,
 	
 	/*
      * Configurations 
      */	
-	input 	wire						         EnableSampleGeneration, 
+	input 	wire						     EnableSampleGeneration, 
 	input 	wire 	[DATA_REG_WIDTH-1:0]	 PacketSize, 
-	input 	wire 	[7:0]					     EnablePacket, 
+	input 	wire 	[7:0]					 EnablePacket, 
 	input 	wire 	[DATA_REG_WIDTH-1:0]	 ConfigPassband,
 	input 	wire 	[DATA_REG_WIDTH-1:0]	 DMABaseAddr,
 	input 	wire 	[DATA_REG_WIDTH-1:0]	 TriggerLevel,
 	input 	wire 	[DATA_REG_WIDTH-1:0]	 ConfigSampler,
 	input 	wire 	[DATA_REG_WIDTH-1:0]	 DataFromArm,
 	input 	wire 	[DATA_REG_WIDTH-1:0]	 Decimator,	
-	input   wire    [DATA_REG_WIDTH-1:0]   MavgFactor,
+	input   wire    [DATA_REG_WIDTH-1:0]     MavgFactor,
 
 	output   wire    [31:0]              TriggerOffset,  
 	output   wire    [31:0]              TriggerEnable
@@ -72,8 +72,8 @@ module adc_7276#
 wire 		Clk; 
 wire 		ResetL; 
 
-assign Clk = Clk_100m; 
-assign ResetL = Resetn;  
+assign Clk = CLK100MHz; 
+assign ResetL = ARESETN;  
 
 
 /////////////////////////////////////////////////
@@ -93,14 +93,31 @@ wire in_data_ready,in_data_ready1,in_data_ready2;
 
 assign in_data_ready = (in_data_ready1 && in_data_ready2) ? 1'b1 : 1'b0;
 
-wire eoc_adc;
+
 wire [11:0] adc_result_decimator0,adc_result_decimator1;
 wire adc_result_0_valid,adc_result_1_valid;
+
+reg [4:0 ]time_scale;
+reg [31:0] time_sampling;
+reg [15:0] dis_count;
+wire clk_sampling;
+// sampling_time sampling_time(.scale_in(ADC_CLK_DIV), .time_sampling(time_sampling));
+always @(posedge CLK100MHz, negedge ARESETN) begin
+	if(~ARESETN)
+		dis_count <= 0;
+	else begin
+		dis_count <= dis_count + 1;
+		if(dis_count >= ADC_CLK_DIV)
+			dis_count <= 0;
+	end
+end
+
+// assign adc_clk = (dis_count <= ADC_CLK_DIV/2);
 
 ad7276_if adc (
         //clock and reset signals
         .fpga_clk_i(Clk),
-        .adc_clk_i(Clk_adc),
+        .adc_clk_i(clk_adc),
         .reset_n_i(ResetL),
             
         //IP control and data interface
@@ -117,8 +134,6 @@ ad7276_if adc (
         .cs_o(cs_n)    
     );   
     
-
-
 
 /////////////////////////////////////////////////
 // 
