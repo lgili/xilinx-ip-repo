@@ -81,7 +81,7 @@ localparam      ADC_SCLK_PERIODS    = 16;
 //----------- Assign/Always Blocks ---------------------------------------------
 //------------------------------------------------------------------------------
 assign sclk_o       = (adc_clk_en == 1'b1)&&(sclk_cnt >= 32'd0) ? adc_clk_i : 1'b1;
-assign cs_o         =  adc_cs_s; 
+assign cs_o         =  (adc_cs_s ); 
 assign data_0_o     = (data_rd_rdy_s == 1'b1) ? data_0_s[13:2] : data_0_o;
 assign data_1_o     = (data_rd_rdy_s == 1'b1) ? data_1_s[13:2] : data_1_o;  
 assign data_rdy_o   = data_rd_rdy_s && adc_clk_en; // (adc_cs_s == 1'b1 && adc_clk_en == 1'b1) ? 1'b1 : 1'b0;

@@ -47,7 +47,8 @@ class TB:
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.DEBUG)
 
-        cocotb.cocotb.start_soon(Clock(dut.CLK100MHz, 10,units="ns").start())        
+        cocotb.cocotb.start_soon(Clock(dut.CLK100MHz, 10,units="ns").start())  
+        # cocotb.cocotb.start_soon(Clock(dut.clk_adc, 60,units="ns").start())       
         
         self.EnableSampleGeneration = 0x00	
         self.PacketSize			    = 0x04
@@ -65,7 +66,7 @@ class TB:
     
     async def reset(self):
         self.dut.ARESETN.setimmediatevalue(0)
-        self.dut.inData[0].setimmediatevalue(0)
+        self.dut.inData.setimmediatevalue(0)
         #self.dut.m_axis_tready.setimmediatevalue(0)
         # self.dut.EnableSampleGeneration.setimmediatevalue(0)
         await RisingEdge(self.dut.CLK100MHz)
@@ -84,7 +85,7 @@ class TB:
         # self.dut.TriggerLevel.value           = 100
         # self.dut.Decimator.value              = 10
         # self.dut.MavgFactor.value             = 10
-        # await self.write_to_axi_lite(self.EnableSampleGeneration, 1)
+        await self.write_to_axi_lite(self.EnableSampleGeneration, 1)
         # await self.write_to_axi_lite(self.PacketSize, 100)
         # await self.write_to_axi_lite(self.EnablePacket, 0)
         # await self.write_to_axi_lite(self.Decimator, 0)
@@ -107,47 +108,35 @@ class TB:
         except:
             print("An exception occurred")
 
-    async def write_sig_a_thead(self):        
-        for i in range(len(self.signal_a)):         
-            v = int(self.signal_a[i])       
-            await self.write(v,12, 0)
+    async def write_sig_thead(self, signal, bit):        
+        for i in range(len(signal)):         
+            v = int(signal[i])       
+            await self.write(v,12, bit)  
 
-    async def write_sig_b_thead(self):        
-        for i in range(len(self.signal_b)):         
-            v = int(self.signal_b[i])       
-            await self.write(v,12,1)        
-
-    async def write(self, data, size, input_bit): 
+    async def write(self, data, size, n_adc): 
         
-        await FallingEdge(self.dut.cs)  
-        await FallingEdge(self.dut.sclk)
-        self.dut.inData[input_bit].value  = 0
+        await FallingEdge(self.dut.cs0)  
+        await FallingEdge(self.dut.sclk0)
+       
+        self.dut.inData[n_adc].value  = 0
 
         
-        if(self.dut.cs.value == 0):
+        if(self.dut.cs[0].value == 0):
             
             for i in range(size): 
                 value = data
                 value >>= (size+1-i)
-                await RisingEdge(self.dut.sclk) 
-                self.dut.inData[input_bit].value        = value & 1
+                await RisingEdge(self.dut.sclk0) 
+                
+                self.dut.inData[n_adc].value        = value & 1
                 #data <<= 1  
                
             
-        await FallingEdge(self.dut.sclk)
-        self.dut.inData[input_bit].value        = 0
-        await FallingEdge(self.dut.sclk)
-        self.dut.inData[input_bit].value        = 0
+        await FallingEdge(self.dut.sclk0)        
+        self.dut.inData[n_adc].value  = 0
+        await FallingEdge(self.dut.sclk0)       
+        self.dut.inData[n_adc].value  = 0
     
-    
-    async def write_angle(self):
-        j = 0
-        for i in range(len(self.signal_a)):
-            await RisingEdge(self.dut.cs)            
-            self.dut.angle.value = int(((1 << 32)*j)/360)
-            j= j+1
-            if j == 359:
-                j = 0
 
     async def read(self):
         #await RisingEdge(self.dut.eoc)
@@ -192,8 +181,22 @@ async def run_test(dut):
     #await tb.write(20,12)
 
     # Run reset_dut concurrently
-    write_thread_a = cocotb.start_soon(tb.write_sig_a_thead())
-    write_thread_b = cocotb.start_soon(tb.write_sig_b_thead())
+    write_thread_0 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 0))
+    write_thread_1 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 1))
+    write_thread_2 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 2))
+    write_thread_3 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 3))
+    write_thread_4 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 4))
+    write_thread_5 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 5))
+    write_thread_6 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 6))
+    write_thread_7 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 7))
+    write_thread_8 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 8))
+    write_thread_9 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 9))
+    write_thread_10 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 10))
+    write_thread_11 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 11))
+    write_thread_12 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 12))
+    write_thread_13 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 13))
+    write_thread_14 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 14))
+    write_thread_15 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 15))
     
     #write_angle_thread = cocotb.start_soon(tb.write_angle())
        
@@ -202,10 +205,23 @@ async def run_test(dut):
     await RisingEdge(dut.CLK100MHz)
 
     # Wait for the other thread to complete
-    await write_thread_a
-    await write_thread_a
-    #await write_angle_thread
-
+    await write_thread_0
+    await write_thread_1
+    await write_thread_2
+    await write_thread_3
+    await write_thread_4
+    await write_thread_5
+    await write_thread_6
+    await write_thread_7
+    await write_thread_8
+    await write_thread_9
+    await write_thread_10
+    await write_thread_11
+    await write_thread_12
+    await write_thread_13
+    await write_thread_14
+    await write_thread_15
+ 
 
 
 
@@ -228,7 +244,7 @@ def test_ad7276_wrapper(request, data_width):
     toplevel = dut
 
     verilog_sources = [
-        os.path.join(hdl_dir, f"{dut}.v"),
+        os.path.join(hdl_dir, f"{dut}.sv"),
         os.path.join(hdl_dir, "ad7276_if.v"),
         os.path.join(hdl_dir, "data_decimation.v"),        
         os.path.join(hdl_dir, "moving_average_fir.v"),

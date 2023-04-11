@@ -26,20 +26,12 @@ WAVES ?= 1
 COCOTB_HDL_TIMEUNIT = 1ns
 COCOTB_HDL_TIMEPRECISION = 1ps
 
-DUT      = ad7276_wrapper
+DUT      = trafficgen_v1_0
 TOPLEVEL = $(DUT)
 MODULE   = test_$(DUT)
-VERILOG_SOURCES += ../../hdl/$(DUT).sv
-VERILOG_SOURCES += ../../hdl/adc_7276.v
-VERILOG_SOURCES += ../../hdl/ad7276_if.v
-VERILOG_SOURCES += ../../hdl/data_decimation.v
-VERILOG_SOURCES += ../../hdl/moving_average_fir.v
-VERILOG_SOURCES += ../../hdl/ad7276_v1_s_axi.v
-#VERILOG_SOURCES += ../../hdl/pi_controller.v 
-#VERILOG_SOURCES += ../../hdl/pll/fd.v 
-#VERILOG_SOURCES += ../../hdl/pll/lp.v 
-#VERILOG_SOURCES += ../../hdl/pll/pd.v 
-#VERILOG_SOURCES += ../../hdl/pll/vcodiv.v 
+VERILOG_SOURCES += ../hdl/$(DUT).v
+VERILOG_SOURCES += ../hdl/trafficgen_v1_0_S00_AXI.v
+VERILOG_SOURCES += ../hdl/trafficgen_v1_0_M00_AXIS.v
 
 
 # module parameters
