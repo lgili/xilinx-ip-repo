@@ -24,7 +24,8 @@ module adc_7276#
 (
 	// Users to add parameters here
 	parameter ADC_LENGTH = 12,
-	parameter SAMPLE_RATE = 3	
+	parameter SAMPLE_RATE = 12,
+	parameter OUTPUT_AS_FLOAT = 1 // 0 or 1
 )
 (
     input  wire                         CLK100MHz,
@@ -32,14 +33,18 @@ module adc_7276#
 	/*
      * ADC port
      */	
-	input  wire  		                in_adc0,
-	input  wire  		                in_adc1,              
-	output wire  [ADC_LENGTH-1:0]  		adc0,
-	output wire  [ADC_LENGTH-1:0]  		adc1,
+	input  wire  		                in_adc1,
+	input  wire  		                in_adc2,  
+	input  wire        [ADC_LENGTH-1:0] offset, 
+	input  wire       	[31:0] 			gain,    
+	output wire  		[(OUTPUT_AS_FLOAT*(32-ADC_LENGTH))+ADC_LENGTH-1:0] adc1,
+	output wire  		[(OUTPUT_AS_FLOAT*(32-ADC_LENGTH))+ADC_LENGTH-1:0] adc2,
 	output wire                         cs,  
 	output wire                         sclk,      
 	output wire                         eoc_adc,
-	output wire 					    clk_sampling
+	output wire 					    clk_sampling,
+
+	input wire   [ADC_LENGTH-1:0]       id
 	
 	
     );
@@ -76,133 +81,165 @@ reg [4:0 ]time_scale;
 reg [31:0] time_sampling;
 reg [15:0] dis_count;
 wire adc_clk;
+wire adc_clk_inv;
 
-localparam ADC_CLK_DIV = 5;
-always @(posedge Clk, negedge ResetL) begin
-	if(~ResetL)
-		dis_count <= 0;
-	else begin
-		dis_count <= dis_count + 1;
-		if(dis_count >= ADC_CLK_DIV)
-			dis_count <= 0;
-	end
-end
+wire [ADC_LENGTH-1:0] adc1_raw;
+wire [ADC_LENGTH-1:0] adc2_raw;
 
-assign adc_clk = !(dis_count <= ADC_CLK_DIV/2);
+// 4 is the minimal value to work as 1M samples for the ad7276
+localparam ADC_CLK_DIV = 4;
 
-ad7276_if adc (
+clock_divider#(
+	.DIV_WIDTH(ADC_CLK_DIV)    		// Number of divider
+) adc_clock (
+	.clk_in(Clk),				// clock in
+	.div_ctrl(ADC_CLK_DIV/2),	// divider control
+	.rstn(ResetL),				// reset (active low)
+	.clk_out(adc_clk),			// clock out
+	.clk_out_b(adc_clk_inv)		// complementary clock out
+);
+
+wire clock_adc;
+
+assign clock_adc = (id == 1 || id == 3 || id == 5 || id == 7 || id == 9 || id == 11 || id == 13 || id == 15) ? adc_clk : adc_clk_inv;
+
+ad7276_if #(
+	.ADC_CLK_DIV(ADC_CLK_DIV-3)
+)
+adc (
         //clock and reset signals
         .fpga_clk_i(Clk),
-        .adc_clk_i(adc_clk),
+        .adc_clk_i(clock_adc),
         .reset_n_i(ResetL),
             
         //IP control and data interface
         .en_0_i(1'b1),
         .en_1_i(1'b1),        
         .data_rdy_o(eoc_adc),
-        .data_0_o(adc0),
-        .data_1_o(adc1),
+        .data_0_o(adc1_raw),
+        .data_1_o(adc2_raw),
             
         //ADC control and data interface
-        .data_0_i(in_adc0),
-        .data_1_i(in_adc1),
+        .data_0_i(in_adc1),
+        .data_1_i(in_adc2),
         .sclk_o(sclk),
         .cs_o(cs_n)    
     );   
     
-reg [15:0] sample_count;
-always @(posedge eoc_adc, negedge ARESETN) begin
-	if(~ARESETN)
-		sample_count <= 0;
-	else begin
-		sample_count <= sample_count + 1;
-		if(sample_count >= SAMPLE_RATE)
-			sample_count <= 0;
-	end
-end
 
-assign clk_sampling = !(sample_count <= SAMPLE_RATE/2);
-/////////////////////////////////////////////////
-// 
-// DECIMATOR
-//
-/////////////////////////////////////////////////
 
-// data_decimation #(
-//     .DATA_IN_WIDTH(12),
-//     .DATA_OUT_WIDTH(12),
-//     .DATA_REG_WIDTH(32)
-// ) decimator0
-// (
-// 	.clk(Clk),
-// 	.rst_n(ResetL),
-// 	.in_data_ready(in_data_ready1),
-// 	.in_data_valid(eoc_adc),
-// 	.in_data(adc0),
-// 	.out_data_ready(1'b1),
-// 	.out_data_valid(adc_result_0_valid),
-// 	.out_data(adc_result_decimator0),
-// 	.decimate_reg(Decimator)  
-// );
-
-// data_decimation#(
-//     .DATA_IN_WIDTH(12),
-//     .DATA_OUT_WIDTH(12),
-//     .DATA_REG_WIDTH(DATA_REG_WIDTH)
-// ) decimator1 
-// (
-// 	.clk(Clk),
-// 	.rst_n(ResetL),
-// 	.in_data_ready(in_data_ready2),
-// 	.in_data_valid(eoc_adc),
-// 	.in_data(adc1),
-// 	.out_data_ready(1'b1),
-// 	.out_data_valid(adc_result_1_valid),
-// 	.out_data(adc_result_decimator1),
-// 	.decimate_reg(Decimator)  
-// );   
-
+// assign clk_sampling = !(sample_count <= SAMPLE_RATE/2);
+clock_divider#(
+	.DIV_WIDTH(SAMPLE_RATE)    	// Number of divider
+) sample_clock (
+	.clk_in(adc_clk),			// clock in
+	.div_ctrl(SAMPLE_RATE/2),	// divider control
+	.rstn(ResetL),				// reset (active low)
+	.clk_out(clk_sampling),		// clock out
+	.clk_out_b()				// complementary clock out
+);
 
 /////////////////////////////////////////////////
 // 
-// FIR FILTER
+// to_float
 //
 /////////////////////////////////////////////////
+wire [31:0] adc1_q16_16;
+wire [31:0] adc2_q16_16;
+wire [31:0] offset_q16_16;
+wire [31:0] adc1_without_offset_q16_16;
+wire [31:0] adc2_without_offset_q16_16;
+wire [31:0] adc1_with_gain_q16_16;
+wire [31:0] adc2_with_gain_q16_16;
+reg  [31:0] adc1_float;
+reg  [31:0] adc2_float;
+wire signed [31:0] ad1s;
 
-// wire [15:0] out_data_fir0;
-// wire [15:0] out_data_fir1;
-// wire out_data_valid_fir0;
-// wire out_data_valid_fir1;
 
-// moving_average_fir #
-// (
-// 	.IN_DATA_WIDTH(12),
-// 	.OUT_DATA_WIDTH(FIR_OUT_LENGTH)
-// )	mavg_fir0
-// (
-// 	.clk(Clk), 
-// 	.rst(ResetL), 
-// 	.mavg_factor(MavgFactor),
-// 	.in_data_valid(adc_result_0_valid), 
-// 	.in_data(adc_result_decimator0),
-// 	.out_data_valid(out_data_valid_fir0), 
-// 	.out_data(out_data_fir0)
-// );
+assign adc1_q16_16 = (adc1_raw << 16);
+assign adc2_q16_16 = (adc2_raw << 16);
+assign offset_q16_16 = (offset << 16);
 
-// moving_average_fir #
-// (
-// 	.IN_DATA_WIDTH(12),
-// 	.OUT_DATA_WIDTH(FIR_OUT_LENGTH)
-// )	mavg_fir1
-// (
-// 	.clk(Clk), 
-// 	.rst(ResetL), 
-// 	.mavg_factor(MavgFactor),
-// 	.in_data_valid(adc_result_1_valid), 
-// 	.in_data(adc_result_decimator1),
-// 	.out_data_valid(out_data_valid_fir1), 
-// 	.out_data(out_data_fir1)
-// );
+fxp_addsub # (
+    .WIIA(16),
+    .WIFA(16),
+    .WIIB(16),
+    .WIFB(16),
+    .WOI(16),
+    .WOF(16),
+    .ROUND(1)
+)sub_1(
+    .ina(adc1_q16_16),
+    .inb(offset_q16_16),
+    .sub(1), // 0=add, 1=sub
+    .out(adc1_without_offset_q16_16),
+    .overflow()
+);
+fxp_addsub # (
+    .WIIA(16),
+    .WIFA(16),
+    .WIIB(16),
+    .WIFB(16),
+    .WOI(16),
+    .WOF(16),
+    .ROUND(1)
+)sub_2(
+    .ina(adc2_q16_16),
+    .inb(offset_q16_16),
+    .sub(1), // 0=add, 1=sub
+    .out(adc2_without_offset_q16_16),
+    .overflow()
+);
 
-// assign adcData = {out_data_fir1 , out_data_fir0};
+fxp_mul # (
+    .WIIA(16),
+    .WIFA(16),
+    .WIIB(16),
+    .WIFB(16),
+    .WOI(16),
+    .WOF(16),
+    .ROUND(1)
+)mult_1(
+    .ina(adc1_without_offset_q16_16),
+    .inb(gain),
+    .out(adc1_with_gain_q16_16),
+    .overflow()
+);
+
+fxp_mul # (
+    .WIIA(16),
+    .WIFA(16),
+    .WIIB(16),
+    .WIFB(16),
+    .WOI(16),
+    .WOF(16),
+    .ROUND(1)
+)mult_2(
+    .ina(adc2_without_offset_q16_16),
+    .inb(gain),
+    .out(adc2_with_gain_q16_16),
+    .overflow()
+);
+
+fxp2float #(
+    .WII(16),
+    .WIF(16)
+) fxp2float_0 (
+    .in(adc1_with_gain_q16_16),
+    .out(adc1_float)
+);
+
+fxp2float #(
+    .WII(16),
+    .WIF(16)
+) fxp2float_1 (
+    .in(adc2_with_gain_q16_16),
+    .out(adc2_float)
+);
+
+
+
+assign adc1 = (OUTPUT_AS_FLOAT == 1) ? adc1_float : adc1_raw;
+assign adc2 = (OUTPUT_AS_FLOAT == 1) ? adc2_float : adc2_raw;
+
 endmodule

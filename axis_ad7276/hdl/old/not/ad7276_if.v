@@ -25,30 +25,26 @@ THE SOFTWARE.
 
 `timescale 1ns / 1ps
 
-module ad7276_if#
-(
-    parameter ADC_CLK_DIV = 1
-)
-(
-    //clock and reset signals
-    input           fpga_clk_i,
-    input           adc_clk_i,
-    input           reset_n_i,
-    
-    //IP control and data interface
-    input           en_0_i,
-    input           en_1_i,        
-    output          data_rdy_o,
-    output          data_clk,
-    output  [11:0]  data_0_o,
-    output  [11:0]  data_1_o,
-    
-    //ADC control and data interface
-    input           data_0_i,
-    input           data_1_i,
-    output          sclk_o,
-    output          cs_o
-);
+module ad7276_if
+    (
+        //clock and reset signals
+        input           fpga_clk_i,
+        input           adc_clk_i,
+        input           reset_n_i,
+        
+        //IP control and data interface
+        input           en_0_i,
+        input           en_1_i,        
+        output          data_rdy_o,
+        output  [11:0]  data_0_o,
+        output  [11:0]  data_1_o,
+        
+        //ADC control and data interface
+        input           data_0_i,
+        input           data_1_i,
+        output          sclk_o,
+        output          cs_o
+    );
 
 //------------------------------------------------------------------------------
 //----------- Registers Declarations -------------------------------------------
@@ -68,39 +64,26 @@ reg         adc_clk_en;
 //------------------------------------------------------------------------------
 //----------- Local Parameters -------------------------------------------------
 //------------------------------------------------------------------------------
-// reg [15:0] gain_adc_freq;
-// generate
-//     if(ADC_CLK_DIV <= 4)
-//         gain_adc_freq <= 1;
-//     else if(ADC_CLK_DIV > 4)
-//         gain_adc_freq <=   ADC_CLK_DIV - 3;  
-// endgenerate
 localparam      ADC_IDLE_STATE      = 8'b00000001;
 localparam      ADC_START_STATE     = 8'b00000010;
 localparam      ADC_READ_STATE      = 8'b00000100;
 localparam      ADC_DONE_STATE      = 8'b00001000;
 
 localparam real FPGA_CLOCK_FREQ     = 100000000;
-localparam real ADC_CYCLE_TIME      = 0.000002000*ADC_CLK_DIV; 
-localparam real ADC_CS_TIME         = 0.000000020*ADC_CLK_DIV; 
+localparam real ADC_CYCLE_TIME      = 0.000001000; 
+localparam real ADC_CS_TIME         = 0.000000020; 
 localparam      ADC_CYCLE_CNT       = FPGA_CLOCK_FREQ * ADC_CYCLE_TIME - 1;
 localparam      ADC_CS_CNT          = FPGA_CLOCK_FREQ * ADC_CS_TIME;
 localparam      ADC_SCLK_PERIODS    = 16; 
 
-
-initial begin 
-data_0_s <= 0;
-data_1_s <= 0;
-data_rd_rdy_s <= 1'b1;
-end
 //------------------------------------------------------------------------------
 //----------- Assign/Always Blocks ---------------------------------------------
 //------------------------------------------------------------------------------
 assign sclk_o       = (adc_clk_en == 1'b1)&&(sclk_cnt >= 32'd0) ? adc_clk_i : 1'b1;
-assign cs_o         = (adc_cs_s); 
-assign data_0_o     = (data_rd_rdy_s == 1'b1) ? data_0_s[11:0] : data_0_o;
-assign data_1_o     = (data_rd_rdy_s == 1'b1) ? data_1_s[11:0] : data_1_o;  
-assign data_rdy_o   = data_rd_rdy_s && adc_clk_en; // (adc_cs_s == 1'b1 && adc_clk_en == 1'b1) ? 1'b1 : 1'b0;
+assign cs_o         = adc_cs_s;
+assign data_0_o     = (data_rd_rdy_s == 1'b1) ? data_0_s[13:2] : data_0_o;
+assign data_1_o     = (data_rd_rdy_s == 1'b1) ? data_1_s[13:2] : data_1_o;  
+assign data_rdy_o   = data_rd_rdy_s;
 
 always @(posedge fpga_clk_i)
 begin
@@ -227,8 +210,5 @@ begin
         endcase
     end
 end
-
-
-assign data_clk = adc_clk_en;
 
 endmodule

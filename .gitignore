@@ -17,6 +17,11 @@
 *results.xml
 *.hier
 *.wpc
+*solution1/
+*.settings
+*.cproject
+*.project
+*.xml
 # #########
 # #Exclude all
 # #########

@@ -32,7 +32,7 @@ set_property physical_name CLK100MHz [ipx::get_port_maps CLK100MHz -of_objects [
 ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 set_property value ARESETN [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
-# set_property value s00_axi [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
+set_property value m_axis_ch1 [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
 
 # Set reset polarity
 set aresetn_intf [ipx::get_bus_interfaces ARESETN -of_objects ${ip_core}]

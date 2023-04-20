@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<autopilotfilemapping:AutoPilotFileMapping xmlns:autopilotfilemapping="www.autoesl.com/autopilotfilemapping">
+  <source>
+    <originFiles name="pll.cpp" path="/home/lgili/Documents/Tese/xilinx-ip-repo/pll_sogi/src/pll.cpp"/>
+    <originFiles name="pll.hpp" path="/home/lgili/Documents/Tese/xilinx-ip-repo/pll_sogi/src/pll.hpp"/>
+  </source>
+  <testbench>
+    <originFiles name="pll_tb.cpp" path="/home/lgili/Documents/Tese/xilinx-ip-repo/pll_sogi/src/pll_tb.cpp"/>
+  </testbench>
+</autopilotfilemapping:AutoPilotFileMapping>
