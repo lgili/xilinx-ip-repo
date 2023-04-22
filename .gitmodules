@@ -4,3 +4,6 @@
 [submodule "verilog-axis"]
 	path = verilog-axis
 	url = https://github.com/alexforencich/verilog-axis.git
+[submodule "cordic"]
+	path = cordic
+	url = https://github.com/ZipCPU/cordic.git

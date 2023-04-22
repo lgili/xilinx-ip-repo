@@ -333,7 +333,7 @@ assign adc_sampling = adc_clk[0];
 assign cs0 = cs[0];
 assign sclk0 = sclk[1];
 
-assign axis_ch5 = sclk[1];
+// assign axis_ch5 = sclk[1];
 
 wire [(OUTPUT_AS_FLOAT*(32-ADC_LENGTH))+ADC_LENGTH-1:0] adc1s[ADC_QTD];
 wire [(OUTPUT_AS_FLOAT*(32-ADC_LENGTH))+ADC_LENGTH-1:0] adc2s[ADC_QTD];
