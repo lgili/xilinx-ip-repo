@@ -46,31 +46,31 @@ class TB:
 
         self.getbit = [2048,1024,512,256,128,64,32,16,8,4,2,1]
 
-        self.log_ch = logging.getLogger('cocotb.ad7276_wrapper.axis_o')
-        self.log_ch.setLevel(logging.ERROR)
+        #self.log_ch = logging.getLogger('cocotb.ad7276_wrapper.axis_o')
+        #self.log_ch.setLevel(logging.ERROR)
         
-        for i in range(16):
-            channel = f'cocotb.ad7276_wrapper.axis_ch{i+1}'            
-            self.log_ch = logging.getLogger(channel)
-            self.log_ch.setLevel(logging.ERROR)
+        # for i in range(16):
+        #     channel = f'cocotb.ad7276_wrapper.axis_ch{i+1}'            
+        #     self.log_ch = logging.getLogger(channel)
+        #     self.log_ch.setLevel(logging.ERROR)
         
         self.log = logging.getLogger("cocotb.tb")
         self.log.setLevel(logging.ERROR)
 
-        cocotb.cocotb.start_soon(Clock(dut.CLK100MHz, 10,units="ns").start())   
-        # cocotb.cocotb.start_soon(Clock(dut.m_axis_aclk, 10,units="ns").start())     
+        cocotb.cocotb.start_soon(Clock(dut.s_axi_aclk, 10,units="ns").start()) 
+        cocotb.cocotb.start_soon(Clock(dut.s_axis_aclk, 10,units="ns").start()) 
+        cocotb.cocotb.start_soon(Clock(dut.m_axis_aclk, 10,units="ns").start())     
 
-        self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.CLK100MHz, dut.ARESETN,reset_active_level=False)
-        # self.axis_o = AxiStreamSink(AxiStreamBus.from_prefix(dut, "axis_o"), dut.CLK100MHz, dut.ARESETN,reset_active_level=False)  
-        self.axis_o = AxiStreamSink(AxiStreamBus.from_prefix(dut, "axis_adc"), dut.CLK100MHz, dut.ARESETN,reset_active_level=False) 
+        self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.s_axi_aclk, dut.s_axi_aresetn,reset_active_level=False)
+        self.axis_o = AxiStreamSink(AxiStreamBus.from_prefix(dut, "m_axis"), dut.s_axi_aclk, dut.m_axis_aresetn,reset_active_level=False)  
           
       
         
         self.EnableSampleGeneration = 0x00	
         self.PacketSize			    = 0x04
-        self.EnablePacket		    = 0x08
+        self.PacketRate  		    = 0x08
         self.configPassband         = 0x0C
-        self.DMABaseAddr            = 0x10
+        self.PacketPattern          = 0x10
         self.TriggerLevel           = 0x14
         self.ConfigSampler          = 0x18
         self.DataFromArm            = 0x1C
@@ -85,46 +85,35 @@ class TB:
                 self.sink.set_pause_generator(generator())
 
     async def reset(self):
-        self.dut.ARESETN.setimmediatevalue(0)
-        # self.dut.m_axis_aresetn.setimmediatevalue(0)
-        self.dut.inData.setimmediatevalue(0)
-        self.dut.axis_ch1_tready.setimmediatevalue(0)
-        self.dut.axis_adc_tready.setimmediatevalue(0)
-        # self.dut.enable.setimmediatevalue(0)
+        self.dut.s_axi_aresetn.setimmediatevalue(0)
+        self.dut.s_axis_aresetn.setimmediatevalue(0)
+        self.dut.m_axis_aresetn.setimmediatevalue(0)
+
+                
         
-        
-        await RisingEdge(self.dut.CLK100MHz)
-        await RisingEdge(self.dut.CLK100MHz)
-        self.dut.ARESETN.value = 0
-        await RisingEdge(self.dut.CLK100MHz)
-        await RisingEdge(self.dut.CLK100MHz)
+        await RisingEdge(self.dut.s_axi_aclk)
+        await RisingEdge(self.dut.s_axi_aclk)
+        # self.dut.s_axi_aresetn.value = 0
+        await RisingEdge(self.dut.s_axi_aclk)
+        await RisingEdge(self.dut.s_axi_aclk)
     
         # self.dut.num_of_words.value = 16
         for i in range(100): 
-            await RisingEdge(self.dut.CLK100MHz)
+            await RisingEdge(self.dut.s_axi_aclk)
         
-        self.dut.ARESETN.value = 1  
-        # self.dut.m_axis_aresetn.value = 1
+        self.dut.s_axi_aresetn.value = 1 
+        self.dut.s_axis_aresetn.value = 1 
+        self.dut.m_axis_aresetn.value = 1  
         for i in range(100): 
-            await RisingEdge(self.dut.CLK100MHz)
-        self.dut.axis_ch1_tready.value = 1 
-        self.dut.axis_adc_tready.value = 1 
+            await RisingEdge(self.dut.s_axi_aclk)
+        self.dut.m_axis_tready.value = 1 
 
-        # self.dut.enable.value = 1
-
-        # self.dut.EnableSampleGeneration.value = 1
-        # self.dut.PacketSize.value             = 100  #verilog code pkg is 8 bits so 16/4 = 4 u32 will be send
-        # self.dut.EnablePacket.value           = 0  
-        # self.dut.TriggerLevel.value           = 100
-        # self.dut.Decimator.value              = 10
-        # self.dut.MavgFactor.value             = 10
-        await self.write_to_axi_lite(self.PacketSize, 1024)
+             
+        await self.write_to_axi_lite(self.PacketSize, 10)
+        await self.write_to_axi_lite(self.PacketRate, 0)
         await self.write_to_axi_lite(self.EnableSampleGeneration, 0)
         await self.write_to_axi_lite(self.EnableSampleGeneration, 1)
-        # await self.write_to_axi_lite(self.PacketSize, 100)
-        # await self.write_to_axi_lite(self.EnablePacket, 0)
-        # await self.write_to_axi_lite(self.Decimator, 0)
-        # await self.write_to_axi_lite(self.MavgFactor, 0)
+       
 
         #self.dut.m_axis_tready.value          = 1
 
@@ -163,7 +152,7 @@ class TB:
             await self.axil_master.write(addr, send_data)
            
 
-            await RisingEdge(self.dut.clk_100m)
+            await RisingEdge(self.dut.s_axi_aclk)
             data = await self.axil_master.read(addr, 4)
 
             self.log.info("Writed: %s", data.data) 
@@ -175,68 +164,7 @@ class TB:
             v = int(signal[i])       
             await self.write(v,12, bit)  
 
-    async def write(self, data, size, n_adc): 
-        
-        await FallingEdge(self.dut.cs0)  
-        await FallingEdge(self.dut.sclk0)
-       
-        self.dut.inData[n_adc].value  = 0
-
-        
-        if(self.dut.cs[0].value == 0):
-            
-            for i in range(size): 
-                value = data
-                value >>= (size+1-i)
-                await RisingEdge(self.dut.sclk0) 
-                
-                self.dut.inData[n_adc].value        = value & 1
-                #data <<= 1  
-               
-            
-        await FallingEdge(self.dut.sclk0)        
-        self.dut.inData[n_adc].value  = 0
-        await FallingEdge(self.dut.sclk0)       
-        self.dut.inData[n_adc].value  = 0
     
-    def bytes_to_float(self, bytesArray):
-        # print(bytesArray)
-        hexfloat = ''.join(format(x, '02x') for x in bytesArray)
-        return struct.unpack('<f', codecs.decode(hexfloat, 'hex_codec'))[0]
-    """
-    f is the input floating point number 
-    e is the number of fractional bits in the Q format. 
-        Example in Q1.15 format e = 15
-    """
-    def to_fixed(self,f,e):
-        a = f* (2**e)
-        b = int(round(a))
-        if a < 0:
-            # next three lines turns b into it's 2's complement.
-            b = abs(b)
-            b = ~b
-            b = b + 1
-        return b   
-
-    """
-    x is the input fixed number which is of integer datatype
-    e is the number of fractional bits for example in Q1.15 e = 15
-    """
-    def to_float(self,x,e):
-        c = abs(x)
-        sign = 1 
-        if x < 0:
-            # convert back from two's complement
-            c = x - 1 
-            c = ~c
-            sign = -1
-        f = (1.0 * c) / (2 ** e)
-        f = f * sign
-        return f
-    
-    def ieee754(self,flt):
-        b = bitstring.BitArray(float=flt, length=32)
-        return b
 
     def generateSin(self, freq, time, amp,  sample_rate, random, random_range, channel):
         samples = np.arange(0, time, 1/sample_rate) 
@@ -255,16 +183,17 @@ class TB:
         
     async def fetch_data(self):
         self.counter =0
-        for i in range(4095):
-                await RisingEdge(self.dut.CLK100MHz)  
-        await self.write_to_axi_lite(self.PacketSize, 1024*4)
+        for i in range(1000):
+                await RisingEdge(self.dut.s_axi_aclk)  
+        await self.write_to_axi_lite(self.PacketSize, 1024)
+        await self.write_to_axi_lite(self.PacketRate, 0)
         while(1):
-            for i in range(4095):
-                await RisingEdge(self.dut.CLK100MHz)     
+            for i in range(1024*10):
+                await RisingEdge(self.dut.s_axi_aclk)     
         
             await self.write_to_axi_lite(self.EnableSampleGeneration, 0)
             for i in range(10):
-                await RisingEdge(self.dut.CLK100MHz)
+                await RisingEdge(self.dut.s_axi_aclk)
             await self.write_to_axi_lite(self.EnableSampleGeneration, 1)
 
             self.counter = self.counter +1
@@ -286,56 +215,56 @@ async def run_test(dut, backpressure_inserter=None):
     # plt.plot(tb.signal_b)
     # plt.show() 
     await tb.reset()
-    tb.set_backpressure_generator(backpressure_inserter)
+    # tb.set_backpressure_generator(backpressure_inserter)
 
 
     #await tb.write(20,12)
 
     # Run reset_dut concurrently
-    write_thread_0 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 0))
-    write_thread_1 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 1))
-    write_thread_2 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 2))
-    write_thread_3 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 3))
-    write_thread_4 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 4))
-    write_thread_5 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 5))
-    write_thread_6 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 6))
-    write_thread_7 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 7))
-    write_thread_8 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 8))
-    write_thread_9 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 9))
-    write_thread_10 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 10))
-    write_thread_11 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 11))
-    write_thread_12 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 12))
-    write_thread_13 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 13))
-    write_thread_14 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 14))
-    write_thread_15 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 15))
+    # write_thread_0 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 0))
+    # write_thread_1 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 1))
+    # write_thread_2 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 2))
+    # write_thread_3 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 3))
+    # write_thread_4 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 4))
+    # write_thread_5 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 5))
+    # write_thread_6 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 6))
+    # write_thread_7 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 7))
+    # write_thread_8 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 8))
+    # write_thread_9 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 9))
+    # write_thread_10 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 10))
+    # write_thread_11 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 11))
+    # write_thread_12 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 12))
+    # write_thread_13 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 13))
+    # write_thread_14 = cocotb.start_soon(tb.write_sig_thead(tb.signal_a , 14))
+    # write_thread_15 = cocotb.start_soon(tb.write_sig_thead(tb.signal_b , 15))
 
     reset_dma = cocotb.start_soon(tb.fetch_data())
     # read_thread_1 = cocotb.start_soon(tb.read_m_axis_thead(1, int(len(tb.signal_a)*7)))
     # read_thread_2 = cocotb.start_soon(tb.read_m_axis_thead(2, int(len(tb.signal_a)*7)))
        
     assert 1 == 1   
-    await RisingEdge(dut.CLK100MHz)
-    await RisingEdge(dut.CLK100MHz)
+    await RisingEdge(dut.s_axi_aclk)
+    await RisingEdge(dut.s_axi_aclk)
 
     # x = tb.ieee754(2.5)
     # print(x)
     # Wait for the other thread to complete
-    await write_thread_0
-    await write_thread_1
-    await write_thread_2
-    await write_thread_3
-    await write_thread_4
-    await write_thread_5
-    await write_thread_6
-    await write_thread_7
-    await write_thread_8
-    await write_thread_9
-    await write_thread_10
-    await write_thread_11
-    await write_thread_12
-    await write_thread_13
-    await write_thread_14
-    await write_thread_15
+    # await write_thread_0
+    # await write_thread_1
+    # await write_thread_2
+    # await write_thread_3
+    # await write_thread_4
+    # await write_thread_5
+    # await write_thread_6
+    # await write_thread_7
+    # await write_thread_8
+    # await write_thread_9
+    # await write_thread_10
+    # await write_thread_11
+    # await write_thread_12
+    # await write_thread_13
+    # await write_thread_14
+    # await write_thread_15
     await reset_dma
     # await read_thread_1
     # await read_thread_2
@@ -363,21 +292,15 @@ pll_dir = os.path.abspath(os.path.join(hdl_dir, '.',  'pll'))
 
 @pytest.mark.parametrize("data_width", [12])
 def test_ad7276_wrapper(request, data_width):
-    dut = "ad7276_wrapper"
+    dut = "sample_generator_v2_0"
     module = os.path.splitext(os.path.basename(__file__))[0]
     toplevel = dut
 
     verilog_sources = [
-        os.path.join(hdl_dir, f"{dut}.sv"),
-        os.path.join(hdl_dir, "ad7276_if.v"),
-        os.path.join(hdl_dir, "data_decimation.v"),        
-        os.path.join(hdl_dir, "moving_average_fir.v"),
-        os.path.join(hdl_dir, "cordic.v"),
-        #os.path.join(hdl_dir, "pi_controller.v"),
-        #os.path.join(pll_dir, "fd.v"),
-        #os.path.join(pll_dir, "lp.v"),
-        #os.path.join(pll_dir, "pd.v"),
-        #os.path.join(pll_dir, "vcodiv.v"),
+        os.path.join(hdl_dir, f"{dut}.v"),
+        os.path.join(hdl_dir, "sample_generator_v2_0_S_AXI.v"),
+        os.path.join(hdl_dir, "sample_generator_v2_0_S_AXIS.v"),        
+        os.path.join(hdl_dir, "sample_generator_v2_0_M_AXIS.v"),
     ]
 
     parameters = {}

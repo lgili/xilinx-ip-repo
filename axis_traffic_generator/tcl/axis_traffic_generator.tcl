@@ -39,17 +39,17 @@ set aresetn_intf [ipx::get_bus_interfaces s00_axi_aresetn -of_objects ${ip_core}
 set aresetn_polarity [ipx::add_bus_parameter POLARITY $aresetn_intf]
 set_property value ACTIVE_LOW ${aresetn_polarity}
 
-ipx::add_bus_interface clk ${ip_core}
-set_property abstraction_type_vlnv xilinx.com:signal:clock_rtl:1.0 [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
-set_property bus_type_vlnv xilinx.com:signal:clock:1.0 [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
+ipx::add_bus_interface clk_m ${ip_core}
+set_property abstraction_type_vlnv xilinx.com:signal:clock_rtl:1.0 [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]
+set_property bus_type_vlnv xilinx.com:signal:clock:1.0 [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]
 # ipx::add_bus_parameter FREQ_HZ [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
 # set_property value 99999001 [ipx::get_bus_parameters FREQ_HZ -of_objects [ipx::get_bus_interfaces clk -of_objects [ipx::current_core]]]
-ipx::add_port_map m00_axis_aclk [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
-set_property physical_name m00_axis_aclk [ipx::get_port_maps m00_axis_aclk -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
-ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
-ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces clk -of_objects ${ip_core}]
-set_property value m00_axis_aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
-set_property value m00_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk -of_objects ${ip_core}]]
+ipx::add_port_map m00_axis_aclk [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]
+set_property physical_name m00_axis_aclk [ipx::get_port_maps m00_axis_aclk -of_objects [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]]
+ipx::add_bus_parameter ASSOCIATED_BUSIF [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]
+ipx::add_bus_parameter ASSOCIATED_RESET [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]
+set_property value m00_axis_aresetn [ipx::get_bus_parameters ASSOCIATED_RESET -of_objects [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]]
+set_property value m00_axis [ipx::get_bus_parameters ASSOCIATED_BUSIF -of_objects [ipx::get_bus_interfaces clk_m -of_objects ${ip_core}]]
 
 # Set reset polarity
 set aresetn_intf [ipx::get_bus_interfaces m00_axis_aresetn -of_objects ${ip_core}]

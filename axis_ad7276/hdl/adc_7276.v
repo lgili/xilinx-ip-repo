@@ -144,102 +144,105 @@ clock_divider#(
 // to_float
 //
 /////////////////////////////////////////////////
-wire [31:0] adc1_q16_16;
-wire [31:0] adc2_q16_16;
-wire [31:0] offset_q16_16;
-wire [31:0] adc1_without_offset_q16_16;
-wire [31:0] adc2_without_offset_q16_16;
-wire [31:0] adc1_with_gain_q16_16;
-wire [31:0] adc2_with_gain_q16_16;
-reg  [31:0] adc1_float;
-reg  [31:0] adc2_float;
-wire signed [31:0] ad1s;
+// wire [31:0] adc1_q16_16;
+// wire [31:0] adc2_q16_16;
+// wire [31:0] offset_q16_16;
+// wire [31:0] adc1_without_offset_q16_16;
+// wire [31:0] adc2_without_offset_q16_16;
+// wire [31:0] adc1_with_gain_q16_16;
+// wire [31:0] adc2_with_gain_q16_16;
+// reg  [31:0] adc1_float;
+// reg  [31:0] adc2_float;
+// wire signed [31:0] ad1s;
 
 
-assign adc1_q16_16 = (adc1_raw << 16);
-assign adc2_q16_16 = (adc2_raw << 16);
-assign offset_q16_16 = (offset << 16);
+// assign adc1_q16_16 = (adc1_raw << 16);
+// assign adc2_q16_16 = (adc2_raw << 16);
+// assign offset_q16_16 = (offset << 16);
 
-fxp_addsub # (
-    .WIIA(16),
-    .WIFA(16),
-    .WIIB(16),
-    .WIFB(16),
-    .WOI(16),
-    .WOF(16),
-    .ROUND(1)
-)sub_1(
-    .ina(adc1_q16_16),
-    .inb(offset_q16_16),
-    .sub(1), // 0=add, 1=sub
-    .out(adc1_without_offset_q16_16),
-    .overflow()
-);
-fxp_addsub # (
-    .WIIA(16),
-    .WIFA(16),
-    .WIIB(16),
-    .WIFB(16),
-    .WOI(16),
-    .WOF(16),
-    .ROUND(1)
-)sub_2(
-    .ina(adc2_q16_16),
-    .inb(offset_q16_16),
-    .sub(1), // 0=add, 1=sub
-    .out(adc2_without_offset_q16_16),
-    .overflow()
-);
+// fxp_addsub # (
+//     .WIIA(16),
+//     .WIFA(16),
+//     .WIIB(16),
+//     .WIFB(16),
+//     .WOI(16),
+//     .WOF(16),
+//     .ROUND(1)
+// )sub_1(
+//     .ina(adc1_q16_16),
+//     .inb(offset_q16_16),
+//     .sub(1), // 0=add, 1=sub
+//     .out(adc1_without_offset_q16_16),
+//     .overflow()
+// );
+// fxp_addsub # (
+//     .WIIA(16),
+//     .WIFA(16),
+//     .WIIB(16),
+//     .WIFB(16),
+//     .WOI(16),
+//     .WOF(16),
+//     .ROUND(1)
+// )sub_2(
+//     .ina(adc2_q16_16),
+//     .inb(offset_q16_16),
+//     .sub(1), // 0=add, 1=sub
+//     .out(adc2_without_offset_q16_16),
+//     .overflow()
+// );
 
-fxp_mul # (
-    .WIIA(16),
-    .WIFA(16),
-    .WIIB(16),
-    .WIFB(16),
-    .WOI(16),
-    .WOF(16),
-    .ROUND(1)
-)mult_1(
-    .ina(adc1_without_offset_q16_16),
-    .inb(gain),
-    .out(adc1_with_gain_q16_16),
-    .overflow()
-);
+// fxp_mul # (
+//     .WIIA(16),
+//     .WIFA(16),
+//     .WIIB(16),
+//     .WIFB(16),
+//     .WOI(16),
+//     .WOF(16),
+//     .ROUND(1)
+// )mult_1(
+//     .ina(adc1_without_offset_q16_16),
+//     .inb(gain),
+//     .out(adc1_with_gain_q16_16),
+//     .overflow()
+// );
 
-fxp_mul # (
-    .WIIA(16),
-    .WIFA(16),
-    .WIIB(16),
-    .WIFB(16),
-    .WOI(16),
-    .WOF(16),
-    .ROUND(1)
-)mult_2(
-    .ina(adc2_without_offset_q16_16),
-    .inb(gain),
-    .out(adc2_with_gain_q16_16),
-    .overflow()
-);
+// fxp_mul # (
+//     .WIIA(16),
+//     .WIFA(16),
+//     .WIIB(16),
+//     .WIFB(16),
+//     .WOI(16),
+//     .WOF(16),
+//     .ROUND(1)
+// )mult_2(
+//     .ina(adc2_without_offset_q16_16),
+//     .inb(gain),
+//     .out(adc2_with_gain_q16_16),
+//     .overflow()
+// );
 
-fxp2float #(
-    .WII(16),
-    .WIF(16)
-) fxp2float_0 (
-    .in(adc1_with_gain_q16_16),
-    .out(adc1_float)
-);
+// fxp2float #(
+//     .WII(16),
+//     .WIF(16)
+// ) fxp2float_0 (
+//     .in(adc1_with_gain_q16_16),
+//     .out(adc1_float)
+// );
 
-fxp2float #(
-    .WII(16),
-    .WIF(16)
-) fxp2float_1 (
-    .in(adc2_with_gain_q16_16),
-    .out(adc2_float)
-);
+// fxp2float #(
+//     .WII(16),
+//     .WIF(16)
+// ) fxp2float_1 (
+//     .in(adc2_with_gain_q16_16),
+//     .out(adc2_float)
+// );
 
 
 
-assign adc1 = (OUTPUT_AS_FLOAT == 1) ? adc1_float : adc1_raw;
-assign adc2 = (OUTPUT_AS_FLOAT == 1) ? adc2_float : adc2_raw;
+// assign adc1 = (OUTPUT_AS_FLOAT == 1) ? adc1_float : adc1_raw;
+// assign adc2 = (OUTPUT_AS_FLOAT == 1) ? adc2_float : adc2_raw;
+
+assign adc1 = adc1_raw;
+assign adc2 = adc2_raw;
 
 endmodule

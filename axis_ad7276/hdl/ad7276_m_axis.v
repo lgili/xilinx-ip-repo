@@ -1,12 +1,8 @@
-// Sadri - may - 22 - 2016 - Updated so that the C_M_AXIS_TDATA_WIDTH really defines the width of output data. 
-// Sadri - may - 05 - 2015 - updated ! 
-// Sadri - may - 03 - 2015 - created ! 
 
-// this is the axi stream master plug for our sample generator 
 
 `timescale 1 ns / 1 ps
 
-	module sample_generator_v2_0_M_AXIS #
+	module ad7276_m_axis #
 	(
 		// Users to add parameters here
 
@@ -17,7 +13,8 @@
 		parameter integer C_M_AXIS_TDATA_WIDTH	= 32,
 		// Start count is the numeber of clock cycles the master will wait before initiating/issuing any transaction.
 		parameter integer C_M_START_COUNT	= 32,
-		parameter NUM_CHANNELS = 16
+		parameter NUM_CHANNELS = 16,
+		parameter DATA_WIDTH_ADC = 16
 	)
 	(
 		// Users to add ports here
@@ -25,19 +22,20 @@
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]					PacketSize, 
 		input 	wire 	[7:0]										PacketRate, 
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]					NumberOfPacketsToSend,
+		input   wire 	[(DATA_WIDTH_ADC*NUM_CHANNELS)-1:0] 		InData,
 		// User ports ends
 		// Do not modify the ports beyond this line
 
 		// Global ports
-		input wire  						M_AXIS_ACLK,
-		input wire  						M_AXIS_ARESETN,
-		output wire  						M_AXIS_TVALID,
-		output wire 	[C_M_AXIS_TDATA_WIDTH-1 : 0] 		M_AXIS_TDATA,
-		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TSTRB,
-		output wire  						M_AXIS_TLAST,
-		input wire  						M_AXIS_TREADY,
-		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	M_AXIS_TKEEP,
-		output wire 						M_AXIS_TUSER
+		input wire  						m_axis_aclk,
+		input wire  						m_axis_aresetn,
+		output wire  						m_axis_tvalid,
+		output wire 	[C_M_AXIS_TDATA_WIDTH-1 : 0] 		m_axis_tdata,
+		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	m_axis_tstrb,
+		output wire  						m_axis_tlast,
+		input wire  						m_axis_tready,
+		output wire 	[(C_M_AXIS_TDATA_WIDTH/8)-1 : 0] 	m_axis_tkeep,
+		output wire 						m_axis_tuser
 	);
 	
 /////////////////////////////////////////////////
@@ -48,8 +46,8 @@
 wire 		Clk; 
 wire 		ResetL; 
 
-assign Clk = M_AXIS_ACLK; 
-assign ResetL = M_AXIS_ARESETN; 
+assign Clk = m_axis_aclk; 
+assign ResetL = m_axis_aresetn; 
 
 /////////////////////////////////////////////////
 // 
@@ -143,8 +141,8 @@ always @(posedge Clk)
 wire 			dataIsBeingTransferred; 
 wire 			lastDataIsBeingTransferred; 
 
-assign dataIsBeingTransferred = M_AXIS_TVALID & M_AXIS_TREADY;
-assign lastDataIsBeingTransferred = dataIsBeingTransferred & M_AXIS_TLAST;
+assign dataIsBeingTransferred = m_axis_tvalid & m_axis_tready;
+assign lastDataIsBeingTransferred = dataIsBeingTransferred & m_axis_tlast;
 
 /////////////////////////////////////////////////
 // 
@@ -190,7 +188,7 @@ always @(posedge Clk)
 			globalCounter <= globalCounter; 
 	end 
 
-assign M_AXIS_TDATA = packetDWORDCounter; 
+// assign m_axis_tdata = packetDWORDCounter; 
 
 /////////////////////////////////////////////////
 // 
@@ -274,7 +272,7 @@ always @(posedge Clk)
 // generation of TVALID signal 
 // if the fsm is in active state, then we generate packets 
 
-assign M_AXIS_TVALID = ( packetRate_allowData && ( (fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END) ) ) ? 1 : 0; 
+assign m_axis_tvalid = ( packetRate_allowData && ( (fsm_currentState == `FSM_STATE_ACTIVE) || (fsm_currentState == `FSM_STATE_WAIT_END) ) ) ? 1 : 0; 
 
 /////////////////////////////////////////////////
 // 
@@ -282,7 +280,7 @@ assign M_AXIS_TVALID = ( packetRate_allowData && ( (fsm_currentState == `FSM_STA
 //
 /////////////////////////////////////////////////
 
-assign M_AXIS_TLAST = (validBytesInLastChunk == 0) ? ( ( packetDWORDCounter == (packetSizeInDwords-1) ) ? 1 : 0 ) : 
+assign m_axis_tlast = (validBytesInLastChunk == 0) ? ( ( packetDWORDCounter == (packetSizeInDwords-1) ) ? 1 : 0 ) : 
 			( ( packetDWORDCounter == packetSizeInDwords ) ? 1 : 0 ); 
 
 /////////////////////////////////////////////////
@@ -291,7 +289,7 @@ assign M_AXIS_TLAST = (validBytesInLastChunk == 0) ? ( ( packetDWORDCounter == (
 //
 /////////////////////////////////////////////////
 
-assign M_AXIS_TSTRB =   ( (! lastDataIsBeingTransferred) && dataIsBeingTransferred ) ? 4'hf :
+assign m_axis_tstrb =   ( (! lastDataIsBeingTransferred) && dataIsBeingTransferred ) ? 4'hf :
 			( lastDataIsBeingTransferred && (validBytesInLastChunk == 3) ) ? 4'h7 :
 			( lastDataIsBeingTransferred && (validBytesInLastChunk == 2) ) ? 4'h3 : 
 			( lastDataIsBeingTransferred && (validBytesInLastChunk == 1) ) ? 4'h1 : 4'hf; 
@@ -302,11 +300,11 @@ assign M_AXIS_TSTRB =   ( (! lastDataIsBeingTransferred) && dataIsBeingTransferr
 //
 /////////////////////////////////////////////////
 
-assign M_AXIS_TKEEP = M_AXIS_TSTRB; // 4'hf; 
-assign M_AXIS_TUSER = 0; 
+assign m_axis_tkeep = m_axis_tstrb; // 4'hf; 
+assign m_axis_tuser = 0; 
 
 localparam integer CTR_WIDTH = NUM_CHANNELS == 1? 1 : $clog2(NUM_CHANNELS);
-localparam CTR_MAX = NUM_CHANNELS-1;
+localparam CTR_MAX = (NUM_CHANNELS>>1)-1;
 reg [CTR_WIDTH-1:0] ctr;
 
 always @(posedge Clk)
@@ -315,7 +313,7 @@ begin
 	begin
 		ctr <= 0;
 	end else begin
-		if (M_AXIS_TREADY && M_AXIS_TVALID)
+		if (m_axis_tready && m_axis_tvalid)
 		begin
 			if (ctr == CTR_MAX)
 			begin
@@ -327,5 +325,5 @@ begin
 	end
 end
 
-// assign axis_o_tdata = axis_i_tdata[(1+ctr)*(AXIS_BYTES*8)-1 -: AXIS_BYTES*8];
+assign m_axis_tdata = InData[(1+ctr)*(C_M_AXIS_TDATA_WIDTH)-1 -: C_M_AXIS_TDATA_WIDTH];
 endmodule

@@ -34,7 +34,7 @@ COCOTB_HDL_TIMEPRECISION = 1ps
 
 include $(mkfile_dir)/../hdl/Makefile
 
-DUT      = ad7276_wrapper
+DUT      = sample_generator_v2_0
 TOPLEVEL = $(DUT)
 MODULE   = test_$(DUT)
 

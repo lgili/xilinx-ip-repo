@@ -127,7 +127,6 @@ wire 	[31:0]	packetSize;
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			( packetSize ), 
 		.PacketRate			( packetRate ), 
-		.PacketPattern 			( packetPattern ), 
 		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
 		
 		.TotalReceivedPacketData 	( totalReceivedPacketData ), 
@@ -198,7 +197,6 @@ wire 	[31:0]	packetSize;
 		.EnableSampleGeneration 	( enableSampleGeneration ), 
 		.PacketSize 			( packetSize ), 
 		.PacketRate			( packetRate ), 
-		.PacketPattern 			( packetPattern ), 
 		.NumberOfPacketsToSend		( NumberOfPacketsToSend ), 
 		
 		.M_AXIS_ACLK			(m_axis_aclk),

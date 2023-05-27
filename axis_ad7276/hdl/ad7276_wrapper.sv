@@ -38,7 +38,8 @@ THE SOFTWARE.
 	    parameter ADC_QTD = 8,     
 		parameter SAMPLE_RATE = 2,
 		parameter AXIS_BYTES = 4,
-		parameter OUTPUT_AS_FLOAT =  1// 0 or 1
+		parameter integer C_S_AXI_ADDR_WIDTH	= 6,
+		parameter OUTPUT_AS_FLOAT =  0// 0 or 1
 	)
 	(
 		// Users to add ports here
@@ -78,29 +79,38 @@ THE SOFTWARE.
 		input wire                           CLK100MHz,
         input wire                           ARESETN,
 
-		`M_AXIS_PORT_NO_USER(axis_ch1, AXIS_BYTES),  
-		`M_AXIS_PORT_NO_USER(axis_ch2, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch3, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch4, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch5, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch6, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch7, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch8, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch9, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch10, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch11, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch12, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch13, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch14, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch15, AXIS_BYTES), 
-		`M_AXIS_PORT_NO_USER(axis_ch16, AXIS_BYTES)                       
+		//input wire enable,
+		//input wire [31:0] num_of_words,
+
+		`S_AXI_PORT(s_axi, AXIS_BYTES, C_S_AXI_ADDR_WIDTH),
+		`M_AXIS_PORT_TDEST(axis_o, AXIS_BYTES),
+		`M_AXIS_PORT_NO_USER(axis_ad1, AXIS_BYTES),
+		`M_AXIS_PORT_NO_USER(axis_ad2, AXIS_BYTES),
+		`M_AXIS_PORT_NO_USER(axis_ad3, AXIS_BYTES),
+
+
+		// Ports of Axi Master Bus Interface M_AXIS
+		// input wire  m_axis_aclk,
+		// input wire  m_axis_aresetn,
+		// output wire  m_axis_tvalid,
+		// output wire [31 : 0] m_axis_tdata,
+		// output wire [(AXIS_BYTES)-1 : 0] m_axis_tstrb,
+		// output wire  m_axis_tlast,
+		// input wire  m_axis_tready, 
+		// output wire 	[(AXIS_BYTES)-1 : 0] m_axis_tkeep, 
+		// output wire 	m_axis_tuser
+		`M_AXIS_PORT_NO_USER(axis_adc, AXIS_BYTES)
+		                      
 				
 		/////////////////////////////////////////////////////////////////	
 		
 	);
 	
 //////
-
+wire EnableSampleGeneration;
+wire [(AXIS_BYTES*8)-1:0] PacketSize;
+wire [(AXIS_BYTES*8)-1:0] PacketRate;
+wire [(AXIS_BYTES*8)-1:0] NumberOfPacketsToSend;
 
 reset_gen res (
 	.clk_slow(adc_sampling),
@@ -108,219 +118,207 @@ reset_gen res (
 	.reset_out(resetn)
 );
 
+ad7276_m_axis # ( 
+	.C_M_AXIS_TDATA_WIDTH(32),
+	.C_M_START_COUNT(32),
+	.NUM_CHANNELS(16),
+	.DATA_WIDTH_ADC(16)
+) ad7276_m_axis_inst (
 
+	.EnableSampleGeneration 	( EnableSampleGeneration ), 
+	.PacketSize 				( PacketSize ), 
+	.PacketRate					( PacketRate ), 
+	.NumberOfPacketsToSend		( NumberOfPacketsToSend ),
+	.InData						({4'hF,adc_16,4'hE,adc_15,4'hD,adc_14,4'hC,adc_13,4'hB,adc_12,4'hA,adc_11,4'h9,adc_10,4'h8,adc_9,4'h7,adc_8,4'h6,adc_7,4'h5,adc_6,4'h4,adc_5,4'h3,adc_4,4'h2,adc_3,4'h1,adc_2,4'h0,adc_1}),
+	
+	.m_axis_aclk			(CLK100MHz),
+	.m_axis_aresetn			(ARESETN),
+	`AXIS_MAP_NO_USER(m_axis, axis_adc)
+
+);
 ///////////////////////////////////////////////////////////////////////////
 //
 // axis master TODO: find a way to put inside generate 
 //
 ///////////////////////////////////////////////////////////////////////////
+
 vector_to_axis #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
 	.MSB_FIRST(1)
+) ch1_axis_out
+(
+	.clk(CLK100MHz),
+	.sresetn(resetn),
+	.vec({adc_2,adc_1}),
+	`AXIS_MAP_NO_USER(axis, axis_ad1)
+);
+
+vector_to_axis #
+(
+	.VEC_BYTES(AXIS_BYTES),
+	.AXIS_BYTES(AXIS_BYTES),
+	.MSB_FIRST(1)
+) ch2_axis_out
+(
+	.clk(CLK100MHz),
+	.sresetn(resetn),
+	.vec({adc_4,adc_3}),
+	`AXIS_MAP_NO_USER(axis, axis_ad2)
+);
+
+vector_to_axis #
+(
+	.VEC_BYTES(AXIS_BYTES),
+	.AXIS_BYTES(AXIS_BYTES),
+	.MSB_FIRST(1)
+) ch3_axis_out
+(
+	.clk(CLK100MHz),
+	.sresetn(resetn),
+	.vec({adc_6,adc_5}),
+	`AXIS_MAP_NO_USER(axis, axis_ad3)
+);
+
+///////////////////////////////////////////////////////////////////////////
+`AXIS_INST_TDEST(axis_ch1,AXIS_BYTES);
+`AXIS_INST_TDEST(axis_ch2,AXIS_BYTES);
+`AXIS_INST_TDEST(axis_ch3,AXIS_BYTES);
+`AXIS_INST_TDEST(axis_ch4,AXIS_BYTES);
+`AXIS_INST_TDEST(axis_ch5,AXIS_BYTES);
+`AXIS_INST_TDEST(axis_ch6,AXIS_BYTES);
+`AXIS_INST_TDEST(axis_ch7,AXIS_BYTES);
+`AXIS_INST_TDEST(axis_ch8,AXIS_BYTES);
+
+
+vector_to_axis_tdest #
+(
+	.VEC_BYTES(AXIS_BYTES),
+	.AXIS_BYTES(AXIS_BYTES),
+	.MSB_FIRST(1),
+	.TDEST(1)
 ) ch1_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_1),
-	`AXIS_MAP_NO_USER(axis, axis_ch1)
+	.vec({adc_2,adc_1}),
+	`AXIS_MAP_TDEST(axis, axis_ch1)
 );
 
-vector_to_axis #
+vector_to_axis_tdest #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
+	.MSB_FIRST(1),
+	.TDEST(2)
 ) ch2_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_2),
-	`AXIS_MAP_NO_USER(axis, axis_ch2)
+	.vec({adc_4,adc_3}),
+	`AXIS_MAP_TDEST(axis, axis_ch2)
 );
 
-vector_to_axis #
+vector_to_axis_tdest #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
+	.MSB_FIRST(1),
+	.TDEST(3)
 ) ch3_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_3),
-	`AXIS_MAP_NO_USER(axis, axis_ch3)
+	.vec({adc_6,adc_5}),
+	`AXIS_MAP_TDEST(axis, axis_ch3)
 );
 
-vector_to_axis #
+vector_to_axis_tdest #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
+	.MSB_FIRST(1),
+	.TDEST(4)
 ) ch4_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_4),
-	`AXIS_MAP_NO_USER(axis, axis_ch4)
+	.vec({adc_8,adc_7}),
+	`AXIS_MAP_TDEST(axis, axis_ch4)
 );
 
-vector_to_axis #
+vector_to_axis_tdest #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
+	.MSB_FIRST(1),
+	.TDEST(5)
 ) ch5_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_5),
-	`AXIS_MAP_NO_USER(axis, axis_ch5)
+	.vec({adc_10,adc_9}),
+	`AXIS_MAP_TDEST(axis, axis_ch5)
 );
 
-vector_to_axis #
+vector_to_axis_tdest #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
+	.MSB_FIRST(1),
+	.TDEST(6)
 ) ch6_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_6),
-	`AXIS_MAP_NO_USER(axis, axis_ch6)
+	.vec({adc_12,adc_11}),
+	`AXIS_MAP_TDEST(axis, axis_ch6)
 );
 
-vector_to_axis #
+vector_to_axis_tdest #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
+	.MSB_FIRST(1),
+	.TDEST(7)
 ) ch7_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_7),
-	`AXIS_MAP_NO_USER(axis, axis_ch7)
+	.vec({adc_14,adc_13}),
+	`AXIS_MAP_TDEST(axis, axis_ch7)
 );
 
-vector_to_axis #
+vector_to_axis_tdest #
 (
 	.VEC_BYTES(AXIS_BYTES),
 	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
+	.MSB_FIRST(1),
+	.TDEST(8)
 ) ch8_axis
 (
 	.clk(adc_sampling),
 	.sresetn(resetn),
-	.vec(adc_8),
-	`AXIS_MAP_NO_USER(axis, axis_ch8)
+	.vec({adc_16,adc_15}),
+	`AXIS_MAP_TDEST(axis, axis_ch8)
 );
 
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch9_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_9),
-	`AXIS_MAP_NO_USER(axis, axis_ch9)
-);
 
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch10_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_10),
-	`AXIS_MAP_NO_USER(axis, axis_ch10)
-);
 
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch11_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_11),
-	`AXIS_MAP_NO_USER(axis, axis_ch11)
-);
+// axis_joiner_tdest
+// #(
+// 	.AXIS_BYTES(AXIS_BYTES),
+// 	.NUM_STREAMS(8)
+// ) output_joiner (
+// 	.clk(CLK100MHz),
+// 	.sresetn(ARESETN),
+// 	.enable(EnableSampleGeneration),
+// 	.words_to_send(PacketSize),
+// 	`AXIS_MAP_8_TDEST(axis_i, axis_ch1, axis_ch2, axis_ch3, axis_ch4, axis_ch5, axis_ch6, axis_ch7, axis_ch8),
 
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch12_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_12),
-	`AXIS_MAP_NO_USER(axis, axis_ch12)
-);
-
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch13_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_13),
-	`AXIS_MAP_NO_USER(axis, axis_ch13)
-);
-
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch14_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_14),
-	`AXIS_MAP_NO_USER(axis, axis_ch14)
-);
-
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch15_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_15),
-	`AXIS_MAP_NO_USER(axis, axis_ch15)
-);
-
-vector_to_axis #
-(
-	.VEC_BYTES(AXIS_BYTES),
-	.AXIS_BYTES(AXIS_BYTES),
-	.MSB_FIRST(1)
-) ch16_axis
-(
-	.clk(adc_sampling),
-	.sresetn(resetn),
-	.vec(adc_16),
-	`AXIS_MAP_NO_USER(axis, axis_ch16)
-);
+// 	`AXIS_MAP_TDEST(axis_o, axis_o)
+// );
 
 // initial axis_ch = 2;
 assign adc_sampling = adc_clk[0];
@@ -458,5 +456,34 @@ wire [(OUTPUT_AS_FLOAT*(32-ADC_LENGTH))+ADC_LENGTH-1:0] adc2s[ADC_QTD];
 		end
 	endgenerate
     
+
+// wire enable;
+
+// assign enable = (EnableSampleGeneration == 1) ? 1'b1: enable;
+ad9226_v1_s_axi # ( 
+	.AXI_BYTES(AXIS_BYTES),
+	.C_S_AXI_ADDR_WIDTH(C_S_AXI_ADDR_WIDTH)
+) 	ad9226_v1_s_axi_inst (
+		
+	.EnableSampleGeneration 	( EnableSampleGeneration ), 
+	.PacketSize 			    ( PacketSize ), 
+	.PacketRate 			    ( PacketRate ), 
+	.NumberOfPacketsToSend		( NumberOfPacketsToSend ),
+
+	
+	.DataAdc3Adc4({adc_4,adc_3}),
+	.DataAdc5Adc6({adc_6,adc_5}),
+	.DataAdc7Adc8({adc_8,adc_7}),
+	.DataAdc9Adc10({adc_10,adc_9}),
+	.DataAdc11Adc12({adc_12,adc_11}),
+	.DataAdc13Adc14({adc_14,adc_13}),
+	.DataAdc15Adc16({adc_16,adc_15}),	
+	
+		
+	.s_axi_aclk			    (CLK100MHz),
+	.s_axi_aresetn			(ARESETN),
+	
+	`AXI_MAP(s_axi, s_axi)
+);		
 	
 	endmodule
