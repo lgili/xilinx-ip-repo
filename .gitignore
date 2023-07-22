@@ -112,3 +112,4 @@
 # #########
 # *xgui
 # *src
+!common/hdl/component.xml
