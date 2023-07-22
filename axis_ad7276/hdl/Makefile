@@ -17,6 +17,7 @@ VERILOG_SOURCES += $(mkfile_dir)ad7276_v1_s_axi.sv
 VERILOG_SOURCES += $(mkfile_dir)clock_divider.sv 
 VERILOG_SOURCES += $(mkfile_dir)dff.v 
 VERILOG_SOURCES += $(mkfile_dir)ad7276_m_axis.v 
+VERILOG_SOURCES += $(mkfile_dir)trigger_acq.sv 
 
 VERILOG_SOURCES += $(mkfile_dir)../../common/hdl/fixedpoint.sv
 VERILOG_SOURCES += $(mkfile_dir)../../common/hdl/vector_to_axis_tdest.sv

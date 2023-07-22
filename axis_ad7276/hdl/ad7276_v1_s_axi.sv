@@ -59,14 +59,18 @@ module ad9226_v1_s_axi #
 	output 	wire					    EnableSampleGeneration, 
 	output 	wire 	[(AXI_BYTES*8)-1:0]	PacketSize, 
 	output 	wire 	[(AXI_BYTES*8)-1:0]	PacketRate, 
-	input 	wire 	[(AXI_BYTES*8)-1:0]	NumberOfPacketsToSend, 
-	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc3Adc4,
-	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc5Adc6,
-	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc7Adc8,
-	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc9Adc10,
-	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc11Adc12,
-	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc13Adc14,
-	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc15Adc16,
+	output 	wire 	[(AXI_BYTES*8)-1:0]	NumberOfPacketsToSend, 
+	output 	wire 	[(AXI_BYTES*8)-1:0]	TriggerLevelValue, 
+	output 	wire 	[(AXI_BYTES*8)-1:0]	TriggerChannel, 
+	input 	wire 	[(AXI_BYTES*8)-1:0]	TriggerPosMemory,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc2Adc1,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc4Adc3,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc6Adc5,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc8Adc7,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc10Adc9,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc12Adc11,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc14Adc13,
+	input 	wire 	[(AXI_BYTES*8)-1:0]	DataAdc16Adc15,
 	
 	/*
      * Status to ARM
@@ -453,14 +457,14 @@ module ad9226_v1_s_axi #
 	        4'h1   : reg_data_out <= slv_reg1;
 	        4'h2   : reg_data_out <= slv_reg2;
 	        4'h3   : reg_data_out <= slv_reg3;
-	        4'h4   : reg_data_out <= DataAdc5Adc6; 	
-	        4'h5   : reg_data_out <= DataAdc7Adc8; 	
-	        4'h6   : reg_data_out <= DataAdc9Adc10; 	
-	        4'h7   : reg_data_out <= DataAdc11Adc12; 	
-	        4'h8   : reg_data_out <= DataAdc13Adc14;
-	        4'h9   : reg_data_out <= DataAdc15Adc16;
-	        4'hA   : reg_data_out <= slv_reg10;
-	        4'hB   : reg_data_out <= slv_reg11;
+	        4'h4   : reg_data_out <= DataAdc2Adc1; 	
+	        4'h5   : reg_data_out <= DataAdc4Adc3; 	
+	        4'h6   : reg_data_out <= DataAdc6Adc5; 	
+	        4'h7   : reg_data_out <= DataAdc8Adc7; 	
+	        4'h8   : reg_data_out <= DataAdc10Adc9;
+	        4'h9   : reg_data_out <= DataAdc12Adc11;
+	        4'hA   : reg_data_out <= DataAdc14Adc13;
+	        4'hB   : reg_data_out <= DataAdc16Adc15;
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -490,6 +494,8 @@ module ad9226_v1_s_axi #
 	assign PacketSize = slv_reg1; 
 	assign PacketRate = slv_reg2;
 	assign NumberOfPacketsToSend = slv_reg3;
+	// assign TriggerLevelValue = slv_reg4;
+	// assign TriggerChannel = slv_reg5;
 	
 	
 	// User logic ends

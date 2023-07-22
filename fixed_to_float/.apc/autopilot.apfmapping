@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<autopilotfilemapping:AutoPilotFileMapping xmlns:autopilotfilemapping="www.autoesl.com/autopilotfilemapping">
+  <source>
+    <originFiles name="fixed_to_float.cpp" path="/home/lgili/Documents/Tese/xilinx-ip-repo/fixed_to_float/src/fixed_to_float.cpp"/>
+    <originFiles name="config.hpp" path="/home/lgili/Documents/Tese/xilinx-ip-repo/fixed_to_float/src/config.hpp"/>
+  </source>
+  <testbench>
+    <originFiles name="fixed_to_float_tb.cpp" path="/home/lgili/Documents/Tese/xilinx-ip-repo/fixed_to_float/src/fixed_to_float_tb.cpp"/>
+  </testbench>
+</autopilotfilemapping:AutoPilotFileMapping>

@@ -111,7 +111,9 @@ wire EnableSampleGeneration;
 wire [(AXIS_BYTES*8)-1:0] PacketSize;
 wire [(AXIS_BYTES*8)-1:0] PacketRate;
 wire [(AXIS_BYTES*8)-1:0] NumberOfPacketsToSend;
-
+wire [(AXIS_BYTES*8)-1:0] TriggerPosMemory;
+wire [(AXIS_BYTES*8)-1:0] TriggerLevelValue;
+wire [(AXIS_BYTES*8)-1:0] TriggerChannel;
 reset_gen res (
 	.clk_slow(adc_sampling),
 	.reset_in(ARESETN),
@@ -129,6 +131,9 @@ ad7276_m_axis # (
 	.PacketSize 				( PacketSize ), 
 	.PacketRate					( PacketRate ), 
 	.NumberOfPacketsToSend		( NumberOfPacketsToSend ),
+	.TriggerChannel				( TriggerChannel ),
+	.TriggerLevelValue			( TriggerLevelValue ),
+	.TriggerPosMemory			( TriggerPosMemory ),
 	.InData						({4'hF,adc_16,4'hE,adc_15,4'hD,adc_14,4'hC,adc_13,4'hB,adc_12,4'hA,adc_11,4'h9,adc_10,4'h8,adc_9,4'h7,adc_8,4'h6,adc_7,4'h5,adc_6,4'h4,adc_5,4'h3,adc_4,4'h2,adc_3,4'h1,adc_2,4'h0,adc_1}),
 	
 	.m_axis_aclk			(CLK100MHz),
@@ -469,15 +474,19 @@ ad9226_v1_s_axi # (
 	.PacketSize 			    ( PacketSize ), 
 	.PacketRate 			    ( PacketRate ), 
 	.NumberOfPacketsToSend		( NumberOfPacketsToSend ),
+	.TriggerLevelValue			( TriggerLevelValue ),
+	.TriggerChannel				( TriggerChannel ),
+	.TriggerPosMemory			( TriggerPosMemory ),
 
 	
-	.DataAdc3Adc4({adc_4,adc_3}),
-	.DataAdc5Adc6({adc_6,adc_5}),
-	.DataAdc7Adc8({adc_8,adc_7}),
-	.DataAdc9Adc10({adc_10,adc_9}),
-	.DataAdc11Adc12({adc_12,adc_11}),
-	.DataAdc13Adc14({adc_14,adc_13}),
-	.DataAdc15Adc16({adc_16,adc_15}),	
+	.DataAdc2Adc1({adc_2,adc_1}),
+	.DataAdc4Adc3({adc_4,adc_3}),
+	.DataAdc6Adc5({adc_6,adc_5}),
+	.DataAdc8Adc7({adc_8,adc_7}),
+	.DataAdc10Adc9({adc_10,adc_9}),
+	.DataAdc12Adc11({adc_12,adc_11}),
+	.DataAdc14Adc13({adc_14,adc_13}),	
+	.DataAdc16Adc15({adc_16,adc_15}),	
 	
 		
 	.s_axi_aclk			    (CLK100MHz),

@@ -46,7 +46,9 @@ class TB:
 
         self.getbit = [2048,1024,512,256,128,64,32,16,8,4,2,1]
 
-        self.log_ch = logging.getLogger('cocotb.ad7276_wrapper.axis_o')
+        self.log_ch = logging.getLogger('cocotb.ad7276_wrapper.axis_adc')
+        self.log_ch.setLevel(logging.ERROR)
+        self.log_ch = logging.getLogger('cocotb.ad7276_wrapper.s_axi')
         self.log_ch.setLevel(logging.ERROR)
         
         for i in range(16):
@@ -68,16 +70,16 @@ class TB:
         
         self.EnableSampleGeneration = 0x00	
         self.PacketSize			    = 0x04
-        self.EnablePacket		    = 0x08
-        self.configPassband         = 0x0C
-        self.DMABaseAddr            = 0x10
-        self.TriggerLevel           = 0x14
-        self.ConfigSampler          = 0x18
-        self.DataFromArm            = 0x1C
-        self.Decimator              = 0x20
-        self.MavgFactor             = 0x24
-        self.TriggerEnable          = 0x28
-        self.TriggerOffset          = 0x2C  
+        self.PacketRate 		    = 0x08
+        self.NumberOfPacketsToSend  = 0x0C
+        self.TriggerLevelValue      = 0x10
+        self.TriggerChannel         = 0x14
+        self.TriggerPosMemory       = 0x18
+        # self.DataFromArm            = 0x1C
+        # self.Decimator              = 0x20
+        # self.MavgFactor             = 0x24
+        # self.TriggerEnable          = 0x28
+        # self.TriggerOffset          = 0x2C  
         
 
     def set_backpressure_generator(self, generator=None):
@@ -257,9 +259,12 @@ class TB:
         self.counter =0
         for i in range(4095):
                 await RisingEdge(self.dut.CLK100MHz)  
-        await self.write_to_axi_lite(self.PacketSize, 1024*4)
+        await self.write_to_axi_lite(self.PacketSize, 1024*8)
+        await self.write_to_axi_lite(self.PacketRate, 250)
+        await self.write_to_axi_lite(self.TriggerChannel, 0)
+        await self.write_to_axi_lite(self.TriggerLevelValue, 900)
         while(1):
-            for i in range(4095):
+            for i in range(4095+1024*8*10):
                 await RisingEdge(self.dut.CLK100MHz)     
         
             await self.write_to_axi_lite(self.EnableSampleGeneration, 0)
@@ -274,21 +279,17 @@ class TB:
 async def run_test(dut, backpressure_inserter=None):
 
     tb = TB(dut)
-
     #id_count = 2**len(tb.source.bus.tid)
-
     cur_id = 1
 
     for i in range(2):
-        tb.generateSin(0.6,5,3500,1e3,1,500,i)
+        tb.generateSin(6,5,3500,1e3,1,500,i)
 
     # plt.plot(tb.signal_a)
     # plt.plot(tb.signal_b)
     # plt.show() 
     await tb.reset()
     tb.set_backpressure_generator(backpressure_inserter)
-
-
     #await tb.write(20,12)
 
     # Run reset_dut concurrently

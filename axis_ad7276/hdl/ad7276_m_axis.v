@@ -22,6 +22,10 @@
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]					PacketSize, 
 		input 	wire 	[7:0]										PacketRate, 
 		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]					NumberOfPacketsToSend,
+		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]					TriggerLevelValue,
+		input 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]					TriggerChannel,
+		output 	wire 	[C_M_AXIS_TDATA_WIDTH-1:0]	                TriggerPosMemory,
+		
 		input   wire 	[(DATA_WIDTH_ADC*NUM_CHANNELS)-1:0] 		InData,
 		// User ports ends
 		// Do not modify the ports beyond this line
@@ -326,4 +330,24 @@ begin
 end
 
 assign m_axis_tdata = InData[(1+ctr)*(C_M_AXIS_TDATA_WIDTH)-1 -: C_M_AXIS_TDATA_WIDTH];
+
+
+
+wire [15:0] channel_data;
+
+assign channel_data = InData[(1+TriggerChannel)*(C_M_AXIS_TDATA_WIDTH)-1 -: C_M_AXIS_TDATA_WIDTH];
+////////////////////////////////
+trigger_acq#(
+	.DATA_WIDTH(16),			 
+	.MEMORY_ADDR_LEN(32)
+) trigger_inst(
+            .rstn(ResetL),
+			.clk(Clk),
+			.in_data_valid(m_axis_tready && m_axis_tvalid),
+			.in_data(channel_data),
+			.in_dma_master_address(packetDWORDCounter),
+			.trigger_level(TriggerLevelValue),    // HPS Register
+			.trigger_response(), // HPS Register 
+			.out_data_offset(TriggerPosMemory)  // HPS Register 
+);
 endmodule
