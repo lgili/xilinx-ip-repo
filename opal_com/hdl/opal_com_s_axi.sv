@@ -56,22 +56,18 @@ module opal_com_s_axi #
      * Config from ARM
      */
 
-	input wire [(AXI_BYTES*8)-1:0] var1,
-	input wire  [(AXI_BYTES*8)-1:0] var2,
-	input wire  [(AXI_BYTES*8)-1:0] var3,
-	input wire  [(AXI_BYTES*8)-1:0] var4,
-	input wire  [(AXI_BYTES*8)-1:0] var5,
-	input wire  [(AXI_BYTES*8)-1:0] var6,
-	input wire  [(AXI_BYTES*8)-1:0] var7,
-	input wire  [(AXI_BYTES*8)-1:0] var8,
-	input wire  [(AXI_BYTES*8)-1:0] var9,
-	input wire  [(AXI_BYTES*8)-1:0] var10,
-	input wire  [(AXI_BYTES*8)-1:0] var11,
-	input wire  [(AXI_BYTES*8)-1:0] var12,
-	input wire  [(AXI_BYTES*8)-1:0] var13,
-	input wire  [(AXI_BYTES*8)-1:0] var14,
-	input wire  [(AXI_BYTES*8)-1:0] var15,
-	input wire  [(AXI_BYTES*8)-1:0] var16,
+	input wire [(AXI_BYTES*8)-1:0] from_var1,
+	input wire  [(AXI_BYTES*8)-1:0] from_var2,
+	input wire  [(AXI_BYTES*8)-1:0] from_var3,
+	input wire  [(AXI_BYTES*8)-1:0] from_var4,
+	input wire  [(AXI_BYTES*8)-1:0] from_var5,
+	input wire  [(AXI_BYTES*8)-1:0] from_var6,
+	input wire  [(AXI_BYTES*8)-1:0] from_var7,
+	input wire  [(AXI_BYTES*8)-1:0] from_var8,
+	output wire  [(AXI_BYTES*8)-1:0] to_var1,
+	output wire  [(AXI_BYTES*8)-1:0] to_var2,
+	output wire  [(AXI_BYTES*8)-1:0] to_var3,
+	output wire  [(AXI_BYTES*8)-1:0] to_var4,
 	
 	/*
      * Status to ARM
@@ -454,18 +450,18 @@ module opal_com_s_axi #
 	begin
 	      // Address decoding for reading registers
 	      case ( axi_araddr[ADDR_LSB+OPT_MEM_ADDR_BITS:ADDR_LSB] )
-	        4'h0   : reg_data_out <= var1;
-	        4'h1   : reg_data_out <= var2;
-	        4'h2   : reg_data_out <= var3;
-	        4'h3   : reg_data_out <= var4;
-	        4'h4   : reg_data_out <= var5; 	
-	        4'h5   : reg_data_out <= var6; 	
-	        4'h6   : reg_data_out <= var7; 	
-	        4'h7   : reg_data_out <= var8; 	
-	        4'h8   : reg_data_out <= var9;
-	        4'h9   : reg_data_out <= var10;
-	        4'hA   : reg_data_out <= var11;
-	        4'hB   : reg_data_out <= var12;
+	        4'h0   : reg_data_out <= from_var1;
+	        4'h1   : reg_data_out <= from_var2;
+	        4'h2   : reg_data_out <= from_var3;
+	        4'h3   : reg_data_out <= from_var4;
+	        4'h4   : reg_data_out <= from_var5; 	
+	        4'h5   : reg_data_out <= from_var6; 	
+	        4'h6   : reg_data_out <= from_var7; 	
+	        4'h7   : reg_data_out <= from_var8; 	
+	        4'h8   : reg_data_out <= slv_reg8; 
+	        4'h9   : reg_data_out <= slv_reg9;
+	        4'hA   : reg_data_out <= slv_reg10;
+	        4'hB   : reg_data_out <= slv_reg11;
 	        default : reg_data_out <= 0;
 	      endcase
 	end
@@ -490,7 +486,10 @@ module opal_com_s_axi #
 	end    
 
 	// Add user logic here
-
+	assign to_var1 = slv_reg8;
+	assign to_var2 = slv_reg9;
+	assign to_var3 = slv_reg10;
+	assign to_var4 = slv_reg11;
 
 	
 	

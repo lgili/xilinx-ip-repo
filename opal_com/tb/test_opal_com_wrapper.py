@@ -32,6 +32,8 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge
 from cocotb.regression import TestFactory
 
+from cocotbext.axi import AxiStreamBus, AxiStreamFrame, AxiStreamSource, AxiStreamSink
+from cocotbext.axi import AxiLiteBus, AxiLiteMaster, AxiLiteRam
 
 
 
@@ -45,13 +47,15 @@ class TB:
 
         cocotb.cocotb.start_soon(Clock(dut.CLK100MHz, 10,units="ns").start())        
         
+        self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.CLK100MHz, dut.ARESETN,reset_active_level=False)
+        
         self.simulation_time = int(10)   
-        self.serial_clk_div = 25    
+        self.serial_clk_div = 33    
         
     
     async def reset(self):
         self.dut.ARESETN.setimmediatevalue(0)
-        self.dut.i_data.setimmediatevalue(0)
+        self.dut.i_data_rx.setimmediatevalue(0)
         
         self.dut.ARESETN.value = 0
         await RisingEdge(self.dut.CLK100MHz)
@@ -67,9 +71,9 @@ class TB:
             for i in range(36):
                 await self.delay(self.serial_clk_div)
                 if i < 4:
-                    self.dut.i_data[16].value = 1
+                    self.dut.i_data_rx[16].value = 1
                 else:
-                    self.dut.i_data[16].value = 0
+                    self.dut.i_data_rx[16].value = 0
         
     async def write_enable(self):
         for j in range(self.simulation_time):
@@ -77,31 +81,57 @@ class TB:
                 await self.delay(self.serial_clk_div)
                 if i < 34:
                     if (i % 2) == 0:
-                        self.dut.i_data[17].value = 0
+                        self.dut.i_data_rx[17].value = 0
                     else:
-                        self.dut.i_data[17].value = 1
+                        self.dut.i_data_rx[17].value = 1
                 else:
-                    self.dut.i_data[17].value = 0
+                    self.dut.i_data_rx[17].value = 0
                
     async def write(self, data, size, pos): 
         for j in range(self.simulation_time):
-            # self.dut.i_data[pos].value  = 0
+            # self.dut.i_data_rx[pos].value  = 0
             await self.delay(self.serial_clk_div) 
             await self.delay(self.serial_clk_div)     
-            print("====================================================")            
+            # print("====================================================")            
             for i in range(size+1): 
                 value = data
                 
-                self.dut.i_data[pos].value        = data & 1 << i != 0
-                print(self.dut.i_data[pos].value )
+                self.dut.i_data_rx[pos].value        = data & 1 << i != 0
+                # print(self.dut.i_data_rx[pos].value )
                 await self.delay(self.serial_clk_div)
                 await self.delay(self.serial_clk_div) 
             
                
             
+    async def write_to_axi_lite(self,addr, value):
         
+        try:
+            send_data = value.to_bytes(4, 'little') #bytearray(value)  
+            self.log.info("Writed: %s", send_data)   
+            await self.axil_master.write(addr*4, send_data)             
+
+            # self.log.info("Writed: %s", data.data) 
+        except:
+            print("An exception occurred")    
         
-    
+    async def read_from_axi_lite(self,addr):
+
+        self.log.info("Reading data")
+        try:
+            
+            await RisingEdge(self.dut.CLK100MHz)
+            data = await self.axil_master.read(addr, 4)
+
+            self.log.info("Writed: %s", data.data) 
+        except:
+            print("An exception occurred")
+            
+    async def read_loop(self):
+        for j in range(self.simulation_time):
+            # self.dut.i_data_rx[pos].value  = 0
+            await self.delay(200) 
+            # await self.read_from_axi_lite(0) # var1
+            await self.write_to_axi_lite(8, j) # var2
    
 async def run_test(dut):
 
@@ -130,6 +160,8 @@ async def run_test(dut):
     write_thread_15 = cocotb.start_soon(tb.write(1014,16,13))
     write_thread_16 = cocotb.start_soon(tb.write(1015,16,14))
     write_thread_17 = cocotb.start_soon(tb.write(1016,16,15))
+    
+    read_thread_0 = cocotb.start_soon(tb.read_loop())
 
     assert 1 == 1   
     await RisingEdge(dut.CLK100MHz)
@@ -154,6 +186,7 @@ async def run_test(dut):
     await write_thread_15
     await write_thread_16
     await write_thread_17
+    await read_thread_0
 
 
 if cocotb.SIM_NAME:
