@@ -13,6 +13,8 @@ VERILOG_SOURCES += $(mkfile_dir)opal_com_wrapper.sv
 VERILOG_SOURCES += $(mkfile_dir)opal_rx.sv
 VERILOG_SOURCES += $(mkfile_dir)opal_tx.sv
 VERILOG_SOURCES += $(mkfile_dir)opal_com_s_axi.sv
+VERILOG_SOURCES += $(mkfile_dir)clock_divider.sv
+VERILOG_SOURCES += $(mkfile_dir)dff.sv
 
 # VERILOG_SOURCES += $(mkfile_dir)../../common/hdl/fixedpoint.sv
 # VERILOG_SOURCES += $(mkfile_dir)../../common/hdl/vector_to_axis_tdest.sv

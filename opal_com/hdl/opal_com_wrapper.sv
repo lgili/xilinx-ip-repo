@@ -99,11 +99,22 @@ opal_com_s_axi # (
 	`AXI_MAP(s_axi, s_axi)
 
 );
+localparam ADC_CLK_DIV = 30;
+logic clk_tx;
+clock_divider#(
+    .DIV_WIDTH(ADC_CLK_DIV)    							// Number of divider
+) divider (
+    .clk_in(CLK100MHz),					// clock in
+    .div_ctrl(ADC_CLK_DIV/2),				// divider control
+    .rstn(ARESETN),			// reset (active low)
+    .clk_out(clk_tx),		// clock out
+    .clk_out_b()				// complementary clock out
+);
 
 // initial var_to_opal = 2;
 logic [31:0] var_to_opal;
 opal_tx to_var1_inst(
-    .clk(i_clk),
+    .clk(clk_tx),
     .rst_n(ARESETN),
     .data_in(var_to_opal[7:0]),
     .enable(i_enable),
