@@ -25,6 +25,7 @@ module opal_com_wrapper #
         output wire tx_valid,
 
         output [3:0] state_watch_rx,
+        output data_ready,
 
         `S_AXI_PORT(s_axi, AXIS_BYTES, C_S_AXI_ADDR_WIDTH)
     );
@@ -32,7 +33,7 @@ module opal_com_wrapper #
 logic i_clk;
 logic i_enable;
 logic [(OPAL_INPUT_WIDTH*QTD_VARIABLES_RECEIVE)-1:0] o_data;
-logic data_ready;
+
 
 
 assign i_clk = i_data_rx[QTD_VARIABLES_RECEIVE+1]; // based on simulink pins

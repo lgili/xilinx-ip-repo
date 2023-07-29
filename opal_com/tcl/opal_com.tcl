@@ -48,7 +48,13 @@ set aresetn_intf [ipx::get_bus_interfaces ARESETN -of_objects ${ip_core}]
 set aresetn_polarity [ipx::add_bus_parameter POLARITY $aresetn_intf]
 set_property value ACTIVE_LOW ${aresetn_polarity}
 
-
+update_compile_order -fileset sources_1
+ipx::add_bus_interface irq [ipx::current_core]
+set_property abstraction_type_vlnv xilinx.com:signal:interrupt_rtl:1.0 [ipx::get_bus_interfaces irq -of_objects [ipx::current_core]]
+set_property bus_type_vlnv xilinx.com:signal:interrupt:1.0 [ipx::get_bus_interfaces irq -of_objects [ipx::current_core]]
+set_property interface_mode master [ipx::get_bus_interfaces irq -of_objects [ipx::current_core]]
+ipx::add_port_map INTERRUPT [ipx::get_bus_interfaces irq -of_objects [ipx::current_core]]
+set_property physical_name data_ready [ipx::get_port_maps INTERRUPT -of_objects [ipx::get_bus_interfaces irq -of_objects [ipx::current_core]]]
 
 
 # Save IP and close project

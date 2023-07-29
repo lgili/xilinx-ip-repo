@@ -146,7 +146,7 @@ always_comb begin : next_state_logic
 	  endcase
 end
 
-assign o_ready = (pkg_is_transmitting == TRUE) ? 0 : 1;
+assign o_ready = (pkg_is_transmitting == TRUE) ? 1 : 0;
 
 
 always_ff@(posedge clk) begin : state_logic 

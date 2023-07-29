@@ -49,7 +49,7 @@ class TB:
         
         self.axil_master = AxiLiteMaster(AxiLiteBus.from_prefix(dut, "s_axi"), dut.CLK100MHz, dut.ARESETN,reset_active_level=False)
         
-        self.simulation_time = int(10)   
+        self.simulation_time = int(40)   
         self.serial_clk_div = 33    
         
     
